@@ -23,15 +23,20 @@ class AnalyticsMiddleware:
         # Do not track technical/internal requests
         # ---------------------------------------------
         excluded_paths = (
-            "/admin/",
-            "/static/",
+            "/admin",
+            "/static",
             "/favicon.ico",
             "/robots.txt",
-            "/.well-known/",
-            "/analytics/",
+            "/.well-known",
+            "/analytics",
         )
 
-        if request.path.startswith(excluded_paths):
+        # Track only normal GET page requests.
+        # Exclude admin, static/technical requests and the analytics dashboard itself.
+        if (
+            request.method != "GET"
+            or request.path.lower().startswith(excluded_paths)
+        ):
             return self.get_response(request)
 
         visitor = None
