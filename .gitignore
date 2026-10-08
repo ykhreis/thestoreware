@@ -1,0 +1,8 @@
+
+venv/
+staticfiles/
+__pycache__/
+*.pyc
+.env
+db.sqlite3
+Batch files/
