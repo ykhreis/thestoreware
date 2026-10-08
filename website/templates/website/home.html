@@ -1,0 +1,203 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TheStoreWare AI-Agent turns information into reusable knowledge.">
+    <title>TheStoreWare | AI-Agent</title>
+    <link rel="stylesheet" href="{% static 'website/css/style.css' %}">
+    <script defer src="{% static 'website/js/home.js' %}"></script>
+</head>
+<body>
+<header class="header">
+    <div class="shell nav">
+        <a class="logo" href="#home">
+            <span class="logo-mark">S</span>
+            <span>TheStore<span>Ware</span></span>
+        </a>
+        <nav>
+            <a href="#home">Home</a>
+            <a href="#how">How It Works</a>
+            <a href="#knowledge">Knowledge</a>
+            <a href="#feedback">Feedback</a>
+        </nav>
+        <a class="button button-small" href="#access">Try AI-Agent</a>
+    </div>
+</header>
+
+<main>
+<section class="hero" id="home">
+    <div class="hero-orb orb-a"></div>
+    <div class="hero-orb orb-b"></div>
+    <div class="shell hero-grid">
+        <div class="hero-copy reveal">
+            <div class="badge"><i></i> AI-AGENT • KNOWLEDGE INTELLIGENCE</div>
+            <h1>AI that turns<br>information into <em>knowledge.</em></h1>
+            <p class="hero-sub">Ask questions. Provide information. Let AI-Agent understand, analyze and transform useful information into knowledge that can be reused.</p>
+            <div class="hero-buttons">
+                <a class="button" href="#access">Try AI-Agent <span>→</span></a>
+                <a class="button secondary" href="#how">See How It Works <span>↓</span></a>
+            </div>
+            <div class="steps">
+                <span>ASK</span><b>→</b><span>UNDERSTAND</span><b>→</b><span>ANALYZE</span><b>→</b><span>KNOW</span><b>→</b><span>REUSE</span>
+            </div>
+        </div>
+
+        <div class="intelligence-stage reveal">
+            <div class="halo halo-1"></div>
+            <div class="halo halo-2"></div>
+            <div class="agent-core">
+                <div class="brain-symbol">AI</div>
+                <strong>AI-Agent</strong>
+                <small>INTELLIGENT KNOWLEDGE CORE</small>
+            </div>
+            <div class="flow-card input-card">
+                <span class="flow-icon">?</span>
+                <div><strong>Question</strong><small>Ask naturally</small></div>
+            </div>
+            <div class="flow-card doc-card">
+                <span class="flow-icon">DOC</span>
+                <div><strong>Information</strong><small>Documents & data</small></div>
+            </div>
+            <div class="flow-card knowledge-card">
+                <span class="flow-icon">K</span>
+                <div><strong>Knowledge</strong><small>Structured & reusable</small></div>
+            </div>
+            <div class="flow-card answer-card">
+                <span class="flow-icon">✓</span>
+                <div><strong>Answer</strong><small>Clear & traceable</small></div>
+            </div>
+            <svg class="connections" viewBox="0 0 600 560" aria-hidden="true">
+                <path d="M115 130 C220 130,220 235,300 260"/>
+                <path d="M115 425 C215 420,225 330,300 300"/>
+                <path d="M485 130 C390 135,390 235,330 260"/>
+                <path d="M485 425 C390 420,390 330,330 300"/>
+            </svg>
+        </div>
+    </div>
+</section>
+
+<section class="intro strip">
+    <div class="shell intro-grid reveal">
+        <div><span class="number">01</span><strong>Understand</strong><p>Interpret the question or information.</p></div>
+        <div><span class="number">02</span><strong>Analyze</strong><p>Identify what matters and what is being asked.</p></div>
+        <div><span class="number">03</span><strong>Know</strong><p>Find or create useful structured knowledge.</p></div>
+        <div><span class="number">04</span><strong>Reuse</strong><p>Use trusted knowledge again when it is needed.</p></div>
+    </div>
+</section>
+
+<section class="section how" id="how">
+    <div class="shell">
+        <div class="section-head reveal">
+            <span class="kicker">HOW AI-AGENT WORKS</span>
+            <h2>It doesn't just answer.<br><em>It builds knowledge.</em></h2>
+            <p>AI-Agent combines intelligent interpretation with a reusable knowledge layer.</p>
+        </div>
+
+        <div class="workflow reveal">
+            <div class="workflow-item"><span>01</span><div class="workflow-icon">Q</div><strong>Ask or Provide</strong><small>A question, document or information</small></div>
+            <i>→</i>
+            <div class="workflow-item"><span>02</span><div class="workflow-icon">U</div><strong>Understand</strong><small>Interpret intent and context</small></div>
+            <i>→</i>
+            <div class="workflow-item"><span>03</span><div class="workflow-icon">A</div><strong>Analyze</strong><small>Identify concepts, facts and meaning</small></div>
+            <i>→</i>
+            <div class="workflow-item highlighted"><span>04</span><div class="workflow-icon">K</div><strong>Build Knowledge</strong><small>Structure useful information</small></div>
+            <i>→</i>
+            <div class="workflow-item"><span>05</span><div class="workflow-icon">R</div><strong>Reuse</strong><small>Search and answer intelligently</small></div>
+        </div>
+
+        <div class="decision-card reveal">
+            <div class="decision-copy">
+                <span class="kicker">DATABASE-FIRST INTELLIGENCE</span>
+                <h3>Use what is already known first.</h3>
+                <p>AI-Agent searches its knowledge before relying on external intelligence. When useful knowledge exists, it can be reused directly. When additional intelligence is needed, AI can help interpret or analyze the request.</p>
+            </div>
+            <div class="decision-flow">
+                <span>QUESTION</span><b>↓</b><span>SEARCH KNOWLEDGE</span><b>↓</b>
+                <div class="decision">FOUND?<i>YES → REUSE</i><i>NO → ANALYZE</i></div>
+                <b>↓</b><span>ANSWER + SOURCE TRACE</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section knowledge-section" id="knowledge">
+    <div class="shell knowledge-grid">
+        <div class="section-head left reveal">
+            <span class="kicker">FROM INFORMATION TO KNOWLEDGE</span>
+            <h2>The source is information.<br><em>Knowledge is the result.</em></h2>
+            <p>AI-Agent is designed to understand useful information, identify what matters and transform it into structured knowledge that can be searched and reused.</p>
+            <div class="format-row">
+                <span>PDF</span><span>WORD</span><span>EXCEL</span><span>POWERPOINT</span><span>TEXT</span>
+            </div>
+        </div>
+        <div class="knowledge-visual reveal">
+            <div class="source-stack">
+                <div>Document</div><div>Question</div><div>Data</div>
+            </div>
+            <span class="big-arrow">→</span>
+            <div class="transform-core"><b>AI</b><strong>UNDERSTAND</strong><strong>ANALYZE</strong></div>
+            <span class="big-arrow">→</span>
+            <div class="knowledge-output"><b>K</b><strong>Reusable Knowledge</strong><small>Concepts • Facts • Context • Sources</small></div>
+        </div>
+    </div>
+</section>
+
+<section class="section difference">
+    <div class="shell">
+        <div class="section-head reveal">
+            <span class="kicker">THE IDEA</span>
+            <h2>Learn once. <em>Reuse intelligently.</em></h2>
+        </div>
+        <div class="difference-grid reveal">
+            <article><span>01</span><h3>Knowledge First</h3><p>Search existing knowledge before repeating work.</p></article>
+            <article><span>02</span><h3>Source Aware</h3><p>Keep visibility of where useful information came from.</p></article>
+            <article><span>03</span><h3>Human Validation</h3><p>Important knowledge can be reviewed before trusted reuse.</p></article>
+            <article><span>04</span><h3>Continuously Improving</h3><p>Testing and feedback help us improve how AI-Agent understands and responds.</p></article>
+        </div>
+    </div>
+</section>
+
+<section class="access-section" id="access">
+    <div class="shell access-card reveal">
+        <div>
+            <span class="kicker">EARLY ACCESS</span>
+            <h2>Try. Challenge. Improve.</h2>
+            <p>AI-Agent is currently being tested with selected users. Early access helps us evaluate real questions and improve the experience.</p>
+        </div>
+        <div class="access-actions">
+            <a href="#" class="button">Try AI-Agent <span>→</span></a>
+            <small>Controlled testing access</small>
+        </div>
+    </div>
+</section>
+
+<section class="section feedback" id="feedback">
+    <div class="shell feedback-grid">
+        <div class="section-head left reveal">
+            <span class="kicker">HELP SHAPE AI-AGENT</span>
+            <h2>Your feedback helps<br>make it <em>better.</em></h2>
+            <p>Tell us what worked, what did not, and what you would expect AI-Agent to do differently.</p>
+        </div>
+        <div class="feedback-card reveal">
+            <p>Was AI-Agent useful?</p>
+            <div class="rating"><button type="button">👍 Yes</button><button type="button">👎 Needs Improvement</button></div>
+            <label for="feedback-text">What should we improve?</label>
+            <textarea id="feedback-text" placeholder="Share your feedback..."></textarea>
+            <button type="button" class="button feedback-submit">Send Feedback</button>
+            <small class="feedback-note">Feedback submission will be enabled during testing.</small>
+        </div>
+    </div>
+</section>
+</main>
+
+<footer>
+    <div class="shell footer">
+        <a class="logo" href="#home"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a>
+        <p>AI that turns information into knowledge.</p>
+        <span>© 2026 TheStoreWare</span>
+    </div>
+</footer>
+</body>
+</html>
