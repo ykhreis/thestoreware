@@ -1,3 +1,4 @@
+from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.shortcuts import render
 from django.utils import timezone
@@ -5,6 +6,7 @@ from django.utils import timezone
 from .models import Visitor, VisitSession, PageView
 
 
+@login_required(login_url='/admin/login/')
 def dashboard(request):
     today = timezone.localdate()
 
