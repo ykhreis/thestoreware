@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheStoreWare Analytics</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f8fc;
+            color: #10243e;
+        }
+        .topbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e5ebf3;
+            padding: 20px 6%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .brand { font-size: 24px; font-weight: 800; }
+        .brand span { color: #08aeb4; }
+        .back {
+            text-decoration: none;
+            color: #2468e8;
+            font-weight: 700;
+        }
+        .wrap { width: min(1180px, 90%); margin: 38px auto; }
+        .eyebrow {
+            color: #08aeb4;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+        h1 { margin: 8px 0 6px; font-size: 36px; }
+        .subtitle { margin: 0 0 28px; color: #6a7b91; }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 18px;
+            margin-bottom: 24px;
+        }
+        .card, .panel {
+            background: white;
+            border: 1px solid #e4ebf4;
+            border-radius: 18px;
+            box-shadow: 0 10px 30px rgba(35, 66, 110, .06);
+        }
+        .card { padding: 22px; }
+        .card .label { color: #718096; font-size: 13px; font-weight: 700; }
+        .card .value { font-size: 34px; font-weight: 800; margin-top: 8px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .panel { padding: 22px; }
+        .panel h2 { font-size: 18px; margin: 0 0 18px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td {
+            text-align: left;
+            padding: 11px 8px;
+            border-bottom: 1px solid #edf1f6;
+            font-size: 13px;
+        }
+        th { color: #718096; }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 11px 0;
+            border-bottom: 1px solid #edf1f6;
+        }
+        .stat-row:last-child { border-bottom: 0; }
+        .pill {
+            background: #eef7ff;
+            color: #2468e8;
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-weight: 700;
+        }
+        @media (max-width: 850px) {
+            .cards, .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">TheStore<span>Ware</span></div>
+        <a class="back" href="/">← Back to Website</a>
+    </header>
+
+    <main class="wrap">
+        <div class="eyebrow">FIRST-PARTY WEBSITE INTELLIGENCE</div>
+        <h1>Analytics Dashboard</h1>
+        <p class="subtitle">Private analytics powered directly by TheStoreWare PostgreSQL data.</p>
+
+        <section class="cards">
+            <div class="card"><div class="label">TOTAL VISITORS</div><div class="value">{{ total_visitors }}</div></div>
+            <div class="card"><div class="label">SESSIONS</div><div class="value">{{ total_sessions }}</div></div>
+            <div class="card"><div class="label">PAGE VIEWS</div><div class="value">{{ total_page_views }}</div></div>
+            <div class="card"><div class="label">TODAY'S NEW VISITORS</div><div class="value">{{ todays_visitors }}</div></div>
+        </section>
+
+        <section class="grid">
+            <div class="panel">
+                <h2>Popular Pages</h2>
+                <table>
+                    <thead><tr><th>Page</th><th>Views</th></tr></thead>
+                    <tbody>
+                    {% for item in popular_pages %}
+                        <tr><td>{{ item.path }}</td><td><span class="pill">{{ item.views }}</span></td></tr>
+                    {% empty %}
+                        <tr><td colspan="2">No page views yet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <h2>Devices</h2>
+                {% for item in devices %}
+                    <div class="stat-row"><span>{{ item.device_type|default:"Unknown" }}</span><strong>{{ item.total }}</strong></div>
+                {% empty %}
+                    <div>No device data yet.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="grid">
+            <div class="panel">
+                <h2>Recent Sessions</h2>
+                <table>
+                    <thead><tr><th>Started</th><th>Browser</th><th>Device</th><th>Views</th></tr></thead>
+                    <tbody>
+                    {% for item in recent_sessions %}
+                        <tr>
+                            <td>{{ item.started_at|date:"d M Y H:i" }}</td>
+                            <td>{{ item.browser|default:"Unknown" }}</td>
+                            <td>{{ item.device_type|default:"Unknown" }}</td>
+                            <td>{{ item.page_view_count }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4">No sessions yet.</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="panel">
+                <h2>Technology</h2>
+                <strong>Browsers</strong>
+                {% for item in browsers %}
+                    <div class="stat-row"><span>{{ item.browser|default:"Unknown" }}</span><strong>{{ item.total }}</strong></div>
+                {% endfor %}
+                <br>
+                <strong>Operating Systems</strong>
+                {% for item in operating_systems %}
+                    <div class="stat-row"><span>{{ item.operating_system|default:"Unknown" }}</span><strong>{{ item.total }}</strong></div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>
