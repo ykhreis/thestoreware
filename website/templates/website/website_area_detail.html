@@ -1,0 +1,42 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ area.title }} | TheStoreWare</title>
+    <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+</head>
+<body>
+<header class="header">
+    <div class="shell nav">
+        <a class="logo" href="{% url 'home' %}"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a>
+        <a class="button button-small secondary" href="{% url 'home' %}">← Back to Home</a>
+    </div>
+</header>
+<main>
+<section class="area-hero">
+    <div class="shell area-inner">
+        <div class="area-symbol">{{ area.icon }}</div>
+        <span class="launch-badge">{{ area.status|upper }}</span>
+        <h1>{{ area.title }}</h1>
+        <p>{{ area.description }}</p>
+        <div class="topic-cloud">
+            {% for topic in area.topics %}<span>{{ topic }}</span>{% endfor %}
+        </div>
+        {% if area.slug == 'ai-agent' %}
+        <div class="area-actions">
+            <a class="button" href="{% url 'ask_ai_agent' %}">Ask AI-Agent <span>→</span></a>
+        </div>
+        {% else %}
+        <div class="coming-panel">
+            <strong>COMING SOON</strong>
+            <p>We are building this area. Have an idea for what should be included?</p>
+            <a class="button secondary" href="{% url 'home' %}#feedback">Suggest an Idea</a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+</main>
+</body>
+</html>

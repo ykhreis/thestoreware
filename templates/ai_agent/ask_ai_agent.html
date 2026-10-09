@@ -1,0 +1,86 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ask AI-Agent</title>
+<link rel="stylesheet" href="{% static 'css/ai_agent/ask_ai_agent.css' %}">
+</head>
+<body>
+<header>
+<strong>AI-Agent</strong>
+<div>
+{% if request.user.is_authenticated and is_ai_admin %}
+<a href="{% url 'dashboard' %}">AI Dashboard</a> &nbsp; | &nbsp;
+<a href="{% url 'logout' %}">Logout</a> &nbsp; | &nbsp;
+{% endif %}
+<a href="{% url 'area_detail' 'ai-agent' %}">← Back to AI-Agent</a>
+</div>
+</header>
+
+<main>
+<div class="card generic-card">
+<h2 class="section-title">Ask AI-Agent</h2>
+<p class="description">Ask your question or attach supporting documents. AI-Agent searches its reusable knowledge first and automatically uses additional intelligence only when required.</p>
+
+<form method="post" id="generic_form" enctype="multipart/form-data">
+{% csrf_token %}
+<input type="hidden" name="action" value="external">
+<input type="hidden" name="organization" value="{{ selected_organization_id }}">
+
+<label for="generic_question">Your Question</label>
+<textarea id="generic_question" name="question" placeholder="What would you like to know?" required>{% if answer_mode == "external" %}{{ question }}{% endif %}</textarea>
+
+<label for="generic_attachments" style="margin-top:14px;">Attachments <span style="font-weight:400; color:#64748b;">(Optional — multiple files allowed)</span></label>
+<input type="file" id="generic_attachments" name="generic_attachments" multiple accept=".txt,.pdf,.docx,.xlsx,.pptx,.csv" style="display:block; width:100%; margin-top:6px; margin-bottom:6px;">
+<div class="external-ai-note" id="generic_attachment_note" style="margin-bottom:12px;">
+You can attach one or more TXT, PDF, DOCX, XLSX, PPTX or CSV files. Files are processed as supporting information for your question.
+</div>
+<div id="generic_attachment_list" class="document-scope" style="display:none; padding:10px 14px; margin-bottom:12px;"></div>
+
+<button type="submit" class="generic-button">Ask AI-Agent</button>
+<button type="button" class="new-question-button" onclick="prepareNewQuestion('generic_question')">New Question</button>
+
+<div class="external-ai-note">
+AI-Agent searches its existing knowledge first and automatically determines the best way to answer your question.
+</div>
+
+<div id="live_progress_box" class="live-progress-box">
+<div class="live-progress-title">AI-Agent Processing</div>
+<div class="live-progress-track"><div id="live_progress_fill" class="live-progress-fill"></div></div>
+<div class="live-progress-meta">
+<span id="live_progress_stage">Ready</span>
+<span><span id="live_progress_percent">0%</span> | Elapsed: <span id="live_progress_elapsed">00:00</span></span>
+</div>
+</div>
+
+<div id="live_result_container"></div>
+</form>
+</div>
+
+{% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+{% if external_answer %}
+<div class="card previous-result">
+<h3>AI-Agent Answer</h3>
+<div class="answer">{{ external_answer }}</div>
+</div>
+{% endif %}
+</main>
+
+<div id="ai_agent_js_config"
+     hidden
+     data-answer-mode="{{ answer_mode|default:''|escape }}"
+     data-export-internal-docx-url="{% url 'export_internal_analysis_docx' 999999 %}"
+     data-export-internal-pdf-url="{% url 'export_internal_analysis_pdf' 999999 %}"
+     data-review-internal-analysis-url="{% url 'review_internal_analysis' %}"
+     data-internal-progress-url="{% url 'internal_knowledge_progress' %}"
+     data-export-generic-docx-url="{% url 'export_generic_analysis_docx' 999999 %}"
+     data-export-generic-pdf-url="{% url 'export_generic_analysis_pdf' 999999 %}"
+     data-generic-progress-url="{% url 'generic_knowledge_progress' %}"
+     data-external-progress-url="{% url 'external_ai_progress' %}">
+</div>
+<script src="{% static 'js/ai_agent/ask_ai_agent.js' %}"></script>
+</body>
+</html>

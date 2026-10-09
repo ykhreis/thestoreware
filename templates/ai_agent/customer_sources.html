@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manage Customer Files - AI-Agent</title>
+<style>
+*{box-sizing:border-box} body{font-family:Arial,sans-serif;margin:0;background:#f4f6f8;color:#1f2937} header{background:#1f2937;color:white;padding:18px 30px;display:flex;justify-content:space-between} header a{color:white;text-decoration:none} main{max-width:950px;margin:35px auto;padding:0 20px}.card{background:white;padding:30px;border-radius:12px}.description,.meta{color:#64748b}.row{display:flex;gap:10px;align-items:center}.row select{flex:1;padding:11px;border:1px solid #cbd5e1;border-radius:8px}.button{border:0;padding:11px 15px;border-radius:8px;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block}.primary{background:#2563eb;color:white}.danger{background:#b91c1c;color:white}.secondary{background:#e5e7eb;color:#1f2937}.source{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:14px 0;border-bottom:1px solid #e5e7eb}.source-name{font-weight:700}.message{background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;padding:12px;border-radius:8px;margin:16px 0}.actions{display:flex;gap:10px;justify-content:space-between;margin-top:22px;flex-wrap:wrap}.empty{padding:20px 0;color:#64748b}.warning{background:#fff7ed;border:1px solid #fed7aa;padding:12px;border-radius:8px;margin:18px 0;color:#9a3412}
+</style>
+</head>
+<body>
+<header><strong>AI-Agent</strong><div>{{ request.user.username }} &nbsp;|&nbsp; <a href="{% url 'dashboard' %}">Dashboard</a></div></header>
+<main><section class="card">
+<h1>Manage Customer Files</h1>
+<p class="description">Review and delete uploaded file sources for one customer / organization. Deleting a source also removes its searchable content records.</p>
+{% if messages %}{% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}{% endif %}
+<form method="get" class="row">
+<select name="organization" required>
+<option value="">Select customer / organization</option>
+{% for org in organizations %}<option value="{{ org.id }}" {% if selected_organization_id|stringformat:"s" == org.id|stringformat:"s" %}selected{% endif %}>{{ org.name }}</option>{% endfor %}
+</select><button class="button primary" type="submit">Show Files</button>
+</form>
+{% if organization %}
+<div class="warning"><strong>{{ organization.name }}</strong> only. Generic Knowledge and other customers are not affected.</div>
+<form method="post" onsubmit="return confirmDelete(event)">{% csrf_token %}<input type="hidden" name="organization" value="{{ organization.id }}">
+{% for source in sources %}
+<div class="source"><input type="checkbox" name="source_ids" value="{{ source.id }}"><div><div class="source-name">{{ source.name }}</div><div class="meta">{{ source.chunk_count }} searchable content record(s) · {{ source.processing_status }}{% if source.source_reference %}<br>{{ source.source_reference }}{% endif %}</div></div><div class="meta">{{ source.created_at|date:"d/m/Y H:i" }}</div></div>
+{% empty %}<div class="empty">No uploaded files found for this customer / organization.</div>{% endfor %}
+<div class="actions"><div><button class="button danger" type="submit" name="action" value="delete_selected">Delete Selected Files</button></div><div><button class="button danger" type="submit" name="action" value="delete_all">Delete All Customer Files</button> <a class="button secondary" href="{% url 'upload_information' %}?organization={{ organization.id }}">Back to Upload</a></div></div>
+</form>
+{% endif %}
+</section></main>
+<script>function confirmDelete(e){const submitter=e.submitter;const action=submitter?submitter.value:'';if(action==='delete_all')return confirm('Delete ALL uploaded files and searchable content for this customer? This cannot be undone.');const checked=document.querySelectorAll('input[name="source_ids"]:checked').length;if(!checked){alert('Please select at least one file.');return false;}return confirm('Delete the selected file(s) and their searchable content? This cannot be undone.');}</script>
+</body></html>

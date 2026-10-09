@@ -1,0 +1,162 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TheStoreWare — explore AI, learning, exams, knowledge, entertainment and smart tools.">
+    <title>TheStoreWare | Explore. Learn. Create. Solve.</title>
+    <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+    <script defer src="{% static 'website/js/website_home.js' %}"></script>
+</head>
+<body>
+<header class="header">
+    <div class="shell nav">
+        <a class="logo" href="{% url 'home' %}">
+            <span class="logo-mark">S</span>
+            <span>TheStore<span>Ware</span></span>
+        </a>
+        <nav>
+            <a href="#explore">Explore</a>
+            <a href="#coming">Coming Soon</a>
+            <a href="#feedback">Share an Idea</a>
+        </nav>
+        <a class="button button-small" href="#explore">Explore TheStoreWare</a>
+    </div>
+</header>
+
+<main>
+<section class="platform-hero" id="home">
+    <div class="hero-glow glow-a"></div>
+    <div class="hero-glow glow-b"></div>
+    <div class="shell platform-hero-inner reveal">
+        <div class="launch-badge">THESTOREWARE • BUILDING FOR EVERYONE</div>
+        <h1>Explore. Learn. Create.<br><em>Solve. With AI.</em></h1>
+        <p>
+            A growing knowledge and technology platform bringing together artificial intelligence,
+            learning, professional development, entertainment, useful information and smart digital tools.
+        </p>
+        <div class="hero-actions">
+            <a class="button" href="#explore">Explore What's Coming <span>↓</span></a>
+            <a class="button secondary" href="#feedback">Share an Idea <span>→</span></a>
+        </div>
+        <div class="coming-banner" id="coming">
+            <span class="pulse-dot"></span>
+            <div><strong>COMING SOON</strong><small>New experiences, subjects and tools are being built step by step.</small></div>
+        </div>
+    </div>
+</section>
+
+<section class="section explore-section" id="explore">
+    <div class="shell">
+        <div class="section-head reveal">
+            <span class="kicker">DISCOVER THESTOREWARE</span>
+            <h2>One platform. <em>Many possibilities.</em></h2>
+            <p>Choose an area to discover what TheStoreWare is building.</p>
+        </div>
+
+        <div class="portal-grid">
+            {% for item in areas %}
+            <a class="portal-card reveal" href="{% url 'area_detail' item.slug %}">
+                <div class="portal-art {{ item.art_class }}">
+                    <span class="portal-icon">{{ item.icon }}</span>
+                    {% if item.slug == "ai-agent" %}
+                    <span class="status">AVAILABLE NOW</span>
+                    {% else %}
+                    <span class="status coming-soon-status">COMING SOON</span>
+                    {% endif %}
+                </div>
+                <div class="portal-copy">
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.summary }}</p>
+                    <span class="portal-link">Discover {{ item.title }} <b>→</b></span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section vision-section">
+    <div class="shell vision-card reveal">
+        <div>
+            <span class="kicker">THE VISION</span>
+            <h2>Knowledge should be more than something you read.</h2>
+            <p>Ask it. Explore it. Practice it. Create with it. TheStoreWare is being designed to make information useful, interactive and easier to understand.</p>
+        </div>
+        <div class="vision-flow">
+            <span>LEARN</span><b>→</b><span>ASK</span><b>→</b><span>PRACTICE</span><b>→</b><span>CREATE</span><b>→</b><span>DISCOVER</span>
+        </div>
+    </div>
+</section>
+
+<section class="section feedback" id="feedback">
+    <div class="shell feedback-grid">
+        <div class="section-head left reveal">
+            <span class="kicker">HELP BUILD THESTOREWARE</span>
+            <h2>Your idea could become<br><em>our next feature.</em></h2>
+            <p>
+                TheStoreWare is being built interactively with its users.
+                Share your ideas, suggest features and tell us what you would like to see next.
+                Your feedback will help us decide what to improve and build.
+            </p>
+            <div class="feedback-prompts">
+                <span>New Tool</span><span>New Course</span><span>Exam / Quiz</span>
+                <span>Knowledge Topic</span><span>AI Feature</span><span>Website Improvement</span>
+            </div>
+        </div>
+
+        <form class="feedback-card reveal" method="post" action="{% url 'submit_feedback' %}">
+            {% csrf_token %}
+            {% if feedback_success %}
+                <div class="success-message"><strong>Thank you!</strong> Your idea has been received and will help shape TheStoreWare.</div>
+            {% endif %}
+            {% if feedback_error %}
+                <div class="error-message">{{ feedback_error }}</div>
+            {% endif %}
+
+            <label for="category">What would you like us to build or improve?</label>
+            <select id="category" name="category" required>
+                <option value="">Select a category</option>
+                <option>New Tool</option>
+                <option>New Course</option>
+                <option>Exam / Quiz</option>
+                <option>Knowledge Topic</option>
+                <option>AI Feature</option>
+                <option>Website Improvement</option>
+                <option>Other</option>
+            </select>
+
+            <label for="message">Your idea or feedback</label>
+            <textarea id="message" name="message" maxlength="4000" required placeholder="Tell us what would make TheStoreWare more useful to you..."></textarea>
+
+            <div class="form-two">
+                <div>
+                    <label for="name">Name <small>(optional)</small></label>
+                    <input id="name" name="name" maxlength="120" placeholder="Your name">
+                </div>
+                <div>
+                    <label for="email">Email <small>(optional)</small></label>
+                    <input id="email" type="email" name="email" maxlength="254" placeholder="you@example.com">
+                </div>
+            </div>
+
+            <button type="submit" class="button feedback-submit">Send My Idea <span>→</span></button>
+            <small class="feedback-note">
+                Your email is optional and is only needed if you would like us to contact you about your suggestion.
+                Submitted feedback is securely recorded for review.
+            </small>
+        </form>
+    </div>
+</section>
+</main>
+
+<footer>
+    <div class="shell footer">
+        <a class="logo" href="{% url 'home' %}"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a>
+        <p>Your Knowledge. Your AI.</p>
+        <span>© 2026 TheStoreWare</span>
+    </div>
+</footer>
+</body>
+</html>

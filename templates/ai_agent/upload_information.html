@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload Information - AI-Agent</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #1f2937; }
+header { background: #1f2937; color: white; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; }
+header .brand { font-size: 18px; font-weight: 700; }
+header a { color: white; text-decoration: none; }
+main { max-width: 800px; margin: 35px auto; padding: 0 20px 40px; }
+.card { background: white; padding: 30px; border-radius: 12px; }
+h1 { margin-top: 0; margin-bottom: 8px; }
+.description { color: #64748b; line-height: 1.55; }
+label { display: block; font-weight: 700; margin: 22px 0 8px; }
+select, input[type="text"], input[type="file"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; font-size: 14px; }
+.field-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.manage-files { display: inline-block; background: #475569; color: white; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-weight: 700; white-space: nowrap; margin-top: 10px; }
+.add-customer { display: inline-block; background: #2563eb; color: white; text-decoration: none; padding: 12px 14px; border-radius: 8px; font-weight: 700; white-space: nowrap; }
+.message { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 12px; border-radius: 8px; margin: 18px 0; }
+.help { color: #64748b; font-size: 13px; margin-top: 6px; line-height: 1.45; }
+.error { background: #fef2f2; color: #991b1b; padding: 12px; border-radius: 8px; margin: 18px 0; }
+.info { background: #eff6ff; border: 1px solid #bfdbfe; padding: 14px; border-radius: 8px; margin: 20px 0; line-height: 1.5; }
+.buttons { display: flex; gap: 12px; margin-top: 24px; }
+.primary { border: 0; background: #0f766e; color: white; padding: 12px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.cancel { background: #e5e7eb; color: #1f2937; text-decoration: none; padding: 12px 18px; border-radius: 8px; font-weight: 700; }
+.ask-card { margin-top: 20px; }
+textarea { width:100%; min-height:120px; padding:12px; border:1px solid #cbd5e1; border-radius:8px; font-family:Arial,sans-serif; font-size:14px; resize:vertical; }
+.live-progress-box { display:none; margin-top:18px; padding:16px; border:1px solid #dbe3ec; border-radius:8px; background:#fff; }
+.live-progress-title { font-weight:700; margin-bottom:8px; }
+.live-progress-track { width:100%; height:12px; background:#e5e7eb; border-radius:999px; overflow:hidden; }
+.live-progress-fill { width:0%; height:100%; background:#64748b; border-radius:999px; transition:width .25s ease; }
+.live-progress-meta { display:flex; justify-content:space-between; gap:12px; margin-top:8px; font-size:12px; color:#475569; }
+.activity-log { margin-top:14px; padding-top:12px; border-top:1px solid #e5e7eb; }
+.activity-log-title { font-size:12px; font-weight:700; color:#334155; margin-bottom:7px; }
+.activity-row { display:grid; grid-template-columns:42px 1fr 70px; gap:8px; padding:4px 0; font-size:11px; line-height:1.35; border-bottom:1px solid #f1f5f9; }
+.activity-percent { font-weight:700; color:#475569; }
+.activity-duration { text-align:right; color:#64748b; }
+.answer-card { margin-top:18px; padding:18px; border:1px solid #dbe3ec; border-radius:8px; background:#fff; }
+.answer { white-space:pre-wrap; line-height:1.65; }
+.trace { margin-top:14px; padding:12px; background:#f8fafc; border-radius:8px; font-size:13px; line-height:1.6; }
+</style>
+</head>
+<body>
+<header>
+    <div class="brand">AI-Agent</div>
+    <div>{{ request.user.username }} &nbsp;|&nbsp; <a href="{% url 'dashboard' %}">Dashboard</a></div>
+</header>
+
+<main>
+<section class="card">
+    <h1>Upload Information</h1>
+    <p class="description">
+        Add a source to the AI-Agent information repository and assign it to the appropriate customer / organization.
+    </p>
+
+    <div class="info">
+        Processing is local. This upload does <strong>not</strong> call OpenAI and does not generate paid API embeddings.
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="message">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <label for="organization">Customer / Organization</label>
+        <div class="field-row">
+            <select id="organization" name="organization" required>
+                {% for organization in organizations %}
+                    <option value="{{ organization.id }}"
+                        {% if selected_organization_id %}
+                            {% if selected_organization_id|stringformat:"s" == organization.id|stringformat:"s" %}selected{% endif %}
+                        {% elif default_organization_id == organization.id %}
+                            selected
+                        {% endif %}>
+                        {{ organization.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <a class="add-customer" href="{% url 'add_customer' %}">+ Add Customer</a>
+        </div>
+        <div class="help">Generic / All Customers is the default for information that is not customer-specific.</div>
+        <a id="manage_customer_files" class="manage-files" href="{% url 'customer_sources' %}{% if selected_organization_id %}?organization={{ selected_organization_id }}{% endif %}">Manage Customer Files</a>
+
+        <label for="information_file">Information File(s)</label>
+        <input type="file" id="information_file" name="information_file" multiple required>
+        <div class="help">Select one or multiple files. Each file is processed as a separate knowledge source for the selected customer / organization.</div>
+
+        <label for="source_name">Source Name</label>
+        <input type="text" id="source_name" name="source_name" value="{{ source_name|default:'' }}" placeholder="Optional - filename will be used if blank">
+        <div class="help">Optional for a single file. When multiple files are selected, each filename is automatically used as its Source Name.</div>
+
+        <div class="buttons">
+            <button class="primary" type="submit">Upload &amp; Process File(s)</button>
+            <a class="cancel" href="{% url 'dashboard' %}">Cancel</a>
+        </div>
+    </form>
+</section>
+
+{% if request.GET.uploaded == "1" %}
+<section class="card ask-card">
+    <h2 style="margin-top:0;">Ask About Uploaded Information</h2>
+    <p class="description">
+        Ask AI-Agent about all available documents for the selected customer / organization.
+        The existing Internal Knowledge analysis workflow is used.
+    </p>
+
+    <form id="upload_ask_form">
+        {% csrf_token %}
+        <input type="hidden" name="organization" value="{{ selected_organization_id }}">
+        <input type="hidden" name="source" value="">
+
+        <label for="upload_question">Internal Knowledge Question</label>
+        <textarea id="upload_question" name="question" placeholder="Ask about the uploaded customer information..." required></textarea>
+
+        <div class="buttons">
+            <button class="primary" type="submit">Ask Internal Knowledge</button>
+        </div>
+
+        <div id="upload_progress_box" class="live-progress-box">
+            <div class="live-progress-title">AI-Agent Processing Progress</div>
+            <div class="live-progress-track"><div id="upload_progress_fill" class="live-progress-fill"></div></div>
+            <div class="live-progress-meta">
+                <span id="upload_progress_stage">Ready</span>
+                <span><span id="upload_progress_percent">0%</span> | Elapsed: <span id="upload_progress_elapsed">00:00</span></span>
+            </div>
+            <div class="activity-log">
+                <div class="activity-log-title">Processing Activity</div>
+                <div id="upload_activity_rows"></div>
+            </div>
+        </div>
+
+        <div id="upload_result"></div>
+    </form>
+</section>
+
+<script>
+(function () {
+    const form = document.getElementById('upload_ask_form');
+    if (!form) return;
+
+    const box = document.getElementById('upload_progress_box');
+    const fill = document.getElementById('upload_progress_fill');
+    const stage = document.getElementById('upload_progress_stage');
+    const percentText = document.getElementById('upload_progress_percent');
+    const elapsed = document.getElementById('upload_progress_elapsed');
+    const activities = document.getElementById('upload_activity_rows');
+    const resultBox = document.getElementById('upload_result');
+    let startedAt = null;
+    let lastActivityAt = null;
+    let timerId = null;
+
+    function esc(value) {
+        const div = document.createElement('div');
+        div.textContent = value == null ? '' : String(value);
+        return div.innerHTML;
+    }
+
+    function fmt(seconds) {
+        seconds = Math.max(0, Math.floor(seconds || 0));
+        return String(Math.floor(seconds / 60)).padStart(2,'0') + ':' +
+               String(seconds % 60).padStart(2,'0');
+    }
+
+    function addActivity(percent, text) {
+        const now = Date.now();
+        const duration = lastActivityAt ? fmt((now-lastActivityAt)/1000) : 'started';
+        lastActivityAt = now;
+        const row = document.createElement('div');
+        row.className = 'activity-row';
+        row.innerHTML =
+            '<div class="activity-percent">' + esc(percent) + '%</div>' +
+            '<div>' + esc(text || 'Processing...') + '</div>' +
+            '<div class="activity-duration">' + esc(duration) + '</div>';
+        activities.appendChild(row);
+    }
+
+    function renderResult(r) {
+        const aspectRows = Array.isArray(r.aspect_evidence) ? r.aspect_evidence.map(function(a) {
+            return esc(a.aspect) + ': ' + (a.found ? 'FOUND' : 'NOT FOUND') +
+                ' (' + esc(a.knowledge_items) + ' item(s), ' +
+                esc(a.content_records) + ' record(s))';
+        }).join('<br>') : '';
+
+        resultBox.innerHTML =
+            '<div class="answer-card">' +
+            '<h3>AI-Agent Internal Knowledge Answer</h3>' +
+            '<div class="trace">' +
+            '<strong>Organization:</strong> ' + esc(r.organization_name || '') + '<br>' +
+            '<strong>Document Scope:</strong> ' + esc(r.document_name || 'All documents for this organization') + '<br>' +
+            '<strong>Question Interpretation:</strong> ' + esc(r.interpretation_source || 'LOCAL') + '<br>' +
+            '<strong>OpenAI Interpretation Used:</strong> ' + (r.openai_interpretation_used ? 'YES' : 'NO') + '<br>' +
+            '<strong>OpenAI External Knowledge Used:</strong> NO<br>' +
+            '<strong>Answer Information Source:</strong> INTERNAL DATABASE<br>' +
+            '<strong>Retrieved Knowledge Items:</strong> ' + esc(r.retrieved_items || 0) + '<br>' +
+            '<strong>Retrieved Content Records:</strong> ' + esc(r.retrieved_chunks || 0) +
+            (aspectRows ? '<br><strong>Aspect Investigation:</strong><br>' + aspectRows : '') +
+            '</div>' +
+            '<div class="answer">' + esc(r.answer || '') + '</div>' +
+            '</div>';
+    }
+
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const button = form.querySelector('button[type="submit"]');
+        button.disabled = true;
+        button.textContent = 'Processing...';
+        resultBox.innerHTML = '';
+        activities.innerHTML = '';
+        box.style.display = 'block';
+        fill.style.width = '0%';
+        percentText.textContent = '0%';
+        stage.textContent = 'Starting AI-Agent processing...';
+        startedAt = Date.now();
+        lastActivityAt = startedAt;
+        elapsed.textContent = '00:00';
+        addActivity(0, 'Starting AI-Agent processing...');
+        timerId = setInterval(function(){ elapsed.textContent=fmt((Date.now()-startedAt)/1000); },1000);
+
+        try {
+            const response = await fetch("{% url 'internal_knowledge_progress' %}", {
+                method:'POST',
+                body:new FormData(form),
+                headers:{'X-Requested-With':'XMLHttpRequest'}
+            });
+            if (!response.ok || !response.body) throw new Error('Unable to start Internal Knowledge processing.');
+
+            const reader=response.body.getReader();
+            const decoder=new TextDecoder();
+            let buffer='';
+            let finalResult=null;
+
+            function processLine(line) {
+                if (!line || !line.trim()) return;
+                const message=JSON.parse(line);
+                if (message.type==='progress') {
+                    const p=Math.max(0,Math.min(100,Number(message.percent)||0));
+                    fill.style.width=p+'%';
+                    percentText.textContent=p+'%';
+                    stage.textContent=message.stage||'Processing...';
+                    addActivity(p,message.stage||'Processing...');
+                } else if (message.type==='result') {
+                    finalResult=message.result;
+                } else if (message.type==='error') {
+                    throw new Error(message.message||'Internal Knowledge processing failed.');
+                }
+            }
+
+            while (true) {
+                const read=await reader.read();
+                if (read.done) {
+                    buffer+=decoder.decode();
+                    if (buffer.trim()) processLine(buffer);
+                    break;
+                }
+                buffer+=decoder.decode(read.value,{stream:true});
+                const lines=buffer.split('\n');
+                buffer=lines.pop()||'';
+                for (const line of lines) processLine(line);
+            }
+
+            if (!finalResult) throw new Error('Internal Knowledge processing completed without returning a result.');
+            fill.style.width='100%';
+            percentText.textContent='100%';
+            stage.textContent='Completed';
+            renderResult(finalResult);
+        } catch(err) {
+            stage.textContent=err.message||'Processing failed.';
+            addActivity(Number((percentText.textContent||'0').replace('%',''))||0, stage.textContent);
+        } finally {
+            if (timerId) clearInterval(timerId);
+            elapsed.textContent=fmt((Date.now()-startedAt)/1000);
+            button.disabled=false;
+            button.textContent='Ask Internal Knowledge';
+        }
+    });
+})();
+</script>
+{% endif %}
+
+</main>
+<script>
+(function(){
+    const org = document.getElementById('organization');
+    const manage = document.getElementById('manage_customer_files');
+    if (!org || !manage) return;
+    const base = "{% url 'customer_sources' %}";
+    function updateManageLink(){ manage.href = base + '?organization=' + encodeURIComponent(org.value); }
+    org.addEventListener('change', updateManageLink);
+    updateManageLink();
+})();
+</script>
+</body>
+</html>

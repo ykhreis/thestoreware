@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generic Knowledge Candidates - AI-Agent</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #1f2937; }
+header { background: #1f2937; color: white; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; }
+header a { color: white; text-decoration: none; }
+main { max-width: 1280px; margin: 28px auto; padding: 0 20px 35px; }
+.card { background: white; padding: 24px; margin-bottom: 20px; border-radius: 12px; }
+.top-row { display: flex; justify-content: space-between; gap: 20px; align-items: flex-start; }
+h1 { margin: 0 0 8px; font-size: 26px; }
+.description { color: #64748b; line-height: 1.5; margin: 0; }
+.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 20px; }
+.stat { border: 1px solid #e5e7eb; border-radius: 10px; padding: 15px; }
+.stat-number { font-size: 26px; font-weight: 700; }
+.stat-label { color: #64748b; font-size: 12px; margin-top: 5px; }
+.button { border: 0; border-radius: 8px; padding: 12px 18px; background: #2563eb; color: white; font-weight: 700; cursor: pointer; }
+.button:disabled { background: #94a3b8; cursor: not-allowed; }
+.back { display: inline-block; margin-bottom: 16px; color: #2563eb; text-decoration: none; font-weight: 700; }
+.notice { padding: 13px 16px; border-radius: 9px; margin-bottom: 15px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+.message { padding: 13px 16px; border-radius: 9px; margin-bottom: 15px; background: #f8fafc; border: 1px solid #cbd5e1; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 11px 9px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+th { color: #475569; background: #f8fafc; white-space: nowrap; }
+.status { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #eef2f7; font-weight: 700; font-size: 11px; }
+.small { color: #64748b; font-size: 12px; }
+.error-text { color: #b91c1c; max-width: 300px; }
+.progress-card { display: none; }
+.progress-head { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:12px; }
+.progress-percent { font-size:28px; font-weight:700; }
+.progress-track { width:100%; height:14px; background:#e5e7eb; border-radius:999px; overflow:hidden; }
+.progress-fill { width:0%; height:100%; background:#2563eb; transition:width .25s ease; }
+.progress-stage { margin-top:12px; font-weight:700; }
+.progress-meta { color:#64748b; margin-top:6px; font-size:13px; }
+.activity { margin-top:18px; border-top:1px solid #e5e7eb; overflow:visible; }
+.activity-row { display:grid; grid-template-columns:70px 1fr 90px; gap:12px; padding:9px 0; border-bottom:1px solid #eef2f7; font-size:13px; }
+.activity-time, .activity-duration { color:#64748b; white-space:nowrap; }
+@media (max-width: 900px) { .stats { grid-template-columns: repeat(2, 1fr); } .top-row { flex-direction: column; } }
+</style>
+</head>
+<body>
+<header>
+    <div><strong>AI-Agent</strong></div>
+    <div>{{ request.user.username }} &nbsp;|&nbsp; <a href="{% url 'logout' %}">Logout</a></div>
+</header>
+<main>
+<a class="back" href="{% url 'dashboard' %}">&larr; Back to Dashboard</a>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="message">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<section class="card">
+    <div class="top-row">
+        <div>
+            <h1>Generic Knowledge Candidates</h1>
+            <p class="description">
+                Staged external knowledge waiting for semantic consolidation and human review before promotion.
+            </p>
+        </div>
+        <form id="candidateProcessForm" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="analyze">
+            <button id="candidateProcessButton" class="button" type="submit"
+                    {% if not processing_available or pending_count == 0 %}disabled{% endif %}>
+                Analyze & Consolidate Pending
+            </button>
+        </form>
+        <form method="post"
+              action="{% url 'generic_knowledge_candidates' %}"
+              onsubmit="return confirm('Apply the reviewed consolidation proposal and proceed directly to Gate 2? Gate 2 may reuse existing trusted knowledge, return UPDATE/MERGE/CONFLICT for review, or create new Generic Knowledge when safe.');"
+              style="display:inline-block; margin-left:8px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="gate2">
+            <button class="button" type="submit"
+                    {% if pending_count == 0 %}disabled{% endif %}>
+                Review &amp; Promote
+            </button>
+        </form>
+    </div>
+
+    {% if not processing_available %}
+    <div class="notice" style="margin-top:18px;">
+        Promotion is disabled on the Heroku web dyno. Heavy embedding generation remains
+        outside the web request to protect Heroku memory. Candidate status can still be reviewed here.
+    </div>
+    {% endif %}
+
+    <div class="stats">
+        <div class="stat"><div class="stat-number">{{ pending_count }}</div><div class="stat-label">Pending</div></div>
+        <div class="stat"><div class="stat-number">{{ processing_count }}</div><div class="stat-label">Processing</div></div>
+        <div class="stat"><div class="stat-number">{{ completed_count }}</div><div class="stat-label">Completed</div></div>
+        <div class="stat"><div class="stat-number">{{ failed_count }}</div><div class="stat-label">Failed</div></div>
+        <div class="stat"><div class="stat-number">{{ rejected_count }}</div><div class="stat-label">Rejected</div></div>
+    </div>
+</section>
+
+
+<section id="candidateProgressCard" class="card progress-card">
+    <div class="progress-head">
+        <div>
+            <h2 style="margin:0 0 5px;">Pending Knowledge Analysis Progress</h2>
+            <div class="description">OpenAI semantic consolidation activity; no final knowledge is written during analysis.</div>
+        </div>
+        <div id="candidateProgressPercent" class="progress-percent">0%</div>
+    </div>
+    <div class="progress-track">
+        <div id="candidateProgressFill" class="progress-fill"></div>
+    </div>
+    <div id="candidateProgressStage" class="progress-stage">Waiting to start...</div>
+    <div class="progress-meta">
+        Elapsed Time: <strong id="candidateElapsedTime">00:00</strong>
+    </div>
+
+    <h3 style="margin:22px 0 5px;">Processing Activity</h3>
+    <div id="candidateActivity" class="activity"></div>
+</section>
+
+<section class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Concept</th>
+                    <th>Knowledge Aspect</th>
+                    <th>Status</th>
+                    <th>Promoted GK</th>
+                    <th>Created</th>
+                    <th>Processed</th>
+                    <th>AI Review</th>
+                    <th>Group / Proposal</th>
+                    <th>Final Review / Decision</th>
+                    <th>Error</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for candidate in candidates %}
+                <tr>
+                    <td>#{{ candidate.id }}</td>
+                    <td><strong>{{ candidate.canonical_concept|default:"-" }}</strong></td>
+                    <td>{{ candidate.knowledge_aspect|default:"-" }}</td>
+                    <td><span class="status">{{ candidate.status }}</span></td>
+                    <td>
+                        {% if candidate.promoted_generic_knowledge_id %}
+                            #{{ candidate.promoted_generic_knowledge_id }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="small">{{ candidate.created_at|date:"d/m/Y H:i:s" }}</td>
+                    <td class="small">
+                        {% if candidate.processed_at %}
+                            {{ candidate.processed_at|date:"d/m/Y H:i:s" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="small">
+                        {% if candidate.pending_ai_review.relationship %}
+                            <strong>{{ candidate.pending_ai_review.relationship }}</strong><br>
+                            Confidence: {{ candidate.pending_ai_review.confidence|floatformat:2 }}<br>
+                            {{ candidate.pending_ai_review.reason|default:"-" }}
+                        {% else %}
+                            Not analyzed
+                        {% endif %}
+                    </td>
+                    <td class="small">
+                        {% if candidate.pending_ai_group.group_id %}
+                            <strong>{{ candidate.pending_ai_group.group_id }}</strong>
+                            — {{ candidate.pending_ai_group.group_decision }}<br>
+                            Canonical: #{{ candidate.pending_ai_group.canonical_candidate_id }}<br>
+                            {{ candidate.pending_ai_group.recommended_action|default:"-" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="small">
+                        {% if candidate.gate2_review %}
+                            {% if candidate.gate2_review.consolidation_decision %}
+                                {% if candidate.status == "COMPLETED" and candidate.gate2_review.human_decision == "APPROVE_MERGE" %}
+                                        <strong style="color:#15803d;">MERGED ✓</strong>
+                                    {% else %}
+                                        <strong>{{ candidate.gate2_review.consolidation_decision }}</strong>
+                                        {% if candidate.status == "PENDING" and candidate.gate2_review.consolidation_decision == "MERGE" %}
+                                            <span style="color:#b45309;"> — Awaiting Approval</span>
+                                        {% endif %}
+                                    {% endif %}<br>
+                            {% elif candidate.gate2_review.duplicate_reused %}
+                                <strong>DUPLICATE / REUSED</strong><br>
+                            {% elif candidate.gate2_review.status %}
+                                <strong>{{ candidate.gate2_review.status }}</strong><br>
+                            {% endif %}
+                            {% if candidate.gate2_review.semantic_consolidation.confidence != None %}
+                                Confidence: {{ candidate.gate2_review.semantic_consolidation.confidence|floatformat:2 }}<br>
+                            {% endif %}
+                            {% if candidate.gate2_matched_knowledge %}
+                                Matched GK: #{{ candidate.gate2_matched_knowledge.id }} — {{ candidate.gate2_matched_knowledge.title }}{% if candidate.status == "COMPLETED" and candidate.gate2_review.human_decision == "APPROVE_MERGE" %}
+                                            <br>Human Decision: APPROVED
+                                            <br>Status: COMPLETED
+                                        {% endif %}<br>
+                            {% elif candidate.gate2_review.generic_knowledge_id %}
+                                Matched GK: #{{ candidate.gate2_review.generic_knowledge_id }}<br>
+                            {% endif %}
+                            {{ candidate.gate2_review.semantic_consolidation.reason|default:candidate.gate2_review.message|default:"-" }}
+                            {% if candidate.gate2_review.technical_error %}
+                                <br><span class="error-text">Technical: {{ candidate.gate2_review.technical_error }}</span>
+                            {% endif %}
+
+                            {% if candidate.status == "PENDING" and candidate.gate2_review.review_required %}
+                                <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">
+                                    {% if candidate.gate2_review.consolidation_decision == "MERGE" %}
+                                    <form method="post" action="{% url 'generic_knowledge_candidates' %}"
+                                          onsubmit="return confirm('Approve MERGE for Candidate #{{ candidate.id }} into matched Generic Knowledge #{{ candidate.gate2_review.generic_knowledge_id }}? The trusted record will be consolidated and its embeddings regenerated.');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="gate2_approve_merge">
+                                        <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+                                        <button class="button" type="submit" style="padding:7px 10px; font-size:11px; background:#15803d;">
+                                            Approve Merge
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <form method="post" action="{% url 'generic_knowledge_candidates' %}"
+                                          onsubmit="return confirm('Keep Candidate #{{ candidate.id }} as separate Generic Knowledge? This is an explicit human override of the Gate 2 merge/update recommendation.');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="gate2_keep_separate">
+                                        <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+                                        <button class="button" type="submit" style="padding:7px 10px; font-size:11px;">
+                                            Keep Separate
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'generic_knowledge_candidates' %}"
+                                          onsubmit="return confirm('Reject Candidate #{{ candidate.id }}? No trusted Generic Knowledge will be changed.');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="gate2_reject">
+                                        <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+                                        <button class="button" type="submit" style="padding:7px 10px; font-size:11px; background:#b91c1c;">
+                                            Reject
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="error-text">{{ candidate.error_message|default:"-" }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="8">No Generic Knowledge candidates are available.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+</main>
+
+<script>
+(function () {
+    const form = document.getElementById("candidateProcessForm");
+    const button = document.getElementById("candidateProcessButton");
+    const card = document.getElementById("candidateProgressCard");
+    const percentEl = document.getElementById("candidateProgressPercent");
+    const fillEl = document.getElementById("candidateProgressFill");
+    const stageEl = document.getElementById("candidateProgressStage");
+    const elapsedEl = document.getElementById("candidateElapsedTime");
+    const activityEl = document.getElementById("candidateActivity");
+
+    if (!form || !button) return;
+
+    let startedAt = null;
+    let timer = null;
+    let previousStageAt = null;
+
+    function formatElapsed(ms) {
+        const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        return minutes + ":" + seconds;
+    }
+
+    function addActivity(percent, stage) {
+        const now = Date.now();
+        const duration = previousStageAt ? ((now - previousStageAt) / 1000).toFixed(1) + "s" : "-";
+        previousStageAt = now;
+
+        const row = document.createElement("div");
+        row.className = "activity-row";
+
+        const pct = document.createElement("div");
+        pct.className = "activity-time";
+        pct.textContent = percent + "%";
+
+        const text = document.createElement("div");
+        text.textContent = stage;
+
+        const dur = document.createElement("div");
+        dur.className = "activity-duration";
+        dur.textContent = duration;
+
+        row.appendChild(pct);
+        row.appendChild(text);
+        row.appendChild(dur);
+        activityEl.appendChild(row);
+    }
+
+    function updateProgress(percent, stage) {
+        const safePercent = Math.max(0, Math.min(100, Number(percent) || 0));
+        percentEl.textContent = safePercent + "%";
+        fillEl.style.width = safePercent + "%";
+        stageEl.textContent = stage || "Processing...";
+        addActivity(safePercent, stage || "Processing...");
+    }
+
+    form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        button.disabled = true;
+        button.textContent = "Processing...";
+        card.style.display = "block";
+        activityEl.innerHTML = "";
+        startedAt = Date.now();
+        previousStageAt = null;
+        updateProgress(0, "Preparing candidate processing");
+
+        timer = setInterval(function () {
+            elapsedEl.textContent = formatElapsed(Date.now() - startedAt);
+        }, 250);
+
+        try {
+            const formData = new FormData(form);
+            const response = await fetch("{% url 'generic_knowledge_candidates_progress' %}", {
+                method: "POST",
+                body: formData,
+                headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+
+            if (!response.ok || !response.body) {
+                throw new Error("Pending consolidation request failed.");
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = "";
+            let finalResult = null;
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop();
+
+                for (const line of lines) {
+                    if (!line.trim()) continue;
+                    const eventData = JSON.parse(line);
+
+                    if (eventData.type === "progress") {
+                        updateProgress(eventData.percent, eventData.stage);
+                    } else if (eventData.type === "result") {
+                        finalResult = eventData.result;
+                    } else if (eventData.type === "error") {
+                        throw new Error(eventData.message || "Pending consolidation failed.");
+                    }
+                }
+            }
+
+            if (buffer.trim()) {
+                const eventData = JSON.parse(buffer);
+                if (eventData.type === "progress") updateProgress(eventData.percent, eventData.stage);
+                if (eventData.type === "result") finalResult = eventData.result;
+                if (eventData.type === "error") throw new Error(eventData.message || "Pending consolidation failed.");
+            }
+
+            if (finalResult && Number(finalResult.failed || 0) > 0) {
+                stageEl.textContent = finalResult.message;
+            } else {
+                updateProgress(100, (finalResult && finalResult.message) || "Pending knowledge analysis completed");
+            }
+
+            clearInterval(timer);
+            elapsedEl.textContent = formatElapsed(Date.now() - startedAt);
+
+            // Refresh automatically so the saved AI Review / Group proposal appears.
+            button.textContent = "Analyze & Consolidate Pending";
+            setTimeout(function () {
+                window.location.reload();
+            }, 1200);
+
+        } catch (error) {
+            clearInterval(timer);
+            stageEl.textContent = "Error: " + error.message;
+            addActivity(Number(percentEl.textContent.replace("%", "")) || 0, "Error: " + error.message);
+            button.disabled = false;
+            button.textContent = "Analyze & Consolidate Pending";
+        }
+    });
+})();
+</script>
+
+</body>
+</html>

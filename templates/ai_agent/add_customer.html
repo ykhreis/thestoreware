@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Customer - AI-Agent</title>
+<style>
+* { box-sizing: border-box; }
+body { font-family: Arial, sans-serif; margin: 0; background: #f4f6f8; color: #1f2937; }
+header { background: #1f2937; color: white; padding: 18px 30px; display: flex; justify-content: space-between; align-items: center; }
+header .brand { font-size: 18px; font-weight: 700; }
+header a { color: white; text-decoration: none; }
+main { max-width: 700px; margin: 35px auto; padding: 0 20px 40px; }
+.card { background: white; padding: 30px; border-radius: 12px; }
+h1 { margin-top: 0; margin-bottom: 8px; }
+.description { color: #64748b; line-height: 1.55; }
+label { display: block; font-weight: 700; margin: 22px 0 8px; }
+input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
+textarea { min-height: 100px; resize: vertical; }
+.help { color: #64748b; font-size: 13px; margin-top: 6px; line-height: 1.45; }
+.error { background: #fef2f2; color: #991b1b; padding: 12px; border-radius: 8px; margin: 18px 0; }
+.buttons { display: flex; gap: 12px; margin-top: 24px; }
+.primary { border: 0; background: #2563eb; color: white; padding: 12px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+.cancel { background: #e5e7eb; color: #1f2937; text-decoration: none; padding: 12px 18px; border-radius: 8px; font-weight: 700; }
+</style>
+</head>
+<body>
+<header>
+    <div class="brand">AI-Agent</div>
+    <div>{{ request.user.username }} &nbsp;|&nbsp; <a href="{% url 'upload_information' %}">Back to Upload</a></div>
+</header>
+<main>
+<section class="card">
+    <h1>Add Customer</h1>
+    <p class="description">
+        Create a customer once and reuse it when assigning future information sources.
+    </p>
+
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="customer_name">Customer Name</label>
+        <input type="text" id="customer_name" name="customer_name"
+               value="{{ customer_name }}" placeholder="Example: Tamdeen" required>
+        <div class="help">The customer will be stored as an Organization with type Customer.</div>
+
+        <div class="buttons">
+            <button class="primary" type="submit">Add Customer</button>
+            <a class="cancel" href="{% url 'upload_information' %}">Cancel</a>
+        </div>
+    </form>
+</section>
+</main>
+</body>
+</html>

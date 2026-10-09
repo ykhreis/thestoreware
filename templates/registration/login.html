@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Agent Login</title>
+<style>
+body { font-family: Arial; background: #f4f6f8; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+.box { background: white; width: 380px; padding: 35px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,.10); }
+h1 { text-align: center; }
+.subtitle { text-align: center; color: #666; margin-bottom: 25px; }
+label { display: block; margin-top: 15px; }
+input { width: 100%; padding: 11px; margin-top: 6px; box-sizing: border-box; }
+button { width: 100%; padding: 12px; margin-top: 20px; cursor: pointer; }
+.error { color: red; margin-top: 15px; }
+</style>
+</head>
+<body>
+<div class="box">
+<h1>AI-Agent</h1>
+<div class="subtitle">Secure AI-Agent Access</div>
+<form method="post">
+{% csrf_token %}
+<label>Username</label>
+{{ form.username }}
+<label>Password</label>
+{{ form.password }}
+<button type="submit">Login</button>
+{% if form.errors %}
+<div class="error">Invalid username or password.</div>
+{% endif %}
+</form>
+</div>
+</body>
+</html>

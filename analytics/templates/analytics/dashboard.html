@@ -134,22 +134,37 @@
             <div class="panel">
                 <h2>Recent Sessions</h2>
                 <table>
-                    <thead><tr><th>Started</th><th>Browser</th><th>Device</th><th>Views</th></tr></thead>
+                    <thead><tr><th>Started</th><th>IP</th><th>Country</th><th>Region</th><th>City</th><th>Browser</th><th>Device</th><th>Views</th></tr></thead>
                     <tbody>
                     {% for item in recent_sessions %}
                         <tr>
                             <td>{{ item.started_at|date:"d M Y H:i" }}</td>
+                            <td>{{ item.ip_address|default:"Unknown" }}</td>
+                            <td>{{ item.country_name|default:"Unknown" }}</td>
+                            <td>{{ item.region|default:"—" }}</td>
+                            <td>{{ item.city|default:"—" }}</td>
                             <td>{{ item.browser|default:"Unknown" }}</td>
                             <td>{{ item.device_type|default:"Unknown" }}</td>
                             <td>{{ item.page_view_count }}</td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="4">No sessions yet.</td></tr>
+                        <tr><td colspan="8">No sessions yet.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
             </div>
 
+            <div class="panel">
+                <h2>Top Countries</h2>
+                {% for item in countries %}
+                    <div class="stat-row"><span>{{ item.country_name|default:"Unknown" }}</span><strong>{{ item.total }}</strong></div>
+                {% empty %}
+                    <div>No location data yet.</div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="grid">
             <div class="panel">
                 <h2>Technology</h2>
                 <strong>Browsers</strong>
@@ -161,6 +176,10 @@
                 {% for item in operating_systems %}
                     <div class="stat-row"><span>{{ item.operating_system|default:"Unknown" }}</span><strong>{{ item.total }}</strong></div>
                 {% endfor %}
+            </div>
+            <div class="panel">
+                <h2>Location Notes</h2>
+                <p class="subtitle" style="margin:0;">Location is approximate and derived from the visitor's public IP. Localhost, VPNs, proxies and mobile networks may not identify the exact city.</p>
             </div>
         </section>
     </main>

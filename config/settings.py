@@ -58,15 +58,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'website',
-    'analytics',
+    'website.website_apps.WebsiteConfig',
+    'analytics.apps.AnalyticsConfig',
+    'mentor.ai_agent_apps.MentorConfig',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'analytics.middleware.AnalyticsMiddleware',
+    'analytics.analytics_middleware.AnalyticsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -79,7 +80,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -107,10 +108,10 @@ DATABASES = {
         'HOST': os.environ.get('DB_HOST'),
         'PORT': os.environ.get('DB_PORT', '5432'),
         'OPTIONS': {
-            'options': '-c search_path=' + os.environ.get(
-                'THESTOREWARE_DB_SCHEMA',
-                'thestoreware'
-            ) + ',public',
+        'options': '-c search_path=' + os.environ.get(
+        'THESTOREWARE_DB_SCHEMA',
+        'thestoreware'
+        ) + ',ai_agent,public',
         },
     }
 }
@@ -151,6 +152,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STORAGES = {
@@ -169,3 +173,26 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ============================================================
+# Email / SMTP configuration
+# Values are loaded from the local .env file or Heroku Config Vars.
+# ============================================================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True').lower() == 'true'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Destination for website feedback / idea notifications.
+FEEDBACK_NOTIFICATION_EMAIL = os.environ.get(
+    'FEEDBACK_NOTIFICATION_EMAIL',
+    EMAIL_HOST_USER
+)
+
+# ============================================================
+# GeoIP / Visitor Location
+# ============================================================
+GEOIP_PATH = BASE_DIR / 'geoip'

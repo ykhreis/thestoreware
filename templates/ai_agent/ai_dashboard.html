@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Agent Dashboard</title>
+<link rel="stylesheet" href="{% static 'css/ai_agent/dashboard.css' %}">
+
+</head>
+<body>
+<header>
+    <div class="brand">AI-Agent</div>
+    <div>{{ request.user.username }} &nbsp;|&nbsp; <a href="{% url 'logout' %}">Logout</a></div>
+</header>
+<main>
+{% if messages %}
+    {% for message in messages %}
+        <div class="message-success">{{ message }}</div>
+    {% endfor %}
+{% endif %}
+
+<section class="hero">
+    <div>
+        <h1>AI-Agent Dashboard</h1>
+        <p class="description">Search, analyze and reuse organizational knowledge from available information sources.</p>
+    </div>
+    <div class="hero-actions">
+        {% if is_ai_admin %}
+        <a class="secondary-button" href="{% url 'upload_information' %}">Upload Information</a>
+        {% endif %}
+        <a class="primary-button" href="{% url 'ask_ai_agent' %}">Ask AI-Agent</a>
+    </div>
+</section>
+
+{% if is_ai_admin %}
+<section class="card">
+    <h2 class="section-heading">Knowledge Overview</h2>
+    <p class="section-help">A quick view of the information currently available to AI-Agent and its review status.</p>
+    <div class="stats">
+        <div class="stat"><div class="stat-number">{{ knowledge_sources_count }}</div><div class="stat-label">Information Sources</div><div class="stat-help">Active uploaded information sources available to AI-Agent.</div></div>
+        <div class="stat"><div class="stat-number">{{ knowledge_chunks_count }}</div><div class="stat-label">Document Content</div><div class="stat-help">Extracted document chunks available for customer and organizational retrieval.</div></div>
+        <div class="stat"><div class="stat-number">{{ generic_knowledge_count }}</div><div class="stat-label">Generic Knowledge</div><div class="stat-help">Active reusable Generic Knowledge records available to AI-Agent.</div></div>
+        <div class="stat"><div class="stat-number">{{ generic_knowledge_items_count }}</div><div class="stat-label">Knowledge Items</div><div class="stat-help">Structured reusable items used for Generic Knowledge matching and answers.</div></div>
+        <div class="stat"><div class="stat-number">{{ pending_generic_candidates_count }}</div><div class="stat-label">Awaiting Review</div><div class="stat-help">Generic Knowledge candidates waiting to be processed and promoted.</div></div>
+    </div>
+</section>
+{% endif %}
+
+<div class="dashboard-grid">
+{% if is_ai_admin %}
+<section class="card">
+    <h3 class="section-heading">Information Sources</h3>
+    <p class="section-help">Sources currently contributing information to the AI-Agent knowledge base.</p>
+    {% if knowledge_sources %}
+        {% for source in knowledge_sources %}
+            <div class="source">
+                <div class="source-name">{{ source.name }}</div>
+                <div class="source-meta">
+                    Customer / Organization:
+                    <strong>{% if source.organization %}{{ source.organization.name }}{% else %}Not assigned{% endif %}</strong><br>
+                    Type: {{ source.source_type }}
+                    <span class="status">{{ source.processing_status }}</span>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="description">No information sources are currently available.</p>
+    {% endif %}
+</section>
+{% endif %}
+
+<section class="card">
+    <h3 class="section-heading">Quick Actions</h3>
+    <p class="section-help">Common actions for working with AI-Agent.</p>
+    <div class="action"><a href="{% url 'ask_ai_agent' %}">Ask AI-Agent</a><div class="action-help">Search and analyze the available organizational knowledge.</div></div>
+    {% if is_ai_admin %}
+    <div class="action"><a href="{% url 'upload_information' %}">Upload Information</a><div class="action-help">Upload information for controlled AI-Agent knowledge processing.</div></div>
+    <div class="action"><a href="{% url 'customer_sources' %}">Manage Customer Files</a><div class="action-help">Review and manage uploaded information sources.</div></div>
+    <div class="action"><a href="{% url 'generic_knowledge_candidates' %}">Generic Knowledge Candidates</a><div class="action-help">Review staged external knowledge and monitor promotion into reusable Generic Knowledge.</div></div>
+    <div class="action"><div class="action-title">AI-Agent Administration</div><div class="action-help">Manage configuration, access and AI-Agent administration.</div></div>
+    <div class="action"><a class="danger-button-link" href="{% url 'reset_knowledge' %}">Reset Knowledge Base</a><div class="action-help">Permanently clear knowledge and analysis data while keeping users, organizations and application configuration.</div></div>
+    {% endif %}
+    {% if is_ai_admin %}
+    <div class="user-info"><strong>Signed in as:</strong> {{ request.user.username }}<br><strong>Access groups:</strong> {{ groups|join:", " }}</div>
+    {% endif %}
+</section>
+</div>
+</main>
+</body>
+</html>
