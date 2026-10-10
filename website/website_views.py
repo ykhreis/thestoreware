@@ -1,10 +1,54 @@
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, get_connection, send_mail
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
 from .website_models import WebsiteUserFeedback
+
+
+def get_thestoreware_email_connection():
+    """Return a dedicated Microsoft 365 SMTP connection for TheStoreWare."""
+    return get_connection(
+        backend="django.core.mail.backends.smtp.EmailBackend",
+        host=getattr(settings, "THESTOREWARE_EMAIL_HOST", "smtp.office365.com"),
+        port=getattr(settings, "THESTOREWARE_EMAIL_PORT", 587),
+        username=getattr(settings, "THESTOREWARE_EMAIL_USER", ""),
+        password=getattr(settings, "THESTOREWARE_EMAIL_PASSWORD", ""),
+        use_tls=getattr(settings, "THESTOREWARE_EMAIL_USE_TLS", True),
+        fail_silently=False,
+    )
+
+
+def send_thestoreware_acknowledgement(name, recipient_email):
+    """Send an automatic acknowledgement from info@thestoreware.com."""
+    if not recipient_email:
+        return
+
+    from_email = getattr(settings, "THESTOREWARE_EMAIL_USER", "").strip()
+    if not from_email:
+        raise ValueError("THESTOREWARE_EMAIL_USER is not configured.")
+
+    greeting = f"Dear {name}," if name else "Hello,"
+    body = (
+        f"{greeting}\n\n"
+        "Thank you for contacting TheStoreWare.\n\n"
+        "We have received your message successfully and appreciate your feedback. "
+        "Our team will review it and get back to you if a response is required.\n\n"
+        "Best regards,\n"
+        "TheStoreWare Team\n"
+        "info@thestoreware.com"
+    )
+
+    connection = get_thestoreware_email_connection()
+    email_message = EmailMessage(
+        subject="Thank you for contacting TheStoreWare",
+        body=body,
+        from_email=from_email,
+        to=[recipient_email],
+        connection=connection,
+    )
+    email_message.send(fail_silently=False)
 
 
 AREAS = [
@@ -127,13 +171,32 @@ def submit_feedback(request):
         )
 
         try:
-            sent_count = send_mail(
-                subject,
-                body,
-                getattr(settings, "DEFAULT_FROM_EMAIL", notification_email),
-                [notification_email],
-                fail_silently=False,
+            # Send the internal notification through the dedicated
+            # TheStoreWare Microsoft 365 mailbox (info@thestoreware.com).
+            from_email = getattr(settings, "THESTOREWARE_EMAIL_USER", "").strip()
+            if not from_email:
+                raise ValueError("THESTOREWARE_EMAIL_USER is not configured.")
+
+            connection = get_thestoreware_email_connection()
+            # Send the internal notification to both TheStoreWare
+            # and the existing Gmail notification address.
+            notification_recipients = [
+                address
+                for address in [from_email, notification_email]
+                if address
+            ]
+            # Avoid sending twice if both settings contain the same address.
+            notification_recipients = list(dict.fromkeys(notification_recipients))
+
+            notification_message = EmailMessage(
+                subject=subject,
+                body=body,
+                from_email=from_email,
+                to=notification_recipients,
+                reply_to=[email] if email else None,
+                connection=connection,
             )
+            sent_count = notification_message.send(fail_silently=False)
 
             if sent_count == 1:
                 feedback.notification_sent = True
@@ -168,5 +231,14 @@ def submit_feedback(request):
                 "notification_error",
             ]
         )
+
+    # Send a separate acknowledgement to the visitor using the
+    # TheStoreWare Microsoft 365 mailbox. A failure here must never
+    # prevent the already-stored feedback from being accepted.
+    if email:
+        try:
+            send_thestoreware_acknowledgement(name, email)
+        except Exception:
+            pass
 
     return redirect(reverse("home") + "?feedback=success#feedback")

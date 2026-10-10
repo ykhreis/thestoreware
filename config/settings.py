@@ -192,6 +192,31 @@ FEEDBACK_NOTIFICATION_EMAIL = os.environ.get(
     EMAIL_HOST_USER
 )
 
+
+# ============================================================
+# TheStoreWare Microsoft 365 SMTP configuration
+# Used separately by the public website for visitor replies.
+# Existing Gmail SMTP configuration above remains unchanged.
+# ============================================================
+THESTOREWARE_EMAIL_HOST = os.environ.get(
+    'THESTOREWARE_EMAIL_HOST',
+    'smtp.office365.com'
+)
+THESTOREWARE_EMAIL_PORT = int(
+    os.environ.get('THESTOREWARE_EMAIL_PORT', '587')
+)
+THESTOREWARE_EMAIL_USE_TLS = (
+    os.environ.get('THESTOREWARE_EMAIL_USE_TLS', 'True').lower() == 'true'
+)
+THESTOREWARE_EMAIL_USER = os.environ.get(
+    'THESTOREWARE_EMAIL_USER',
+    ''
+)
+THESTOREWARE_EMAIL_PASSWORD = os.environ.get(
+    'THESTOREWARE_EMAIL_PASSWORD',
+    ''
+)
+
 # ============================================================
 # GeoIP / Visitor Location
 # ============================================================
