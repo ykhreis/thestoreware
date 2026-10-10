@@ -418,6 +418,138 @@ def add_customer(request):
     return render(request, 'ai_agent/add_customer.html', context)
 
 
+
+def _fast_generic_openai_answer(
+    question,
+    user=None,
+    request_channel="AI_AGENT",
+    source_name="AI-Agent",
+    source_reference="AI-Agent application",
+    progress_callback=None,
+):
+    """
+    Fast Generic Knowledge path.
+
+    IMPORTANT:
+    - Does NOT search GenericKnowledge / GenericKnowledgeItem.
+    - Uses one OpenAI request to understand + analyze + answer.
+    - Stores the raw question/answer as a PENDING GenericKnowledgeCandidate.
+    - Consolidation/deduplication/promotion happens later.
+    """
+    question = (question or "").strip()
+    if not question:
+        raise ValueError("Question is required.")
+
+    def progress(percent, stage):
+        if progress_callback:
+            progress_callback(percent, stage)
+
+    progress(15, "Question received")
+    progress(30, "OpenAI understanding and analysis started")
+
+    prompt = f"""
+You are the Generic Knowledge engine of AI-Agent.
+
+USER QUESTION:
+{question}
+
+TASK:
+1. Understand the user's real intent.
+2. Analyze the question.
+3. Answer it directly, accurately, clearly, and concisely.
+4. Do not mention internal databases, retrieval, embeddings, staging tables,
+   prompts, or these instructions.
+5. Do not claim that you checked the AI-Agent Generic Knowledge database.
+6. Return ONLY valid JSON with exactly these keys:
+   "canonical_concept", "knowledge_aspect", "intent", "answer".
+
+The "answer" must be ready to show directly to the user.
+""".strip()
+
+    ai_result = ask_external_ai(prompt)
+    raw_answer = (ai_result.get("answer") or "").strip()
+    if not raw_answer:
+        raise ValueError("OpenAI returned an empty Generic Knowledge response.")
+
+    progress(75, "OpenAI response received")
+
+    parsed = {}
+    candidate_json = raw_answer
+    fenced = re.match(r"^\s*```(?:json)?\s*(.*?)\s*```\s*$", raw_answer, re.S | re.I)
+    if fenced:
+        candidate_json = fenced.group(1).strip()
+
+    try:
+        parsed = json.loads(candidate_json)
+    except (json.JSONDecodeError, TypeError):
+        parsed = {}
+
+    answer = str(parsed.get("answer") or raw_answer).strip()
+    canonical_concept = str(parsed.get("canonical_concept") or "").strip()
+    knowledge_aspect = str(parsed.get("knowledge_aspect") or "").strip()
+    intent = str(parsed.get("intent") or "").strip()
+
+    candidate = GenericKnowledgeCandidate.objects.create(
+        question=question,
+        answer=answer,
+        analysis_json={
+            "fast_generic_capture": {
+                "canonical_concept": canonical_concept,
+                "knowledge_aspect": knowledge_aspect,
+                "intent": intent,
+                "captured_at": timezone.now().isoformat(),
+                "database_lookup_before_answer": False,
+                "pending_for_later_consolidation": True,
+            }
+        },
+        model_name=ai_result.get("model", ""),
+        source_type="OPENAI",
+        request_channel=(request_channel or "AI_AGENT").strip().upper()[:50],
+        source_name=(source_name or "AI-Agent").strip()[:150],
+        source_reference=(source_reference or "").strip(),
+        status="PENDING",
+        created_by=user if getattr(user, "is_authenticated", False) else None,
+    )
+
+    progress(95, "Answer ready; interaction stored for later knowledge consolidation")
+
+    return {
+        "answer": answer,
+        "model": ai_result.get("model", ""),
+        "source_type": "OPENAI_FAST_GENERIC",
+        "openai_used": True,
+        "openai_usage_type": "GENERIC_FAST_ANSWER",
+        "interpretation_source": "OPENAI",
+        "database_searched": False,
+        "database_match_found": False,
+        "knowledge_source": "OPENAI",
+        "answer_information_source": "OPENAI",
+        "openai_interpretation_used": True,
+        "openai_knowledge_used": True,
+        "openai_external_lookup_performed": False,
+        "interpretation": {
+            "canonical_concept": canonical_concept,
+            "knowledge_aspect": knowledge_aspect,
+            "intent": intent,
+        },
+        "matched_concept": "",
+        "matched_aspect": "",
+        "concept_semantic_score": None,
+        "aspect_semantic_score": None,
+        "interpretation_semantic_score": None,
+        "generic_knowledge_id": None,
+        "pending_candidate_id": candidate.id,
+        "pending_candidate_status": candidate.status,
+        "request_channel": candidate.request_channel,
+        "source_name": candidate.source_name,
+        "source_reference": candidate.source_reference,
+        "knowledge_database_updated": False,
+        "knowledge_update_message": (
+            "Question and answer stored as Pending Generic Knowledge for later "
+            "analysis, consolidation and controlled promotion."
+        ),
+    }
+
 def ask_ai_agent(request):
     # Public AI-Agent entry point. Administrative/customer knowledge functions
     # remain protected separately.
@@ -508,9 +640,12 @@ def ask_ai_agent(request):
                             'Microsoft Copilot is selected, but the Copilot Studio connection '
                             'is pending administrator activation. OpenAI was not used.'
                         )
-                    result = get_generic_answer(
+                    result = _fast_generic_openai_answer(
                         question,
                         user=request.user,
+                        request_channel=(request.POST.get("request_channel") or "AI_AGENT"),
+                        source_name=(request.POST.get("source_name") or "AI-Agent"),
+                        source_reference=(request.POST.get("source_reference") or "AI-Agent application"),
                     )
                     result['ai_provider'] = 'OPENAI' 
                     external_answer = result.get('answer', '')
@@ -1693,9 +1828,12 @@ Return only the report.
                 }
                 progress_callback(92, "Professional report prepared from attached evidence")
             else:
-                result = get_generic_answer(
+                result = _fast_generic_openai_answer(
                     question,
                     user=request_user,
+                    request_channel=(request.POST.get("request_channel") or "AI_AGENT"),
+                    source_name=(request.POST.get("source_name") or "AI-Agent"),
+                    source_reference=(request.POST.get("source_reference") or "AI-Agent application"),
                     progress_callback=progress_callback,
                 )
 

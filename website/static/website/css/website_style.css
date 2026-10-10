@@ -815,3 +815,71 @@ footer{border-top:1px solid var(--line);padding:32px 0;background:#fff}.footer{d
   font-weight:700;
   letter-spacing:.1px;
 }
+
+/* =========================================================
+   THESTOREWARE AI CHATBOT - CLEAN FLOATING CHAT
+   ========================================================= */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+.tsw-chatbot{position:fixed;right:20px;bottom:92px;z-index:9999;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+
+.tsw-chat-launcher{width:54px;height:54px;display:grid;place-items:center;padding:0;border:0;border-radius:16px;background:linear-gradient(135deg,#1769aa,#0aa5a5);box-shadow:0 12px 30px rgba(15,55,95,.28);cursor:pointer;transition:transform .2s ease,box-shadow .2s ease}
+.tsw-chat-launcher:hover{transform:translateY(-2px);box-shadow:0 16px 34px rgba(15,55,95,.34)}
+.tsw-chat-launcher-icon{position:relative;width:27px;height:21px;display:flex;align-items:center;justify-content:center;gap:3px;border:2px solid #fff;border-radius:7px}
+.tsw-chat-launcher-icon:after{content:"";position:absolute;left:4px;bottom:-6px;width:8px;height:8px;border-left:2px solid #fff;transform:skewY(-35deg)}
+.tsw-chat-launcher-icon span{width:3px;height:3px;border-radius:50%;background:#fff}
+
+.tsw-chat-panel{position:absolute;right:0;bottom:66px;width:360px;height:490px;max-width:calc(100vw - 32px);max-height:calc(100vh - 125px);display:none;grid-template-rows:auto 1fr auto auto;overflow:hidden;border:1px solid #d9e5ef;border-radius:19px;background:#fff;box-shadow:0 24px 70px rgba(11,31,56,.24)}
+.tsw-chat-panel.open{display:grid}
+
+.tsw-chat-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 15px;background:linear-gradient(100deg,#123d73 0%,#1769aa 55%,#0aa5a5 100%);color:#fff}
+.tsw-chat-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.tsw-chat-logo{width:36px;height:36px;display:grid;place-items:center;flex:0 0 36px;border-radius:11px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:10px;font-weight:900}
+.tsw-chat-brand strong{display:block;font-size:14px;line-height:1.2}
+.tsw-chat-brand small{display:block;margin-top:2px;font-size:9px;color:rgba(255,255,255,.8)}
+.tsw-chat-close{width:31px;height:31px;display:grid;place-items:center;flex:0 0 31px;border:0;border-radius:9px;background:rgba(255,255,255,.13);color:#fff;font-size:18px;line-height:1;cursor:pointer}
+
+.tsw-chat-messages{overflow-y:auto;padding:17px 14px;background:linear-gradient(180deg,#f7faff 0%,#fff 48%)}
+.tsw-chat-message{display:flex;align-items:flex-start;gap:8px;margin-bottom:12px}
+.tsw-chat-message.user{justify-content:flex-end}
+.tsw-chat-avatar{width:28px;height:28px;display:grid;place-items:center;flex:0 0 28px;border-radius:9px;background:linear-gradient(135deg,#2563eb,#08a7a5);color:#fff;font-size:8px;font-weight:900}
+.tsw-chat-bubble{max-width:78%;padding:10px 12px;border:1px solid #e0e8f0;border-radius:14px 14px 14px 4px;background:#fff;color:#183653;font-size:12px;line-height:1.45;box-shadow:0 5px 15px rgba(20,48,82,.05)}
+.tsw-chat-bubble strong,.tsw-chat-bubble span{display:block}
+.tsw-chat-message.user .tsw-chat-bubble{border:0;border-radius:14px 14px 4px 14px;background:linear-gradient(135deg,#2563eb,#168ab2);color:#fff}
+
+.tsw-chat-form{display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:8px;padding:11px 12px;border-top:1px solid #e5edf4;background:#fff}
+.tsw-chat-form textarea{width:100%;min-width:0;height:42px;max-height:110px;resize:none;padding:11px 12px;border:1px solid #d7e2ec;border-radius:11px;outline:none;font:inherit;font-size:12px;line-height:18px;color:#183653}
+.tsw-chat-form textarea:focus{border-color:#76ace5;box-shadow:0 0 0 3px rgba(37,99,235,.07)}
+.tsw-chat-form button{width:42px;height:42px;display:grid;place-items:center;padding:0;border:0;border-radius:11px;background:linear-gradient(135deg,#2563eb,#08a7a5);color:#fff;font-size:16px;cursor:pointer}
+.tsw-chat-status{padding:0 12px 9px;background:#fff;color:#8a9bad;font-size:8px;text-align:center}
+
+@media(max-width:700px){
+  .tsw-chatbot{right:12px;bottom:78px}
+  .tsw-chat-launcher{width:50px;height:50px;border-radius:15px}
+  .tsw-chat-panel{position:fixed;right:12px;left:12px;bottom:140px;width:auto;height:min(500px,calc(100svh - 170px));max-width:none;max-height:none}
+}
+
+
+/* TheStoreWare AI — separate service guidance */
+.tsw-storeware-guidance {
+    max-width: 82%;
+    padding: 11px 13px;
+    border: 1px solid rgba(14, 165, 164, 0.24);
+    border-left: 3px solid #0ea5a4;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(30, 99, 211, 0.07), rgba(14, 165, 164, 0.09));
+    box-shadow: 0 5px 14px rgba(15, 67, 123, 0.07);
+}
+
+.tsw-storeware-guidance-title {
+    margin-bottom: 5px;
+    font-weight: 800;
+    color: #1265c7;
+    letter-spacing: 0.01em;
+}
+
+.tsw-storeware-guidance-text {
+    color: #087f83;
+    font-weight: 600;
+    line-height: 1.45;
+}

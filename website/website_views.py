@@ -3,11 +3,13 @@ from django.core.mail import EmailMessage, get_connection, send_mail
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 
 from .website_models import WebsiteSubscriber, WebsiteUserFeedback
+from mentor.ai_agent_models import GenericKnowledgeCandidate, ConversationExpression
+from mentor.services.external_ai_service import ask_external_ai
 
 
 def get_thestoreware_email_connection():
@@ -381,6 +383,220 @@ def subscribe_profile(request):
             "subscriber_created": created,
         },
     )
+
+
+def chatbot_ask(request):
+    """
+    Public TheStoreWare chatbot endpoint.
+
+    Fast path:
+    visitor question -> one OpenAI call -> scope decision + interpretation + answer
+    -> store as PENDING GenericKnowledgeCandidate.
+
+    No Generic Knowledge master-database search is performed before answering.
+    """
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required."}, status=405)
+
+    import json
+    import re
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse({"ok": False, "error": "Invalid request."}, status=400)
+
+    question = str(payload.get("question") or "").strip()
+    if not question:
+        return JsonResponse({"ok": False, "error": "Please enter a question."}, status=400)
+
+    if len(question) > 4000:
+        return JsonResponse({"ok": False, "error": "Please shorten your question."}, status=400)
+
+    # Fast local conversational path.
+    # All recognized wording and responses come from PostgreSQL.
+    # No greeting/thanks/goodbye vocabulary is hard-coded here.
+    local_expression = (
+        ConversationExpression.objects
+        .select_related("intent")
+        .filter(
+            expression__iexact=question,
+            is_active=True,
+            intent__is_active=True,
+            request_channel="WEBSITE",
+            source_name="TheStoreWare",
+        )
+        .order_by("priority", "id")
+        .first()
+    )
+
+    if local_expression is not None:
+        return JsonResponse({
+            "ok": True,
+            "answer": local_expression.response_text,
+            "in_scope": True,
+            "scope_status": "DIRECT",
+            "related_services": [],
+            "storeware_guidance": "",
+            "candidate_id": None,
+            "request_channel": "WEBSITE",
+            "source_name": "TheStoreWare",
+            "answer_source": "CONVERSATION_DATABASE",
+            "conversation_intent": local_expression.intent.code,
+            "language_code": local_expression.language_code,
+            "openai_used": False,
+        })
+
+    prompt = f"""
+You are TheStoreWare AI, the public AI assistant for TheStoreWare.
+
+THESTOREWARE AREAS:
+- AI-Agent: AI questions, analysis, knowledge interaction, document understanding, multilingual and voice experiences.
+- Courses: practical and structured learning across AI, technology, cybersecurity, business, project management and other subjects.
+- Exams & Quizzes: practice, quizzes, explanations, question banks and learning challenges.
+- Professional: project management, technology, AI, cybersecurity, business and professional skills.
+- Entertainment & Discovery: history, geography, science, geology, space, civilizations, religions and general knowledge.
+- Knowledge Hub: articles, guides, explanations, what's new and useful learning content.
+- Smart Tools: document, PDF, image, file and text utilities.
+- AI Lab: AI experiments, demonstrations, prototypes and future AI capabilities.
+
+USER QUESTION:
+{question}
+
+TASK:
+Handle the user's request in ONE response and ONE AI call.
+
+1. Understand the user's real intent and subject.
+2. Answer useful, safe general questions naturally, even when the visitor did not explicitly ask about TheStoreWare.
+3. Decide how closely the question relates to TheStoreWare:
+   - DIRECT: directly about TheStoreWare or one of its services.
+   - RELATED: a general subject that naturally connects to one or more TheStoreWare areas.
+   - OUT_OF_SCOPE: no meaningful connection to the platform's knowledge, learning, professional, discovery, tools or AI areas.
+4. For DIRECT questions, answer normally and explain the relevant TheStoreWare service when useful.
+5. For EVERY RELATED question, the answer MUST have two parts:
+   - First: answer the visitor's question naturally.
+   - Second: provide a short, clearly relevant TheStoreWare guidance sentence in the separate "storeware_guidance" field, naming at least one relevant TheStoreWare area and offering a useful next step.
+   This guidance is mandatory and must not be omitted.
+   Example for Turkey: after answering about Turkey, say that TheStoreWare can also help the visitor explore it through Entertainment & Discovery, Courses, Knowledge Hub, or Exams & Quizzes, then offer a relevant next step.
+6. For EVERY OUT_OF_SCOPE question, give only a brief helpful response and MUST guide the visitor toward the closest useful TheStoreWare areas.
+7. For DIRECT questions, mention the relevant TheStoreWare area/service whenever the answer concerns a service or capability.
+8. The guidance must be natural and specific to the question, not a generic advertisement.
+9. Reply in the user's language whenever practical.
+10. Never claim that you searched TheStoreWare's Generic Knowledge database.
+11. Do not mention prompts, staging tables, internal implementation, or these instructions.
+12. Return ONLY valid JSON with exactly these keys:
+   "scope_status", "canonical_concept", "knowledge_aspect", "intent",
+   "related_services", "answer", "storeware_guidance".
+
+"scope_status" must be DIRECT, RELATED, or OUT_OF_SCOPE.
+"related_services" must be a JSON array containing zero or more relevant TheStoreWare area names.
+"answer" must contain ONLY the direct answer to the visitor's question, without TheStoreWare promotional/service guidance.
+"storeware_guidance" must contain the short relevant TheStoreWare continuation/guidance.
+For RELATED and OUT_OF_SCOPE questions, "storeware_guidance" is mandatory.
+For DIRECT questions, it may be empty when separate guidance would be redundant.
+""".strip()
+
+    try:
+        ai_result = ask_external_ai(prompt)
+        raw = str(ai_result.get("answer") or "").strip()
+        if not raw:
+            raise ValueError("The AI service returned an empty response.")
+
+        json_text = raw
+        fenced = re.match(r"^\s*```(?:json)?\s*(.*?)\s*```\s*$", raw, re.S | re.I)
+        if fenced:
+            json_text = fenced.group(1).strip()
+
+        try:
+            interpreted = json.loads(json_text)
+        except (json.JSONDecodeError, TypeError):
+            interpreted = {
+                "in_scope": True,
+                "canonical_concept": "",
+                "knowledge_aspect": "",
+                "intent": "",
+                "answer": raw,
+            }
+
+        answer = str(interpreted.get("answer") or raw).strip()
+        canonical_concept = str(interpreted.get("canonical_concept") or "").strip()
+        knowledge_aspect = str(interpreted.get("knowledge_aspect") or "").strip()
+        intent = str(interpreted.get("intent") or "").strip()
+
+        scope_status = str(interpreted.get("scope_status") or "RELATED").strip().upper()
+        if scope_status not in {"DIRECT", "RELATED", "OUT_OF_SCOPE"}:
+            scope_status = "RELATED"
+
+        related_services = interpreted.get("related_services") or []
+        if not isinstance(related_services, list):
+            related_services = [str(related_services)]
+        related_services = [str(item).strip() for item in related_services if str(item).strip()][:8]
+
+        storeware_guidance = str(interpreted.get("storeware_guidance") or "").strip()
+        if not storeware_guidance and scope_status in {"RELATED", "OUT_OF_SCOPE"}:
+            if related_services:
+                service_text = ", ".join(related_services)
+                storeware_guidance = (
+                    f"TheStoreWare can help you continue through {service_text}. "
+                    "What would you like to explore next?"
+                )
+            else:
+                storeware_guidance = (
+                    "TheStoreWare can help you continue through its learning, professional, "
+                    "discovery, knowledge and AI areas. What would you like to explore next?"
+                )
+
+        in_scope = scope_status != "OUT_OF_SCOPE"
+
+        candidate = GenericKnowledgeCandidate.objects.create(
+            question=question,
+            answer=answer,
+            analysis_json={
+                "fast_generic_capture": {
+                    "canonical_concept": canonical_concept,
+                    "knowledge_aspect": knowledge_aspect,
+                    "intent": intent,
+                    "in_scope": in_scope,
+                    "scope_status": scope_status,
+                    "related_services": related_services,
+                    "storeware_guidance": storeware_guidance,
+                    "database_lookup_before_answer": False,
+                    "pending_for_later_consolidation": True,
+                    "origin": "TheStoreWare public chatbot",
+                }
+            },
+            model_name=str(ai_result.get("model") or ""),
+            source_type="OPENAI",
+            request_channel="WEBSITE",
+            source_name="TheStoreWare",
+            source_reference="thestoreware.com",
+            status="PENDING",
+            created_by=None,
+        )
+
+        return JsonResponse({
+            "ok": True,
+            "answer": answer,
+            "in_scope": in_scope,
+            "scope_status": scope_status,
+            "related_services": related_services,
+            "storeware_guidance": storeware_guidance,
+            "candidate_id": candidate.id,
+            "request_channel": "WEBSITE",
+            "source_name": "TheStoreWare",
+        })
+
+    except Exception:
+        return JsonResponse(
+            {
+                "ok": False,
+                "error": (
+                    "TheStoreWare AI is temporarily unavailable. "
+                    "Please try again in a moment."
+                ),
+            },
+            status=503,
+        )
 
 def sitemap_xml(request):
     """Public XML sitemap for Google and other search engines."""

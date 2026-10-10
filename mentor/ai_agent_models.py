@@ -427,6 +427,26 @@ class GenericKnowledgeCandidate(models.Model):
     model_name = models.CharField(max_length=100, blank=True)
     source_type = models.CharField(max_length=20, default="OPENAI")
 
+    # Origin/channel traceability for public Generic Knowledge.
+    # These fields do not affect the fast answer path; they only identify
+    # where the pending question/answer originated for later consolidation.
+    request_channel = models.CharField(
+        max_length=50,
+        blank=True,
+        db_index=True,
+        help_text="Entry channel, e.g. AI_AGENT, WEBSITE, API.",
+    )
+    source_name = models.CharField(
+        max_length=150,
+        blank=True,
+        db_index=True,
+        help_text="Friendly origin name, e.g. TheStoreWare.",
+    )
+    source_reference = models.TextField(
+        blank=True,
+        help_text="Origin reference, e.g. thestoreware.com or another website/API.",
+    )
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_TYPES,
@@ -627,3 +647,90 @@ class TermCandidate(models.Model):
 
     def __str__(self):
         return self.term_text
+
+# ============================================================
+# Local Conversation / Small-Talk Intents
+# ============================================================
+
+class ConversationIntent(models.Model):
+    """
+    Master conversation intent used for instant local replies.
+
+    Examples such as greeting, thanks and goodbye are database records,
+    not fixed Python choices. This keeps conversational behavior DB-driven.
+    """
+    code = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=150)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "conversation_intent"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class ConversationExpression(models.Model):
+    """
+    User wording that can be recognized locally without an OpenAI call.
+
+    The expression itself, its language and its response are all stored
+    in PostgreSQL. No greeting/thanks/goodbye vocabulary is hard-coded.
+    """
+    intent = models.ForeignKey(
+        ConversationIntent,
+        on_delete=models.CASCADE,
+        related_name="expressions",
+    )
+    language_code = models.CharField(
+        max_length=20,
+        db_index=True,
+        help_text="Language code stored as data, e.g. en, ar, fr.",
+    )
+    expression = models.CharField(
+        max_length=255,
+        help_text="Normalized user expression to match locally.",
+    )
+    response_text = models.TextField(
+        help_text="Instant local response returned when this expression matches.",
+    )
+    request_channel = models.CharField(
+        max_length=50,
+        blank=True,
+        db_index=True,
+        help_text="Optional channel restriction, e.g. WEBSITE or AI_AGENT. Blank means all channels.",
+    )
+    source_name = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text="Optional source/site restriction, e.g. TheStoreWare. Blank means all sources.",
+    )
+    priority = models.PositiveIntegerField(
+        default=100,
+        help_text="Lower values are checked first when more than one active expression could apply.",
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "conversation_expression"
+        ordering = ["priority", "expression"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["intent", "language_code", "expression", "request_channel", "source_name"],
+                name="unique_conversation_expression_scope",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["language_code", "is_active"]),
+            models.Index(fields=["request_channel", "source_name", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.expression} -> {self.intent.code}"
+

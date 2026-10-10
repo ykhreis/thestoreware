@@ -1,0 +1,404 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TheStoreWare — explore AI, learning, exams, knowledge, entertainment and smart tools.">
+    <title>TheStoreWare | Explore. Learn. Create. Solve.</title>
+    <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+    <script defer src="{% static 'website/js/website_home.js' %}"></script>
+</head>
+<body>
+<header class="header">
+    <div class="shell nav">
+        <a class="logo" href="{% url 'home' %}">
+            <span class="logo-mark">S</span>
+            <span>TheStore<span>Ware</span></span>
+        </a>
+        <nav>
+            <a href="#explore">Explore</a>
+            <a href="#coming">Coming Soon</a>
+            <a href="#feedback">Share an Idea</a>
+        </nav>
+        <a class="button button-small" href="#explore">Explore TheStoreWare</a>
+    </div>
+</header>
+
+<main>
+<section class="platform-hero" id="home">
+    <div class="hero-glow glow-a"></div>
+    <div class="hero-glow glow-b"></div>
+    <div class="shell platform-hero-inner reveal">
+        <div class="launch-badge">THESTOREWARE • BUILDING FOR EVERYONE</div>
+        <h1>Explore. Learn. Create.<br><em>Solve. With AI.</em></h1>
+        <p>
+            A growing knowledge and technology platform bringing together artificial intelligence,
+            learning, professional development, entertainment, useful information and smart digital tools.
+        </p>
+        <div class="hero-actions">
+            <a class="button" href="#explore">Explore What's Coming <span>↓</span></a>
+            <a class="button secondary" href="#feedback">Share an Idea <span>→</span></a>
+        </div>
+        <div class="coming-banner" id="coming">
+            <span class="pulse-dot"></span>
+            <div><strong>COMING SOON</strong><small>New experiences, subjects and tools are being built step by step.</small></div>
+        </div>
+    </div>
+</section>
+
+<section class="section explore-section" id="explore">
+    <div class="shell">
+        <div class="section-head reveal">
+            <span class="kicker">DISCOVER THESTOREWARE</span>
+            <h2>One platform. <em>Many possibilities.</em></h2>
+            <p>Choose an area to discover what TheStoreWare is building.</p>
+        </div>
+
+        <div class="portal-grid">
+            {% for item in areas %}
+            <a class="portal-card reveal" href="{% url 'area_detail' item.slug %}">
+                <div class="portal-art {{ item.art_class }}">
+                    <span class="portal-icon">{{ item.icon }}</span>
+                    {% if item.slug == "ai-agent" %}
+                    <span class="status">AVAILABLE NOW</span>
+                    {% else %}
+                    <span class="status coming-soon-status">COMING SOON</span>
+                    {% endif %}
+                </div>
+                <div class="portal-copy">
+                    <h3>{{ item.title }}</h3>
+                    <p>{{ item.summary }}</p>
+                    <span class="portal-link">Discover {{ item.title }} <b>→</b></span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section vision-section">
+    <div class="shell vision-card reveal">
+        <div>
+            <span class="kicker">THE VISION</span>
+            <h2>Knowledge should be more than something you read.</h2>
+            <p>Ask it. Explore it. Practice it. Create with it. TheStoreWare is being designed to make information useful, interactive and easier to understand.</p>
+        </div>
+        <div class="vision-flow">
+            <span>LEARN</span><b>→</b><span>ASK</span><b>→</b><span>PRACTICE</span><b>→</b><span>CREATE</span><b>→</b><span>DISCOVER</span>
+        </div>
+    </div>
+</section>
+
+<section class="section feedback" id="feedback">
+    <div class="shell feedback-grid">
+        <div class="section-head left reveal">
+            <span class="kicker">HELP BUILD THESTOREWARE</span>
+            <h2>Your idea could become<br><em>our next feature.</em></h2>
+            <p>
+                TheStoreWare is being built interactively with its users.
+                Share your ideas, suggest features and tell us what you would like to see next.
+                Your feedback will help us decide what to improve and build.
+            </p>
+            <div class="feedback-prompts">
+                <span>New Tool</span><span>New Course</span><span>Exam / Quiz</span>
+                <span>Knowledge Topic</span><span>AI Feature</span><span>Website Improvement</span>
+            </div>
+        </div>
+
+        <form class="feedback-card reveal" method="post" action="{% url 'submit_feedback' %}">
+            {% csrf_token %}
+            {% if feedback_success %}
+                <div class="success-message"><strong>Thank you!</strong> Your idea has been received and will help shape TheStoreWare.</div>
+            {% endif %}
+            {% if feedback_error %}
+                <div class="error-message">{{ feedback_error }}</div>
+            {% endif %}
+
+            <label for="category">What would you like us to build or improve?</label>
+            <select id="category" name="category" required>
+                <option value="">Select a category</option>
+                <option>New Tool</option>
+                <option>New Course</option>
+                <option>Exam / Quiz</option>
+                <option>Knowledge Topic</option>
+                <option>AI Feature</option>
+                <option>Website Improvement</option>
+                <option>Other</option>
+            </select>
+
+            <label for="message">Your idea or feedback</label>
+            <textarea id="message" name="message" maxlength="4000" required placeholder="Tell us what would make TheStoreWare more useful to you..."></textarea>
+
+            <div class="form-two">
+                <div>
+                    <label for="name">Name <small>(optional)</small></label>
+                    <input id="name" name="name" maxlength="120" placeholder="Your name">
+                </div>
+                <div>
+                    <label for="email">Email <small>(optional)</small></label>
+                    <input id="email" type="email" name="email" maxlength="254" placeholder="you@example.com">
+                </div>
+            </div>
+
+            <button type="submit" class="button feedback-submit">Send My Idea <span>→</span></button>
+            <small class="feedback-note">
+                Your email is optional and is only needed if you would like us to contact you about your suggestion.
+                Submitted feedback is securely recorded for review.
+            </small>
+        </form>
+    </div>
+</section>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer footer-expanded">
+        <div class="footer-brand">
+            <a class="logo" href="{% url 'home' %}"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a>
+            <p>Your Knowledge. Your AI.</p>
+            <a class="footer-email" href="mailto:info@thestoreware.com">✉ info@thestoreware.com</a>
+            <small class="footer-official">Official contact for TheStoreWare</small>
+        </div>
+
+        <div class="footer-subscribe">
+            <strong>Stay Updated</strong>
+            <p>New AI tools, courses and resources are coming.</p>
+            <form class="subscribe-preview" id="subscribe" method="post" action="{% url 'subscribe' %}">
+                {% csrf_token %}
+                <input type="email" name="email" maxlength="254" placeholder="Your email address" required>
+                <button type="submit" class="button">Subscribe</button>
+            </form>
+
+            {% if request.GET.subscribe == "success" %}
+                <small class="subscribe-message subscribe-success">Thank you! You are now subscribed.</small>
+            {% elif request.GET.subscribe == "exists" %}
+                <small class="subscribe-message">This email is already subscribed.</small>
+            {% elif request.GET.subscribe == "invalid" %}
+                <small class="subscribe-message subscribe-error">Please enter a valid email address.</small>
+            {% else %}
+                <small>Subscribe to receive updates from TheStoreWare.</small>
+            {% endif %}
+        </div>
+
+    </div>
+    <div class="shell footer-bottom">© 2026 TheStoreWare. All rights reserved.</div>
+</footer>
+
+<!-- TheStoreWare AI Chatbot -->
+<div class="tsw-chatbot" id="tswChatbot">
+    <button class="tsw-chat-launcher" id="tswChatLauncher" type="button"
+            aria-label="Open TheStoreWare AI chat" aria-expanded="false">
+        <span class="tsw-chat-launcher-icon" aria-hidden="true">
+            <span></span><span></span><span></span>
+        </span>
+    </button>
+
+    <section class="tsw-chat-panel" id="tswChatPanel" aria-hidden="true" aria-label="TheStoreWare AI chat">
+        <div class="tsw-chat-header">
+            <div class="tsw-chat-brand">
+                <span class="tsw-chat-logo">AI</span>
+                <div>
+                    <strong>TheStoreWare AI</strong>
+                    <small>Your Knowledge. Your AI.</small>
+                </div>
+            </div>
+            <button class="tsw-chat-close" id="tswChatClose" type="button" aria-label="Close chat">×</button>
+        </div>
+
+        <div class="tsw-chat-messages" id="tswChatMessages">
+            <div class="tsw-chat-message assistant">
+                <span class="tsw-chat-avatar">AI</span>
+                <div class="tsw-chat-bubble">
+                    <strong>Hello! 👋</strong>
+                    <span>How can I help you today?</span>
+                </div>
+            </div>
+        </div>
+
+        <form class="tsw-chat-form" id="tswChatForm">
+            <label class="sr-only" for="tswChatInput">Ask TheStoreWare AI</label>
+            <textarea id="tswChatInput" rows="1" maxlength="2000" placeholder="Ask me anything..."></textarea>
+            <button type="submit" aria-label="Send message">➤</button>
+        </form>
+        <div class="tsw-chat-status" id="tswChatStatus">Connected to TheStoreWare AI</div>
+    </section>
+</div>
+
+<script>
+(function () {
+    const launcher = document.getElementById('tswChatLauncher');
+    const panel = document.getElementById('tswChatPanel');
+    const closeBtn = document.getElementById('tswChatClose');
+    const form = document.getElementById('tswChatForm');
+    const input = document.getElementById('tswChatInput');
+    const messages = document.getElementById('tswChatMessages');
+    const status = document.getElementById('tswChatStatus');
+    const sendButton = form.querySelector('button[type="submit"]');
+
+    function setOpen(open) {
+        panel.classList.toggle('open', open);
+        panel.setAttribute('aria-hidden', String(!open));
+        launcher.setAttribute('aria-expanded', String(open));
+        if (open) setTimeout(() => input.focus(), 120);
+    }
+
+    function addMessage(role, text) {
+        const message = document.createElement('div');
+        message.className = 'tsw-chat-message ' + role;
+
+        if (role === 'assistant') {
+            const avatar = document.createElement('span');
+            avatar.className = 'tsw-chat-avatar';
+            avatar.textContent = 'AI';
+            message.appendChild(avatar);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'tsw-chat-bubble';
+
+        const span = document.createElement('span');
+        span.textContent = text;
+        bubble.appendChild(span);
+        message.appendChild(bubble);
+
+        messages.appendChild(message);
+        messages.scrollTop = messages.scrollHeight;
+        return message;
+    }
+
+    function addStoreWareGuidance(text) {
+        if (!text) return;
+
+        const message = document.createElement('div');
+        message.className = 'tsw-chat-message assistant';
+
+        const avatar = document.createElement('span');
+        avatar.className = 'tsw-chat-avatar';
+        avatar.textContent = 'AI';
+        message.appendChild(avatar);
+
+        const box = document.createElement('div');
+        box.className = 'tsw-storeware-guidance';
+
+        const title = document.createElement('div');
+        title.className = 'tsw-storeware-guidance-title';
+        title.textContent = 'Explore with TheStoreWare';
+
+        const body = document.createElement('div');
+        body.className = 'tsw-storeware-guidance-text';
+        body.textContent = text;
+
+        box.appendChild(title);
+        box.appendChild(body);
+        message.appendChild(box);
+        messages.appendChild(message);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    launcher.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
+    closeBtn.addEventListener('click', () => setOpen(false));
+
+    form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const question = input.value.trim();
+        if (!question || sendButton.disabled) return;
+
+        addMessage('user', question);
+
+        input.value = '';
+        input.style.height = 'auto';
+        input.disabled = true;
+        sendButton.disabled = true;
+        status.textContent = 'TheStoreWare AI is thinking...';
+
+        const thinking = addMessage('assistant', 'Thinking...');
+
+        try {
+            const response = await fetch('/ai/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ question: question })
+            });
+
+            const data = await response.json();
+            thinking.remove();
+
+            if (!response.ok || !data.ok) {
+                throw new Error(data.error || 'Unable to get an answer right now.');
+            }
+
+            addMessage('assistant', data.answer);
+
+            // The website itself guarantees a separate TheStoreWare guidance block
+            // for RELATED and OUT_OF_SCOPE questions, even if the AI omitted
+            // storeware_guidance in its JSON response.
+            let guidance = (data.storeware_guidance || '').trim();
+            const scopeStatus = (data.scope_status || 'RELATED').toUpperCase();
+            const services = Array.isArray(data.related_services)
+                ? data.related_services.filter(Boolean)
+                : [];
+
+            if (!guidance && (scopeStatus === 'RELATED' || scopeStatus === 'OUT_OF_SCOPE')) {
+                if (services.length) {
+                    guidance =
+                        'TheStoreWare can help you continue through ' +
+                        services.join(', ') +
+                        '. What would you like to explore next?';
+                } else {
+                    guidance =
+                        'TheStoreWare can help you continue through its learning, ' +
+                        'professional, discovery, knowledge and AI services. ' +
+                        'What would you like to explore next?';
+                }
+            }
+
+            if (guidance) {
+                addStoreWareGuidance(guidance);
+            }
+
+            status.textContent = 'Connected to TheStoreWare AI';
+        } catch (error) {
+            thinking.remove();
+            addMessage(
+                'assistant',
+                error.message || 'TheStoreWare AI is temporarily unavailable. Please try again.'
+            );
+            status.textContent = 'Please try again';
+        } finally {
+            input.disabled = false;
+            sendButton.disabled = false;
+            input.focus();
+        }
+    });
+
+    function getCookie(name) {
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (const cookie of cookies) {
+            const trimmed = cookie.trim();
+            if (trimmed.startsWith(name + '=')) {
+                return decodeURIComponent(trimmed.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            form.requestSubmit();
+        }
+    });
+
+    input.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 110) + 'px';
+    });
+})();
+</script>
+
+</body>
+</html>

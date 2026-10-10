@@ -1,13 +1,162 @@
-{% load static %}
+{% load static i18n %}
 <!DOCTYPE html>
-<html lang="en">
+{% get_current_language as CURRENT_LANGUAGE %}
+<html lang="{{ CURRENT_LANGUAGE }}" dir="{% if CURRENT_LANGUAGE == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="TheStoreWare — explore AI, learning, exams, knowledge, entertainment and smart tools.">
-    <title>TheStoreWare | Explore. Learn. Create. Solve.</title>
+    <title>TheStoreWare | {% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}. Learn. Create. Solve.</title>
     <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
     <script defer src="{% static 'website/js/website_home.js' %}"></script>
+
+<style>
+.tsw-storeware-guidance {
+    max-width: 82%;
+    margin: 8px 0 10px 0;
+    padding: 12px 14px;
+    border: 1px solid rgba(14, 165, 164, 0.28);
+    border-left: 4px solid #0ea5a4;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(30, 99, 211, 0.08), rgba(14, 165, 164, 0.11));
+    box-shadow: 0 5px 14px rgba(15, 67, 123, 0.08);
+}
+.tsw-storeware-guidance-title {
+    margin-bottom: 5px;
+    font-weight: 800;
+    color: #1265c7;
+}
+.tsw-storeware-guidance-text {
+    color: #087f83;
+    font-weight: 700;
+    line-height: 1.5;
+}
+</style>
+
+
+<style>
+.tsw-language-switcher {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    margin-right: 14px;
+}
+.tsw-language-switcher form {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+}
+.tsw-language-switcher button {
+    border: 0;
+    background: transparent;
+    padding: 5px 2px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #5f6f82;
+    transition: color .2s ease;
+}
+.tsw-language-switcher button:hover,
+.tsw-language-switcher button.active {
+    color: #1265c7;
+}
+.tsw-language-switcher button.active {
+    font-weight: 800;
+}
+.tsw-language-switcher span {
+    color: #c7d1dc;
+    font-size: 0.78rem;
+}
+html[dir="rtl"] body {
+    direction: rtl;
+    text-align: right;
+}
+html[dir="rtl"] .tsw-chatbot {
+    direction: rtl;
+}
+@media (max-width: 900px) {
+    .tsw-language-switcher {
+        margin-left: 8px;
+        margin-right: 8px;
+    }
+    .tsw-language-switcher form {
+        gap: 4px;
+    }
+}
+</style>
+
+
+<style>
+html[dir="rtl"] .nav,
+html[dir="rtl"] .hero-actions,
+html[dir="rtl"] .feedback-prompts,
+html[dir="rtl"] .form-two,
+html[dir="rtl"] .footer,
+html[dir="rtl"] .tsw-chat-brand {
+    direction: rtl;
+}
+html[dir="rtl"] .section-head.left,
+html[dir="rtl"] .feedback-card,
+html[dir="rtl"] .footer-brand,
+html[dir="rtl"] .footer-subscribe,
+html[dir="rtl"] .tsw-chat-bubble,
+html[dir="rtl"] .tsw-storeware-guidance {
+    text-align: right;
+}
+html[dir="rtl"] .tsw-storeware-guidance {
+    border-left: 1px solid rgba(14, 165, 164, 0.28);
+    border-right: 4px solid #0ea5a4;
+}
+</style>
+
+
+<style>
+/* Clear language selector on the blue/teal header */
+.tsw-language-switcher {
+    margin-left: auto;
+    margin-right: 14px;
+}
+.tsw-language-switcher form {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.tsw-language-switcher button {
+    min-width: 34px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    padding: 6px 8px;
+    color: #ffffff !important;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.2;
+    opacity: 1;
+    text-shadow: 0 1px 2px rgba(0,0,0,.15);
+}
+.tsw-language-switcher button[value="ar"] {
+    min-width: 58px;
+    font-size: 15px;
+    font-family: Arial, "Noto Sans Arabic", sans-serif;
+}
+.tsw-language-switcher button:hover {
+    background: rgba(255,255,255,.14);
+}
+.tsw-language-switcher button.active {
+    background: #ffffff;
+    color: #1265c7 !important;
+    border-color: rgba(255,255,255,.75);
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+    text-shadow: none;
+}
+.tsw-language-switcher span {
+    color: rgba(255,255,255,.72) !important;
+    font-weight: 700;
+}
+</style>
+
 </head>
 <body>
 <header class="header">
@@ -17,11 +166,25 @@
             <span>TheStore<span>Ware</span></span>
         </a>
         <nav>
-            <a href="#explore">Explore</a>
-            <a href="#coming">Coming Soon</a>
-            <a href="#feedback">Share an Idea</a>
+            <a href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}</a>
+            <a href="#coming">{% if CURRENT_LANGUAGE == 'ar' %}قريباً{% elif CURRENT_LANGUAGE == 'fr' %}Bientôt{% else %}Coming Soon{% endif %}</a>
+            <a href="#feedback">{% if CURRENT_LANGUAGE == 'ar' %}شاركنا فكرة{% elif CURRENT_LANGUAGE == 'fr' %}Partager une idée{% else %}Share an Idea{% endif %}</a>
         </nav>
-        <a class="button button-small" href="#explore">Explore TheStoreWare</a>
+        <div class="tsw-language-switcher" aria-label="Language selector">
+            <form action="{% url 'set_language' %}" method="post">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.get_full_path }}">
+                <button type="submit" name="language" value="en"
+                        class="{% if CURRENT_LANGUAGE == 'en' %}active{% endif %}">EN</button>
+                <span>|</span>
+                <button type="submit" name="language" value="ar"
+                        class="{% if CURRENT_LANGUAGE == 'ar' %}active{% endif %}">العربية</button>
+                <span>|</span>
+                <button type="submit" name="language" value="fr"
+                        class="{% if CURRENT_LANGUAGE == 'fr' %}active{% endif %}">FR</button>
+            </form>
+        </div>
+        <a class="button button-small" href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف TheStoreWare{% elif CURRENT_LANGUAGE == 'fr' %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}r TheStoreWare{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} TheStoreWare{% endif %}</a>
     </div>
 </header>
 
@@ -30,19 +193,19 @@
     <div class="hero-glow glow-a"></div>
     <div class="hero-glow glow-b"></div>
     <div class="shell platform-hero-inner reveal">
-        <div class="launch-badge">THESTOREWARE • BUILDING FOR EVERYONE</div>
-        <h1>Explore. Learn. Create.<br><em>Solve. With AI.</em></h1>
+        <div class="launch-badge">{% if CURRENT_LANGUAGE == 'ar' %}THESTOREWARE • نبني للجميع{% elif CURRENT_LANGUAGE == 'fr' %}THESTOREWARE • CONÇU POUR TOUS{% else %}THESTOREWARE • BUILDING FOR EVERYONE{% endif %}</div>
+        <h1>{% if CURRENT_LANGUAGE == 'ar' %}استكشف. تعلّم. ابتكر.<br><em>حلّ. مع الذكاء الاصطناعي.</em>{% elif CURRENT_LANGUAGE == 'fr' %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}z. Apprenez. Créez.<br><em>Résolvez. Avec l’IA.</em>{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}. Learn. Create.<br><em>Solve. With AI.</em>{% endif %}</h1>
         <p>
             A growing knowledge and technology platform bringing together artificial intelligence,
             learning, professional development, entertainment, useful information and smart digital tools.
         </p>
         <div class="hero-actions">
-            <a class="button" href="#explore">Explore What's Coming <span>↓</span></a>
-            <a class="button secondary" href="#feedback">Share an Idea <span>→</span></a>
+            <a class="button" href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف ما هو قادم <span>↓</span>{% elif CURRENT_LANGUAGE == 'fr' %}Découvrez ce qui arrive <span>↓</span>{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} What's Coming <span>↓</span>{% endif %}</a>
+            <a class="button secondary" href="#feedback">{% if CURRENT_LANGUAGE == 'ar' %}شاركنا فكرة <span>←</span>{% elif CURRENT_LANGUAGE == 'fr' %}Partager une idée <span>→</span>{% else %}{% if CURRENT_LANGUAGE == 'ar' %}شاركنا فكرة{% elif CURRENT_LANGUAGE == 'fr' %}Partager une idée{% else %}Share an Idea{% endif %} <span>→</span>{% endif %}</a>
         </div>
         <div class="coming-banner" id="coming">
             <span class="pulse-dot"></span>
-            <div><strong>COMING SOON</strong><small>New experiences, subjects and tools are being built step by step.</small></div>
+            <div><strong>{% if CURRENT_LANGUAGE == 'ar' %}قريباً{% elif CURRENT_LANGUAGE == 'fr' %}BIENTÔT{% else %}COMING SOON{% endif %}</strong><small>{% if CURRENT_LANGUAGE == 'ar' %}نعمل خطوة بخطوة على تطوير تجارب ومواضيع وأدوات جديدة.{% elif CURRENT_LANGUAGE == 'fr' %}De nouvelles expériences, thématiques et outils sont développés étape par étape.{% else %}New experiences, subjects and tools are being built step by step.{% endif %}</small></div>
         </div>
     </div>
 </section>
@@ -50,9 +213,9 @@
 <section class="section explore-section" id="explore">
     <div class="shell">
         <div class="section-head reveal">
-            <span class="kicker">DISCOVER THESTOREWARE</span>
-            <h2>One platform. <em>Many possibilities.</em></h2>
-            <p>Choose an area to discover what TheStoreWare is building.</p>
+            <span class="kicker">{% if CURRENT_LANGUAGE == 'ar' %}اكتشف THESTOREWARE{% elif CURRENT_LANGUAGE == 'fr' %}DÉCOUVREZ THESTOREWARE{% else %}DISCOVER THESTOREWARE{% endif %}</span>
+            <h2>{% if CURRENT_LANGUAGE == 'ar' %}منصة واحدة. <em>إمكانات عديدة.</em>{% elif CURRENT_LANGUAGE == 'fr' %}Une plateforme. <em>De nombreuses possibilités.</em>{% else %}One platform. <em>Many possibilities.</em>{% endif %}</h2>
+            <p>{% if CURRENT_LANGUAGE == 'ar' %}اختر مجالاً لاكتشاف ما تعمل TheStoreWare على تطويره.{% elif CURRENT_LANGUAGE == 'fr' %}Choisissez un domaine pour découvrir ce que TheStoreWare développe.{% else %}Choose an area to discover what TheStoreWare is building.{% endif %}</p>
         </div>
 
         <div class="portal-grid">
@@ -61,15 +224,37 @@
                 <div class="portal-art {{ item.art_class }}">
                     <span class="portal-icon">{{ item.icon }}</span>
                     {% if item.slug == "ai-agent" %}
-                    <span class="status">AVAILABLE NOW</span>
+                    <span class="status">{% if CURRENT_LANGUAGE == 'ar' %}متاح الآن{% elif CURRENT_LANGUAGE == 'fr' %}DISPONIBLE{% else %}AVAILABLE NOW{% endif %}</span>
                     {% else %}
-                    <span class="status coming-soon-status">COMING SOON</span>
+                    <span class="status coming-soon-status">{% if CURRENT_LANGUAGE == 'ar' %}قريباً{% elif CURRENT_LANGUAGE == 'fr' %}BIENTÔT{% else %}COMING SOON{% endif %}</span>
                     {% endif %}
                 </div>
                 <div class="portal-copy">
-                    <h3>{{ item.title }}</h3>
-                    <p>{{ item.summary }}</p>
-                    <span class="portal-link">Discover {{ item.title }} <b>→</b></span>
+                    {% if CURRENT_LANGUAGE == 'ar' %}
+                        {% if item.slug == "ai-agent" %}<h3>الوكيل الذكي</h3><p>تفاعل مع مساعد ذكي للإجابة والتحليل والاستكشاف.</p><span class="portal-link">اكتشف الوكيل الذكي <b>←</b></span>
+                        {% elif item.slug == "courses" %}<h3>الدورات</h3><p>تعلّم من خلال محتوى منظم وعملي ومتطور باستمرار.</p><span class="portal-link">اكتشف الدورات <b>←</b></span>
+                        {% elif item.slug == "exams-quizzes" %}<h3>الاختبارات والمسابقات</h3><p>اختبر معلوماتك وتدرّب وتابع تقدمك.</p><span class="portal-link">اكتشف الاختبارات والمسابقات <b>←</b></span>
+                        {% elif item.slug == "professional" %}<h3>التطوير المهني</h3><p>معرفة وأدوات تساعد على تطوير المهارات والعمل.</p><span class="portal-link">اكتشف التطوير المهني <b>←</b></span>
+                        {% elif item.slug == "entertainment-discovery" %}<h3>الترفيه والاستكشاف</h3><p>اكتشف مواضيع وأماكن وأفكاراً وتجارب جديدة.</p><span class="portal-link">اكتشف الترفيه والاستكشاف <b>←</b></span>
+                        {% elif item.slug == "knowledge-hub" %}<h3>مركز المعرفة</h3><p>استكشف معلومات مفيدة ومنظمة في مجالات متنوعة.</p><span class="portal-link">اكتشف مركز المعرفة <b>←</b></span>
+                        {% elif item.slug == "smart-tools" %}<h3>الأدوات الذكية</h3><p>أدوات رقمية عملية تساعدك على إنجاز المهام بشكل أسرع.</p><span class="portal-link">اكتشف الأدوات الذكية <b>←</b></span>
+                        {% elif item.slug == "ai-lab" %}<h3>مختبر الذكاء الاصطناعي</h3><p>جرّب أفكاراً وقدرات جديدة مدعومة بالذكاء الاصطناعي.</p><span class="portal-link">اكتشف مختبر الذكاء الاصطناعي <b>←</b></span>
+                        {% else %}<h3>{{ item.title }}</h3><p>{{ item.summary }}</p><span class="portal-link">اكتشف {{ item.title }} <b>←</b></span>{% endif %}
+                    {% elif CURRENT_LANGUAGE == 'fr' %}
+                        {% if item.slug == "ai-agent" %}<h3>Agent IA</h3><p>Interagissez avec un assistant intelligent pour répondre, analyser et explorer.</p><span class="portal-link">Découvrir l’Agent IA <b>→</b></span>
+                        {% elif item.slug == "courses" %}<h3>Cours</h3><p>Apprenez grâce à un contenu structuré, pratique et en constante évolution.</p><span class="portal-link">Découvrir les cours <b>→</b></span>
+                        {% elif item.slug == "exams-quizzes" %}<h3>Examens & Quiz</h3><p>Testez vos connaissances, entraînez-vous et suivez vos progrès.</p><span class="portal-link">Découvrir les examens & quiz <b>→</b></span>
+                        {% elif item.slug == "professional" %}<h3>Développement professionnel</h3><p>Des connaissances et des outils pour développer vos compétences et votre travail.</p><span class="portal-link">Découvrir le professionnel <b>→</b></span>
+                        {% elif item.slug == "entertainment-discovery" %}<h3>Divertissement & Découverte</h3><p>Explorez de nouveaux sujets, lieux, idées et expériences.</p><span class="portal-link">Découvrir et explorer <b>→</b></span>
+                        {% elif item.slug == "knowledge-hub" %}<h3>Centre de connaissances</h3><p>Explorez des informations utiles et structurées dans différents domaines.</p><span class="portal-link">Découvrir le centre de connaissances <b>→</b></span>
+                        {% elif item.slug == "smart-tools" %}<h3>Outils intelligents</h3><p>Des outils numériques pratiques pour accomplir vos tâches plus rapidement.</p><span class="portal-link">Découvrir les outils intelligents <b>→</b></span>
+                        {% elif item.slug == "ai-lab" %}<h3>Laboratoire IA</h3><p>Expérimentez de nouvelles idées et capacités alimentées par l’intelligence artificielle.</p><span class="portal-link">Découvrir le laboratoire IA <b>→</b></span>
+                        {% else %}<h3>{{ item.title }}</h3><p>{{ item.summary }}</p><span class="portal-link">Découvrir {{ item.title }} <b>→</b></span>{% endif %}
+                    {% else %}
+                        <h3>{{ item.title }}</h3>
+                        <p>{{ item.summary }}</p>
+                        <span class="portal-link">Discover {{ item.title }} <b>→</b></span>
+                    {% endif %}
                 </div>
             </a>
             {% endfor %}
@@ -80,12 +265,12 @@
 <section class="section vision-section">
     <div class="shell vision-card reveal">
         <div>
-            <span class="kicker">THE VISION</span>
-            <h2>Knowledge should be more than something you read.</h2>
-            <p>Ask it. Explore it. Practice it. Create with it. TheStoreWare is being designed to make information useful, interactive and easier to understand.</p>
+            <span class="kicker">{% if CURRENT_LANGUAGE == 'ar' %}الرؤية{% elif CURRENT_LANGUAGE == 'fr' %}LA VISION{% else %}THE VISION{% endif %}</span>
+            <h2>{% if CURRENT_LANGUAGE == 'ar' %}يجب أن تكون المعرفة أكثر من مجرد شيء تقرؤه.{% elif CURRENT_LANGUAGE == 'fr' %}La connaissance doit être plus que quelque chose que l’on lit.{% else %}Knowledge should be more than something you read.{% endif %}</h2>
+            <p>{% if CURRENT_LANGUAGE == 'ar' %}اسأل عنها. استكشفها. طبّقها. وابتكر بها. صُممت TheStoreWare لجعل المعلومات أكثر فائدة وتفاعلاً وأسهل فهماً.{% elif CURRENT_LANGUAGE == 'fr' %}Interrogez-la. {% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}z-la. Pratiquez-la. Créez avec elle. TheStoreWare est conçu pour rendre l’information utile, interactive et plus facile à comprendre.{% else %}Ask it. {% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} it. Practice it. Create with it. TheStoreWare is being designed to make information useful, interactive and easier to understand.{% endif %}</p>
         </div>
         <div class="vision-flow">
-            <span>LEARN</span><b>→</b><span>ASK</span><b>→</b><span>PRACTICE</span><b>→</b><span>CREATE</span><b>→</b><span>DISCOVER</span>
+            {% if CURRENT_LANGUAGE == 'ar' %}<span>تعلّم</span><b>←</b><span>اسأل</span><b>←</b><span>طبّق</span><b>←</b><span>ابتكر</span><b>←</b><span>اكتشف</span>{% elif CURRENT_LANGUAGE == 'fr' %}<span>APPRENDRE</span><b>→</b><span>DEMANDER</span><b>→</b><span>PRATIQUER</span><b>→</b><span>CRÉER</span><b>→</b><span>DÉCOUVRIR</span>{% else %}<span>LEARN</span><b>→</b><span>ASK</span><b>→</b><span>PRACTICE</span><b>→</b><span>CREATE</span><b>→</b><span>DISCOVER</span>{% endif %}
         </div>
     </div>
 </section>
@@ -93,58 +278,64 @@
 <section class="section feedback" id="feedback">
     <div class="shell feedback-grid">
         <div class="section-head left reveal">
-            <span class="kicker">HELP BUILD THESTOREWARE</span>
-            <h2>Your idea could become<br><em>our next feature.</em></h2>
+            <span class="kicker">{% if CURRENT_LANGUAGE == 'ar' %}ساهم في بناء THESTOREWARE{% elif CURRENT_LANGUAGE == 'fr' %}AIDEZ À CONSTRUIRE THESTOREWARE{% else %}HELP BUILD THESTOREWARE{% endif %}</span>
+            <h2>{% if CURRENT_LANGUAGE == 'ar' %}قد تصبح فكرتك<br><em>ميزتنا القادمة.</em>{% elif CURRENT_LANGUAGE == 'fr' %}Votre idée pourrait devenir<br><em>notre prochaine fonctionnalité.</em>{% else %}Your idea could become<br><em>our next feature.</em>{% endif %}</h2>
             <p>
-                TheStoreWare is being built interactively with its users.
+                {% if CURRENT_LANGUAGE == 'ar' %}يتم تطوير TheStoreWare بالتفاعل مع مستخدميها.
+                شاركنا أفكارك واقترح ميزات جديدة وأخبرنا بما ترغب في رؤيته مستقبلاً.
+                ستساعدنا ملاحظاتك في تحديد ما ينبغي تحسينه وتطويره.{% elif CURRENT_LANGUAGE == 'fr' %}TheStoreWare se construit de manière interactive avec ses utilisateurs.
+                Partagez vos idées, proposez des fonctionnalités et dites-nous ce que vous aimeriez voir ensuite.
+                Vos retours nous aideront à décider quoi améliorer et développer.{% else %}TheStoreWare is being built interactively with its users.
                 Share your ideas, suggest features and tell us what you would like to see next.
-                Your feedback will help us decide what to improve and build.
+                Your feedback will help us decide what to improve and build.{% endif %}
             </p>
             <div class="feedback-prompts">
-                <span>New Tool</span><span>New Course</span><span>Exam / Quiz</span>
-                <span>Knowledge Topic</span><span>AI Feature</span><span>Website Improvement</span>
+                <span>{% if CURRENT_LANGUAGE == 'ar' %}أداة جديدة{% elif CURRENT_LANGUAGE == 'fr' %}Nouvel outil{% else %}New Tool{% endif %}</span><span>{% if CURRENT_LANGUAGE == 'ar' %}دورة جديدة{% elif CURRENT_LANGUAGE == 'fr' %}Nouveau cours{% else %}New Course{% endif %}</span><span>{% if CURRENT_LANGUAGE == 'ar' %}اختبار / مسابقة{% elif CURRENT_LANGUAGE == 'fr' %}Examen / Quiz{% else %}Exam / Quiz{% endif %}</span>
+                <span>{% if CURRENT_LANGUAGE == 'ar' %}موضوع معرفي{% elif CURRENT_LANGUAGE == 'fr' %}Sujet de connaissance{% else %}Knowledge Topic{% endif %}</span><span>{% if CURRENT_LANGUAGE == 'ar' %}ميزة ذكاء اصطناعي{% elif CURRENT_LANGUAGE == 'fr' %}Fonctionnalité IA{% else %}AI Feature{% endif %}</span><span>{% if CURRENT_LANGUAGE == 'ar' %}تحسين الموقع{% elif CURRENT_LANGUAGE == 'fr' %}Amélioration du site{% else %}Website Improvement{% endif %}</span>
             </div>
         </div>
 
         <form class="feedback-card reveal" method="post" action="{% url 'submit_feedback' %}">
             {% csrf_token %}
             {% if feedback_success %}
-                <div class="success-message"><strong>Thank you!</strong> Your idea has been received and will help shape TheStoreWare.</div>
+                <div class="success-message">{% if CURRENT_LANGUAGE == 'ar' %}<strong>شكراً لك!</strong> تم استلام فكرتك وستساهم في تطوير TheStoreWare.{% elif CURRENT_LANGUAGE == 'fr' %}<strong>Merci !</strong> Votre idée a bien été reçue et contribuera à façonner TheStoreWare.{% else %}<strong>Thank you!</strong> Your idea has been received and will help shape TheStoreWare.{% endif %}</div>
             {% endif %}
             {% if feedback_error %}
                 <div class="error-message">{{ feedback_error }}</div>
             {% endif %}
 
-            <label for="category">What would you like us to build or improve?</label>
+            <label for="category">{% if CURRENT_LANGUAGE == 'ar' %}ما الذي ترغب أن نطوره أو نحسّنه؟{% elif CURRENT_LANGUAGE == 'fr' %}Que souhaitez-vous que nous développions ou améliorions ?{% else %}What would you like us to build or improve?{% endif %}</label>
             <select id="category" name="category" required>
-                <option value="">Select a category</option>
-                <option>New Tool</option>
-                <option>New Course</option>
-                <option>Exam / Quiz</option>
-                <option>Knowledge Topic</option>
-                <option>AI Feature</option>
-                <option>Website Improvement</option>
-                <option>Other</option>
+                <option value="">{% if CURRENT_LANGUAGE == 'ar' %}اختر فئة{% elif CURRENT_LANGUAGE == 'fr' %}Sélectionnez une catégorie{% else %}Select a category{% endif %}</option>
+                <option>{% if CURRENT_LANGUAGE == 'ar' %}أداة جديدة{% elif CURRENT_LANGUAGE == 'fr' %}Nouvel outil{% else %}New Tool{% endif %}</option>
+                <option>{% if CURRENT_LANGUAGE == 'ar' %}دورة جديدة{% elif CURRENT_LANGUAGE == 'fr' %}Nouveau cours{% else %}New Course{% endif %}</option>
+                <option>{% if CURRENT_LANGUAGE == 'ar' %}اختبار / مسابقة{% elif CURRENT_LANGUAGE == 'fr' %}Examen / Quiz{% else %}Exam / Quiz{% endif %}</option>
+                <option>{% if CURRENT_LANGUAGE == 'ar' %}موضوع معرفي{% elif CURRENT_LANGUAGE == 'fr' %}Sujet de connaissance{% else %}Knowledge Topic{% endif %}</option>
+                <option>{% if CURRENT_LANGUAGE == 'ar' %}ميزة ذكاء اصطناعي{% elif CURRENT_LANGUAGE == 'fr' %}Fonctionnalité IA{% else %}AI Feature{% endif %}</option>
+                <option>{% if CURRENT_LANGUAGE == 'ar' %}تحسين الموقع{% elif CURRENT_LANGUAGE == 'fr' %}Amélioration du site{% else %}Website Improvement{% endif %}</option>
+                <option>{% if CURRENT_LANGUAGE == 'ar' %}أخرى{% elif CURRENT_LANGUAGE == 'fr' %}Autre{% else %}Other{% endif %}</option>
             </select>
 
-            <label for="message">Your idea or feedback</label>
-            <textarea id="message" name="message" maxlength="4000" required placeholder="Tell us what would make TheStoreWare more useful to you..."></textarea>
+            <label for="message">{% if CURRENT_LANGUAGE == 'ar' %}فكرتك أو ملاحظتك{% elif CURRENT_LANGUAGE == 'fr' %}Votre idée ou commentaire{% else %}Your idea or feedback{% endif %}</label>
+            <textarea id="message" name="message" maxlength="4000" required placeholder="{% if CURRENT_LANGUAGE == 'ar' %}أخبرنا ما الذي يجعل TheStoreWare أكثر فائدة لك...{% elif CURRENT_LANGUAGE == 'fr' %}Dites-nous ce qui rendrait TheStoreWare plus utile pour vous...{% else %}Tell us what would make TheStoreWare more useful to you...{% endif %}"></textarea>
 
             <div class="form-two">
                 <div>
-                    <label for="name">Name <small>(optional)</small></label>
-                    <input id="name" name="name" maxlength="120" placeholder="Your name">
+                    <label for="name">{% if CURRENT_LANGUAGE == 'ar' %}الاسم <small>(اختياري)</small>{% elif CURRENT_LANGUAGE == 'fr' %}Nom <small>(facultatif)</small>{% else %}Name <small>(optional)</small>{% endif %}</label>
+                    <input id="name" name="name" maxlength="120" placeholder="{% if CURRENT_LANGUAGE == 'ar' %}اسمك{% elif CURRENT_LANGUAGE == 'fr' %}Votre nom{% else %}Your name{% endif %}">
                 </div>
                 <div>
-                    <label for="email">Email <small>(optional)</small></label>
+                    <label for="email">{% if CURRENT_LANGUAGE == 'ar' %}البريد الإلكتروني <small>(اختياري)</small>{% elif CURRENT_LANGUAGE == 'fr' %}E-mail <small>(facultatif)</small>{% else %}Email <small>(optional)</small>{% endif %}</label>
                     <input id="email" type="email" name="email" maxlength="254" placeholder="you@example.com">
                 </div>
             </div>
 
-            <button type="submit" class="button feedback-submit">Send My Idea <span>→</span></button>
+            <button type="submit" class="button feedback-submit">{% if CURRENT_LANGUAGE == 'ar' %}أرسل فكرتي <span>←</span>{% elif CURRENT_LANGUAGE == 'fr' %}Envoyer mon idée <span>→</span>{% else %}Send My Idea <span>→</span>{% endif %}</button>
             <small class="feedback-note">
-                Your email is optional and is only needed if you would like us to contact you about your suggestion.
-                Submitted feedback is securely recorded for review.
+                {% if CURRENT_LANGUAGE == 'ar' %}بريدك الإلكتروني اختياري، ونحتاجه فقط إذا رغبت في أن نتواصل معك بشأن اقتراحك.
+                يتم حفظ الملاحظات المرسلة بشكل آمن للمراجعة.{% elif CURRENT_LANGUAGE == 'fr' %}Votre e-mail est facultatif et n’est nécessaire que si vous souhaitez que nous vous contactions au sujet de votre suggestion.
+                Les commentaires envoyés sont enregistrés de manière sécurisée pour examen.{% else %}Your email is optional and is only needed if you would like us to contact you about your suggestion.
+                Submitted feedback is securely recorded for review.{% endif %}
             </small>
         </form>
     </div>
@@ -155,33 +346,251 @@
     <div class="shell footer footer-expanded">
         <div class="footer-brand">
             <a class="logo" href="{% url 'home' %}"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a>
-            <p>Your Knowledge. Your AI.</p>
+            <p>{% if CURRENT_LANGUAGE == 'ar' %}معرفتك. ذكاؤك الاصطناعي.{% elif CURRENT_LANGUAGE == 'fr' %}Vos connaissances. Votre IA.{% else %}Your Knowledge. Your AI.{% endif %}</p>
             <a class="footer-email" href="mailto:info@thestoreware.com">✉ info@thestoreware.com</a>
-            <small class="footer-official">Official contact for TheStoreWare</small>
+            <small class="footer-official">{% if CURRENT_LANGUAGE == 'ar' %}جهة الاتصال الرسمية لـ TheStoreWare{% elif CURRENT_LANGUAGE == 'fr' %}Contact officiel de TheStoreWare{% else %}Official contact for TheStoreWare{% endif %}</small>
         </div>
 
         <div class="footer-subscribe">
-            <strong>Stay Updated</strong>
-            <p>New AI tools, courses and resources are coming.</p>
+            <strong>{% if CURRENT_LANGUAGE == 'ar' %}ابقَ على اطلاع{% elif CURRENT_LANGUAGE == 'fr' %}Restez informé{% else %}Stay Updated{% endif %}</strong>
+            <p>{% if CURRENT_LANGUAGE == 'ar' %}أدوات ذكاء اصطناعي ودورات وموارد جديدة قادمة.{% elif CURRENT_LANGUAGE == 'fr' %}De nouveaux outils d’IA, cours et ressources arrivent bientôt.{% else %}New AI tools, courses and resources are coming.{% endif %}</p>
             <form class="subscribe-preview" id="subscribe" method="post" action="{% url 'subscribe' %}">
                 {% csrf_token %}
-                <input type="email" name="email" maxlength="254" placeholder="Your email address" required>
-                <button type="submit" class="button">Subscribe</button>
+                <input type="email" name="email" maxlength="254" placeholder="{% if CURRENT_LANGUAGE == 'ar' %}بريدك الإلكتروني{% elif CURRENT_LANGUAGE == 'fr' %}Votre adresse e-mail{% else %}Your email address{% endif %}" required>
+                <button type="submit" class="button">{% if CURRENT_LANGUAGE == 'ar' %}اشترك{% elif CURRENT_LANGUAGE == 'fr' %}S’abonner{% else %}Subscribe{% endif %}</button>
             </form>
 
             {% if request.GET.subscribe == "success" %}
-                <small class="subscribe-message subscribe-success">Thank you! You are now subscribed.</small>
+                <small class="subscribe-message subscribe-success">{% if CURRENT_LANGUAGE == 'ar' %}شكراً لك! تم اشتراكك الآن.{% elif CURRENT_LANGUAGE == 'fr' %}Merci ! Vous êtes maintenant abonné.{% else %}Thank you! You are now subscribed.{% endif %}</small>
             {% elif request.GET.subscribe == "exists" %}
-                <small class="subscribe-message">This email is already subscribed.</small>
+                <small class="subscribe-message">{% if CURRENT_LANGUAGE == 'ar' %}هذا البريد الإلكتروني مشترك بالفعل.{% elif CURRENT_LANGUAGE == 'fr' %}Cette adresse e-mail est déjà abonnée.{% else %}This email is already subscribed.{% endif %}</small>
             {% elif request.GET.subscribe == "invalid" %}
-                <small class="subscribe-message subscribe-error">Please enter a valid email address.</small>
+                <small class="subscribe-message subscribe-error">{% if CURRENT_LANGUAGE == 'ar' %}يرجى إدخال بريد إلكتروني صالح.{% elif CURRENT_LANGUAGE == 'fr' %}Veuillez saisir une adresse e-mail valide.{% else %}Please enter a valid email address.{% endif %}</small>
             {% else %}
-                <small>Subscribe to receive updates from TheStoreWare.</small>
+                <small>{% if CURRENT_LANGUAGE == 'ar' %}اشترك لتصلك تحديثات TheStoreWare.{% elif CURRENT_LANGUAGE == 'fr' %}Abonnez-vous pour recevoir les nouveautés de TheStoreWare.{% else %}{% if CURRENT_LANGUAGE == 'ar' %}اشترك{% elif CURRENT_LANGUAGE == 'fr' %}S’abonner{% else %}Subscribe{% endif %} to receive updates from TheStoreWare.{% endif %}</small>
             {% endif %}
         </div>
 
     </div>
-    <div class="shell footer-bottom">© 2026 TheStoreWare. All rights reserved.</div>
+    <div class="shell footer-bottom">{% if CURRENT_LANGUAGE == 'ar' %}© 2026 TheStoreWare. جميع الحقوق محفوظة.{% elif CURRENT_LANGUAGE == 'fr' %}© 2026 TheStoreWare. Tous droits réservés.{% else %}© 2026 TheStoreWare. All rights reserved.{% endif %}</div>
 </footer>
+
+<!-- TheStoreWare AI Chatbot -->
+<div class="tsw-chatbot" id="tswChatbot">
+    <button class="tsw-chat-launcher" id="tswChatLauncher" type="button"
+            aria-label="Open TheStoreWare AI chat" aria-expanded="false">
+        <span class="tsw-chat-launcher-icon" aria-hidden="true">
+            <span></span><span></span><span></span>
+        </span>
+    </button>
+
+    <section class="tsw-chat-panel" id="tswChatPanel" aria-hidden="true" aria-label="TheStoreWare AI chat">
+        <div class="tsw-chat-header">
+            <div class="tsw-chat-brand">
+                <span class="tsw-chat-logo">AI</span>
+                <div>
+                    <strong>TheStoreWare AI</strong>
+                    <small>{% if CURRENT_LANGUAGE == 'ar' %}معرفتك. ذكاؤك الاصطناعي.{% elif CURRENT_LANGUAGE == 'fr' %}Vos connaissances. Votre IA.{% else %}Your Knowledge. Your AI.{% endif %}</small>
+                </div>
+            </div>
+            <button class="tsw-chat-close" id="tswChatClose" type="button" aria-label="Close chat">×</button>
+        </div>
+
+        <div class="tsw-chat-messages" id="tswChatMessages">
+            <div class="tsw-chat-message assistant">
+                <span class="tsw-chat-avatar">AI</span>
+                <div class="tsw-chat-bubble">
+                    <strong>Hello! 👋</strong>
+                    <span>{% if CURRENT_LANGUAGE == 'ar' %}كيف يمكنني مساعدتك اليوم؟{% elif CURRENT_LANGUAGE == 'fr' %}Comment puis-je vous aider aujourd’hui ?{% else %}How can I help you today?{% endif %}</span>
+                </div>
+            </div>
+        </div>
+
+        <form class="tsw-chat-form" id="tswChatForm">
+            <label class="sr-only" for="tswChatInput">{% if CURRENT_LANGUAGE == 'ar' %}اسأل TheStoreWare AI{% elif CURRENT_LANGUAGE == 'fr' %}Demander à TheStoreWare AI{% else %}Ask TheStoreWare AI{% endif %}</label>
+            <textarea id="tswChatInput" rows="1" maxlength="2000" placeholder="{% if CURRENT_LANGUAGE == 'ar' %}اسألني أي شيء...{% elif CURRENT_LANGUAGE == 'fr' %}Posez-moi votre question...{% else %}Ask me anything...{% endif %}"></textarea>
+            <button type="submit" aria-label="Send message">➤</button>
+        </form>
+        <div class="tsw-chat-status" id="tswChatStatus">{% if CURRENT_LANGUAGE == 'ar' %}متصل بـ TheStoreWare AI{% elif CURRENT_LANGUAGE == 'fr' %}Connecté à TheStoreWare AI{% else %}Connected to TheStoreWare AI{% endif %}</div>
+    </section>
+</div>
+
+<script>
+(function () {
+    const launcher = document.getElementById('tswChatLauncher');
+    const panel = document.getElementById('tswChatPanel');
+    const closeBtn = document.getElementById('tswChatClose');
+    const form = document.getElementById('tswChatForm');
+    const input = document.getElementById('tswChatInput');
+    const messages = document.getElementById('tswChatMessages');
+    const status = document.getElementById('tswChatStatus');
+    const sendButton = form.querySelector('button[type="submit"]');
+
+    const uiText = {
+        explore: {% if CURRENT_LANGUAGE == 'ar' %}'استكشف مع TheStoreWare'{% elif CURRENT_LANGUAGE == 'fr' %}'Découvrez avec TheStoreWare'{% else %}'Explore with TheStoreWare'{% endif %},
+        thinking: {% if CURRENT_LANGUAGE == 'ar' %}'TheStoreWare AI يفكر...'{% elif CURRENT_LANGUAGE == 'fr' %}'TheStoreWare AI réfléchit...'{% else %}'TheStoreWare AI is thinking...'{% endif %},
+        thinkingBubble: {% if CURRENT_LANGUAGE == 'ar' %}'جارٍ التفكير...'{% elif CURRENT_LANGUAGE == 'fr' %}'Réflexion en cours...'{% else %}'Thinking...'{% endif %},
+        connected: {% if CURRENT_LANGUAGE == 'ar' %}'متصل بـ TheStoreWare AI'{% elif CURRENT_LANGUAGE == 'fr' %}'Connecté à TheStoreWare AI'{% else %}'Connected to TheStoreWare AI'{% endif %},
+        retry: {% if CURRENT_LANGUAGE == 'ar' %}'يرجى المحاولة مرة أخرى'{% elif CURRENT_LANGUAGE == 'fr' %}'Veuillez réessayer'{% else %}'Please try again'{% endif %}
+    };
+
+    function setOpen(open) {
+        panel.classList.toggle('open', open);
+        panel.setAttribute('aria-hidden', String(!open));
+        launcher.setAttribute('aria-expanded', String(open));
+        if (open) setTimeout(() => input.focus(), 120);
+    }
+
+    function addMessage(role, text) {
+        const message = document.createElement('div');
+        message.className = 'tsw-chat-message ' + role;
+
+        if (role === 'assistant') {
+            const avatar = document.createElement('span');
+            avatar.className = 'tsw-chat-avatar';
+            avatar.textContent = 'AI';
+            message.appendChild(avatar);
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'tsw-chat-bubble';
+
+        const span = document.createElement('span');
+        span.textContent = text;
+        bubble.appendChild(span);
+        message.appendChild(bubble);
+
+        messages.appendChild(message);
+        messages.scrollTop = messages.scrollHeight;
+        return message;
+    }
+
+    function addStoreWareGuidance(text) {
+        if (!text) return;
+
+        const message = document.createElement('div');
+        message.className = 'tsw-chat-message assistant';
+
+        const avatar = document.createElement('span');
+        avatar.className = 'tsw-chat-avatar';
+        avatar.textContent = 'AI';
+        message.appendChild(avatar);
+
+        const box = document.createElement('div');
+        box.className = 'tsw-storeware-guidance';
+
+        const title = document.createElement('div');
+        title.className = 'tsw-storeware-guidance-title';
+        title.textContent = '{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} with TheStoreWare';
+
+        const body = document.createElement('div');
+        body.className = 'tsw-storeware-guidance-text';
+        body.textContent = text;
+
+        box.appendChild(title);
+        box.appendChild(body);
+        message.appendChild(box);
+        messages.appendChild(message);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    launcher.addEventListener('click', () => setOpen(!panel.classList.contains('open')));
+    closeBtn.addEventListener('click', () => setOpen(false));
+
+    form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        const question = input.value.trim();
+        if (!question || sendButton.disabled) return;
+
+        addMessage('user', question);
+
+        input.value = '';
+        input.style.height = 'auto';
+        input.disabled = true;
+        sendButton.disabled = true;
+        status.textContent = uiText.thinking;
+
+        const thinking = addMessage('assistant', uiText.thinkingBubble);
+
+        try {
+            const response = await fetch('/ai/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ question: question })
+            });
+
+            const data = await response.json();
+            thinking.remove();
+
+            if (!response.ok || !data.ok) {
+                throw new Error(data.error || 'Unable to get an answer right now.');
+            }
+
+            addMessage('assistant', data.answer);
+
+            // Render TheStoreWare service guidance separately from the AI answer.
+            const guidance = (data.storeware_guidance || '').trim();
+            if (guidance) {
+                const guidanceBox = document.createElement('div');
+                guidanceBox.className = 'tsw-storeware-guidance';
+
+                const guidanceTitle = document.createElement('div');
+                guidanceTitle.className = 'tsw-storeware-guidance-title';
+                guidanceTitle.textContent = '{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} with TheStoreWare';
+
+                const guidanceText = document.createElement('div');
+                guidanceText.className = 'tsw-storeware-guidance-text';
+                guidanceText.textContent = guidance;
+
+                guidanceBox.appendChild(guidanceTitle);
+                guidanceBox.appendChild(guidanceText);
+                messages.appendChild(guidanceBox);
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            status.textContent = '{% if CURRENT_LANGUAGE == 'ar' %}متصل بـ TheStoreWare AI{% elif CURRENT_LANGUAGE == 'fr' %}Connecté à TheStoreWare AI{% else %}Connected to TheStoreWare AI{% endif %}';
+        } catch (error) {
+            thinking.remove();
+            addMessage(
+                'assistant',
+                error.message || 'TheStoreWare AI is temporarily unavailable. Please try again.'
+            );
+            status.textContent = uiText.retry;
+        } finally {
+            input.disabled = false;
+            sendButton.disabled = false;
+            input.focus();
+        }
+    });
+
+    function getCookie(name) {
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (const cookie of cookies) {
+            const trimmed = cookie.trim();
+            if (trimmed.startsWith(name + '=')) {
+                return decodeURIComponent(trimmed.substring(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    input.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            form.requestSubmit();
+        }
+    });
+
+    input.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 110) + 'px';
+    });
+})();
+</script>
+
 </body>
 </html>
