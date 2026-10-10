@@ -384,7 +384,7 @@ def subscribe_profile(request):
 
 def sitemap_xml(request):
     """Public XML sitemap for Google and other search engines."""
-    base_url = request.build_absolute_uri("/").rstrip("/")
+    base_url = "https://thestoreware.com"
 
     public_urls = [
         f"{base_url}/",
@@ -410,7 +410,7 @@ def sitemap_xml(request):
 
 def robots_txt(request):
     """Public robots.txt allowing indexing and advertising the sitemap."""
-    sitemap_url = request.build_absolute_uri(reverse("sitemap"))
+    sitemap_url = "https://thestoreware.com/sitemap.xml"
     content = (
         "User-agent: *\n"
         "Allow: /\n"
