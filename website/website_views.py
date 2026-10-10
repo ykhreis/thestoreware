@@ -3,6 +3,7 @@ from django.core.mail import EmailMessage, get_connection, send_mail
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone
 
@@ -380,3 +381,44 @@ def subscribe_profile(request):
             "subscriber_created": created,
         },
     )
+
+def sitemap_xml(request):
+    """Public XML sitemap for Google and other search engines."""
+    base_url = request.build_absolute_uri("/").rstrip("/")
+
+    public_urls = [
+        f"{base_url}/",
+        *[
+            f"{base_url}{reverse('area_detail', kwargs={'slug': area['slug']})}"
+            for area in AREAS
+        ],
+    ]
+
+    xml_urls = "\n".join(
+        f"  <url><loc>{url}</loc></url>"
+        for url in public_urls
+    )
+
+    content = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"{xml_urls}\n"
+        "</urlset>\n"
+    )
+    return HttpResponse(content, content_type="application/xml")
+
+
+def robots_txt(request):
+    """Public robots.txt allowing indexing and advertising the sitemap."""
+    sitemap_url = request.build_absolute_uri(reverse("sitemap"))
+    content = (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /admin/\n"
+        "Disallow: /analytics/\n"
+        "Disallow: /feedback/\n"
+        "Disallow: /subscribe/\n"
+        f"Sitemap: {sitemap_url}\n"
+    )
+    return HttpResponse(content, content_type="text/plain")
+
