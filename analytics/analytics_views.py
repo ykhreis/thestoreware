@@ -1,13 +1,14 @@
-from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count
 from django.utils import timezone
 from django.shortcuts import render
 
 # Unique Analytics model module name
 from .analytics_models import Visitor, VisitSession, PageView
+from website.website_models import WebsiteSubscriber
 
 
-@login_required(login_url="/admin/login/")
+@staff_member_required(login_url="/admin/login/")
 def dashboard(request):
     """
     Private TheStoreWare analytics dashboard.
@@ -18,6 +19,13 @@ def dashboard(request):
     total_sessions = VisitSession.objects.count()
     total_page_views = PageView.objects.count()
     todays_visitors = Visitor.objects.filter(first_seen__date=timezone.localdate()).count()
+    total_subscribers = WebsiteSubscriber.objects.filter(is_active=True).count()
+
+    recent_subscribers = (
+        WebsiteSubscriber.objects
+        .select_related("visitor", "visit_session")
+        .order_by("-subscribed_at")[:25]
+    )
 
     recent_sessions = (
         VisitSession.objects
@@ -66,6 +74,8 @@ def dashboard(request):
         "total_sessions": total_sessions,
         "total_page_views": total_page_views,
         "todays_visitors": todays_visitors,
+        "total_subscribers": total_subscribers,
+        "recent_subscribers": recent_subscribers,
         "recent_sessions": recent_sessions,
         "popular_pages": popular_pages,
         "devices": devices,

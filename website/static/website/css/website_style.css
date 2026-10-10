@@ -573,3 +573,245 @@ footer{border-top:1px solid var(--line);padding:32px 0;background:#fff}.footer{d
   }
 }
 
+
+
+/* =========================================================
+   THESTOREWARE OFFICIAL CONTACT + SUBSCRIBE PREVIEW
+   ========================================================= */
+.site-footer{background:linear-gradient(180deg,#fff,#f7faff)}
+.footer-expanded{align-items:flex-start;padding-top:4px;padding-bottom:4px}
+.footer-brand{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:220px}
+.footer-brand p{margin-top:2px}
+.footer-brand small,.footer-subscribe small{font-size:9px;color:#8a9bad}
+.footer-email{font-size:12px;font-weight:800;color:var(--blue);transition:.2s}
+.footer-email:hover{color:var(--teal)}
+.footer-subscribe{margin-left:auto;max-width:430px}
+.footer-subscribe strong{display:block;font-size:13px;letter-spacing:-.2px}
+.footer-subscribe p{font-size:10.5px;color:#7d8fa2;margin:2px 0 8px}
+.subscribe-preview{display:flex;gap:7px}
+.subscribe-preview input{width:250px;border:1px solid #dce5ee;border-radius:9px;padding:8px 10px;font:inherit;font-size:11px;background:#fff;color:#7d8fa2}
+.subscribe-preview .button{padding:8px 13px;border-radius:9px;font-size:10px;min-height:34px}
+.subscribe-preview input:disabled,.subscribe-preview button:disabled{opacity:.72;cursor:not-allowed}
+.footer-copy{align-self:center;white-space:nowrap}
+
+@media (max-width:700px){
+  .footer-expanded{align-items:flex-start}
+  .footer-subscribe{margin-left:0;width:100%;max-width:none}
+  .subscribe-preview{width:100%;flex-direction:column}
+  .subscribe-preview input,.subscribe-preview .button{width:100%}
+  .footer-copy{align-self:flex-start}
+}
+
+
+/* ===== FOOTER FINAL COPYRIGHT ROW ===== */
+.footer-expanded{padding-bottom:18px}
+.footer-bottom{
+  border-top:1px solid var(--line);
+  padding:16px 0 2px;
+  text-align:center;
+  font-size:10px;
+  color:#7d8fa2;
+}
+@media (max-width:700px){
+  .footer-bottom{padding-top:14px;text-align:center}
+}
+
+
+/* =========================================================
+   THESTOREWARE BRANDED HEADER + PROFESSIONAL FOOTER
+   Final visual overrides
+   ========================================================= */
+
+/* Header: subtle branded background */
+.site-header{
+  background:
+    radial-gradient(circle at 15% 0%, rgba(37,99,235,.10), transparent 34%),
+    radial-gradient(circle at 85% 0%, rgba(13,148,136,.10), transparent 34%),
+    linear-gradient(90deg,#f7faff 0%,#ffffff 48%,#f5fbfb 100%);
+  border-bottom:1px solid #dbe7f1;
+  box-shadow:0 6px 22px rgba(15,35,55,.055);
+}
+.site-header .nav a:not(.button){
+  color:#183653;
+}
+.site-header .nav a:not(.button):hover{
+  color:var(--blue);
+}
+
+/* Footer: clearly defined branded section */
+.site-footer{
+  margin-top:0;
+  padding:0;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(37,99,235,.08), transparent 32%),
+    radial-gradient(circle at 88% 10%, rgba(13,148,136,.08), transparent 30%),
+    linear-gradient(180deg,#f8fbff 0%,#f3f8fb 100%);
+  border-top:1px solid #d9e6ef;
+}
+.site-footer .footer-expanded{
+  min-height:auto;
+  padding:28px 0 24px;
+  display:grid;
+  grid-template-columns:minmax(260px,1fr) minmax(360px,460px);
+  gap:54px;
+  align-items:start;
+}
+.footer-brand{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  gap:4px;
+}
+.footer-brand p{
+  margin:2px 0 8px;
+  font-size:11px;
+  color:#6f8498;
+}
+.footer-email{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-top:2px;
+  font-size:13px;
+  line-height:1.4;
+  font-weight:800;
+  color:var(--blue);
+}
+.footer-email:hover{color:var(--teal)}
+.footer-official{
+  display:block;
+  margin-top:1px;
+  font-size:10px;
+  line-height:1.4;
+  color:#8a9bad;
+}
+
+.footer-subscribe{
+  width:100%;
+  max-width:460px;
+  margin-left:auto;
+}
+.footer-subscribe strong{
+  display:block;
+  font-size:15px;
+  color:#0f2740;
+}
+.footer-subscribe p{
+  margin:4px 0 10px;
+  font-size:11px;
+  color:#71879b;
+}
+.subscribe-preview{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:8px;
+  align-items:center;
+}
+.subscribe-preview input{
+  width:100%;
+  min-height:40px;
+  border:1px solid #d5e1eb;
+  border-radius:10px;
+  padding:9px 12px;
+  background:#fff;
+  font:inherit;
+  font-size:11px;
+}
+.subscribe-preview .button{
+  min-height:40px;
+  padding:9px 18px;
+  border-radius:10px;
+  font-size:11px;
+}
+.footer-subscribe small{
+  display:block;
+  margin-top:7px;
+  font-size:9px;
+  color:#8a9bad;
+}
+
+/* True full-width copyright bar */
+.site-footer .footer-bottom{
+  width:100%;
+  max-width:none;
+  margin:0;
+  padding:13px 20px;
+  border-top:1px solid #d7e4ed;
+  background:rgba(255,255,255,.58);
+  text-align:center;
+  font-size:10px;
+  color:#73879a;
+}
+
+@media (max-width:800px){
+  .site-footer .footer-expanded{
+    grid-template-columns:1fr;
+    gap:24px;
+    padding:24px 0 20px;
+  }
+  .footer-subscribe{
+    max-width:none;
+    margin-left:0;
+  }
+}
+@media (max-width:560px){
+  .subscribe-preview{grid-template-columns:1fr}
+  .subscribe-preview .button{width:100%}
+}
+
+
+/* =========================================================
+   STRONG BRAND BARS - HEADER + COPYRIGHT
+   ========================================================= */
+
+/* Actual header class used by the templates */
+.header{
+  background:linear-gradient(100deg,#123d73 0%,#1769aa 52%,#0aa5a5 100%) !important;
+  border-bottom:0 !important;
+  box-shadow:0 8px 24px rgba(15,35,55,.16) !important;
+  backdrop-filter:none !important;
+}
+.header .logo{color:#ffffff !important}
+.header .logo span span{color:#72f0df !important}
+.header .logo-mark{
+  background:rgba(255,255,255,.16) !important;
+  color:#ffffff !important;
+  border:1px solid rgba(255,255,255,.28);
+}
+.header nav a:not(.button){
+  color:rgba(255,255,255,.92) !important;
+  font-weight:800;
+}
+.header nav a:not(.button):hover{color:#ffffff !important}
+
+/* Keep the main CTA distinct on the colored header */
+.header nav .button{
+  background:#ffffff !important;
+  color:#1769aa !important;
+  box-shadow:0 7px 18px rgba(0,0,0,.12) !important;
+}
+
+/* Ensure contact text is truly two lines */
+.footer-brand .footer-email{display:block !important}
+.footer-brand .footer-official{
+  display:block !important;
+  width:100%;
+  margin-top:2px !important;
+}
+
+/* Strong full-width copyright strip */
+.site-footer .footer-bottom{
+  display:block !important;
+  width:100% !important;
+  max-width:none !important;
+  margin:0 !important;
+  padding:14px 20px !important;
+  box-sizing:border-box;
+  background:linear-gradient(100deg,#123d73 0%,#1769aa 52%,#0aa5a5 100%) !important;
+  border-top:0 !important;
+  color:#ffffff !important;
+  text-align:center !important;
+  font-size:10.5px !important;
+  font-weight:700;
+  letter-spacing:.1px;
+}

@@ -151,12 +151,37 @@
 </section>
 </main>
 
-<footer>
-    <div class="shell footer">
-        <a class="logo" href="{% url 'home' %}"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a>
-        <p>Your Knowledge. Your AI.</p>
-        <span>© 2026 TheStoreWare</span>
+<footer class="site-footer">
+    <div class="shell footer footer-expanded">
+        <div class="footer-brand">
+            <a class="logo" href="{% url 'home' %}"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a>
+            <p>Your Knowledge. Your AI.</p>
+            <a class="footer-email" href="mailto:info@thestoreware.com">✉ info@thestoreware.com</a>
+            <small class="footer-official">Official contact for TheStoreWare</small>
+        </div>
+
+        <div class="footer-subscribe">
+            <strong>Stay Updated</strong>
+            <p>New AI tools, courses and resources are coming.</p>
+            <form class="subscribe-preview" id="subscribe" method="post" action="{% url 'subscribe' %}">
+                {% csrf_token %}
+                <input type="email" name="email" maxlength="254" placeholder="Your email address" required>
+                <button type="submit" class="button">Subscribe</button>
+            </form>
+
+            {% if request.GET.subscribe == "success" %}
+                <small class="subscribe-message subscribe-success">Thank you! You are now subscribed.</small>
+            {% elif request.GET.subscribe == "exists" %}
+                <small class="subscribe-message">This email is already subscribed.</small>
+            {% elif request.GET.subscribe == "invalid" %}
+                <small class="subscribe-message subscribe-error">Please enter a valid email address.</small>
+            {% else %}
+                <small>Subscribe to receive updates from TheStoreWare.</small>
+            {% endif %}
+        </div>
+
     </div>
+    <div class="shell footer-bottom">© 2026 TheStoreWare. All rights reserved.</div>
 </footer>
 </body>
 </html>

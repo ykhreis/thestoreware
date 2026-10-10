@@ -1,10 +1,12 @@
 from django.conf import settings
 from django.core.mail import EmailMessage, get_connection, send_mail
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 
-from .website_models import WebsiteUserFeedback
+from .website_models import WebsiteSubscriber, WebsiteUserFeedback
 
 
 def get_thestoreware_email_connection():
@@ -242,3 +244,139 @@ def submit_feedback(request):
             pass
 
     return redirect(reverse("home") + "?feedback=success#feedback")
+
+def _current_analytics_links(request):
+    """Return the current analytics Visitor and VisitSession when available."""
+    visitor = None
+    visit_session = None
+    visitor_id = request.COOKIES.get("tsw_visitor_id")
+    analytics_session_id = request.session.get("tsw_analytics_session_id")
+
+    try:
+        from analytics.analytics_models import Visitor, VisitSession
+
+        if visitor_id:
+            visitor = Visitor.objects.filter(visitor_id=visitor_id).first()
+
+        if analytics_session_id:
+            visit_session = VisitSession.objects.filter(
+                session_id=analytics_session_id
+            ).first()
+            if visit_session is not None:
+                visitor = visit_session.visitor
+    except Exception:
+        # Subscription/profile must remain available even if analytics linking fails.
+        visitor = None
+        visit_session = None
+
+    return visitor, visit_session
+
+
+def subscribe(request):
+    """
+    Footer entry point.
+    Validate the mandatory email, then send the visitor to the full
+    subscription profile page with the email pre-filled.
+    """
+    if request.method != "POST":
+        return redirect(reverse("home") + "#subscribe")
+
+    email = request.POST.get("email", "").strip().lower()
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        return redirect(reverse("home") + "?subscribe=invalid#subscribe")
+
+    return redirect(reverse("subscribe_profile") + f"?email={email}")
+
+
+def subscribe_profile(request):
+    """Display and save the optional TheStoreWare subscriber profile."""
+    initial_email = request.GET.get("email", "").strip().lower()
+
+    if request.method == "GET":
+        return render(
+            request,
+            "website/website_subscribe.html",
+            {
+                "subscriber_email": initial_email,
+            },
+        )
+
+    email = request.POST.get("email", "").strip().lower()
+    first_name = request.POST.get("first_name", "").strip()
+    last_name = request.POST.get("last_name", "").strip()
+    country = request.POST.get("country", "").strip()
+    mobile_number = request.POST.get("mobile_number", "").strip()
+    preferred_language = request.POST.get("preferred_language", "").strip()
+    company_organization = request.POST.get("company_organization", "").strip()
+    job_title = request.POST.get("job_title", "").strip()
+    areas_of_interest = request.POST.get("areas_of_interest", "").strip()
+    consent_to_updates = request.POST.get("consent_to_updates") == "on"
+
+    form_values = {
+        "subscriber_email": email,
+        "first_name": first_name,
+        "last_name": last_name,
+        "country": country,
+        "mobile_number": mobile_number,
+        "preferred_language": preferred_language,
+        "company_organization": company_organization,
+        "job_title": job_title,
+        "areas_of_interest": areas_of_interest,
+        "consent_to_updates": consent_to_updates,
+    }
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        form_values["subscribe_error"] = "Please enter a valid email address."
+        return render(
+            request,
+            "website/website_subscribe.html",
+            form_values,
+            status=400,
+        )
+
+    if not consent_to_updates:
+        form_values["subscribe_error"] = (
+            "Please confirm that you agree to receive updates from TheStoreWare."
+        )
+        return render(
+            request,
+            "website/website_subscribe.html",
+            form_values,
+            status=400,
+        )
+
+    visitor, visit_session = _current_analytics_links(request)
+
+    subscriber, created = WebsiteSubscriber.objects.get_or_create(email=email)
+
+    subscriber.first_name = first_name
+    subscriber.last_name = last_name
+    subscriber.country = country
+    subscriber.mobile_number = mobile_number
+    subscriber.preferred_language = preferred_language
+    subscriber.company_organization = company_organization
+    subscriber.job_title = job_title
+    subscriber.areas_of_interest = areas_of_interest
+    subscriber.consent_to_updates = True
+    subscriber.consent_at = timezone.now()
+    subscriber.visitor = visitor
+    subscriber.visit_session = visit_session
+    subscriber.is_active = True
+    subscriber.unsubscribed_at = None
+    subscriber.source = "website_footer"
+    subscriber.save()
+
+    return render(
+        request,
+        "website/website_subscribe.html",
+        {
+            "subscriber_email": subscriber.email,
+            "subscribe_success": True,
+            "subscriber_created": created,
+        },
+    )

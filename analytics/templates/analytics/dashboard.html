@@ -39,7 +39,7 @@
         .subtitle { margin: 0 0 28px; color: #6a7b91; }
         .cards {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 18px;
             margin-bottom: 24px;
         }
@@ -103,6 +103,7 @@
             <div class="card"><div class="label">SESSIONS</div><div class="value">{{ total_sessions }}</div></div>
             <div class="card"><div class="label">PAGE VIEWS</div><div class="value">{{ total_page_views }}</div></div>
             <div class="card"><div class="label">TODAY'S NEW VISITORS</div><div class="value">{{ todays_visitors }}</div></div>
+            <div class="card"><div class="label">ACTIVE SUBSCRIBERS</div><div class="value">{{ total_subscribers }}</div></div>
         </section>
 
         <section class="grid">
@@ -162,6 +163,34 @@
                     <div>No location data yet.</div>
                 {% endfor %}
             </div>
+        </section>
+
+
+        <section class="panel" style="margin-bottom:20px; overflow-x:auto;">
+            <h2>Subscriber Profiles <span class="pill">{{ total_subscribers }} active</span></h2>
+            <p class="subtitle" style="margin-top:-8px;">Private subscriber information — administrator access only.</p>
+            <table>
+                <thead>
+                    <tr><th>Subscribed</th><th>Email</th><th>Name</th><th>Country</th><th>Language</th><th>Company / Job</th><th>Interests</th><th>Detected Location</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                {% for item in recent_subscribers %}
+                    <tr>
+                        <td>{{ item.subscribed_at|date:"d M Y H:i" }}</td>
+                        <td>{{ item.email }}</td>
+                        <td>{% if item.first_name or item.last_name %}{{ item.first_name }} {{ item.last_name }}{% else %}—{% endif %}</td>
+                        <td>{{ item.country|default:"—" }}</td>
+                        <td>{{ item.get_preferred_language_display|default:"—" }}</td>
+                        <td>{% if item.company_organization %}{{ item.company_organization }}{% else %}—{% endif %}{% if item.job_title %}<br><small>{{ item.job_title }}</small>{% endif %}</td>
+                        <td>{{ item.areas_of_interest|default:"—" }}</td>
+                        <td>{% if item.visit_session %}{{ item.visit_session.country_name|default:"Unknown" }}{% if item.visit_session.city %}<br><small>{{ item.visit_session.city }}</small>{% endif %}{% else %}—{% endif %}</td>
+                        <td>{% if item.is_active %}<span class="pill">Active</span>{% else %}Inactive{% endif %}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="9">No subscribers yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
         </section>
 
         <section class="grid">

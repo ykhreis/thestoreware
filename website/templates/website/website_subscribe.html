@@ -1,0 +1,168 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Join TheStoreWare and stay updated about new AI tools, courses, resources and platform features.">
+    <title>Stay Updated | TheStoreWare</title>
+    <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+</head>
+<body>
+<header class="header">
+    <div class="shell nav">
+        <a class="logo" href="{% url 'home' %}">
+            <span class="logo-mark">S</span>
+            <span>TheStore<span>Ware</span></span>
+        </a>
+        <nav>
+            <a href="{% url 'home' %}#explore">Explore</a>
+            <a href="{% url 'home' %}#coming">Coming Soon</a>
+            <a href="{% url 'home' %}#feedback">Share an Idea</a>
+        </nav>
+        <a class="button button-small" href="{% url 'home' %}#explore">Explore TheStoreWare</a>
+    </div>
+</header>
+
+<main>
+<section class="section feedback subscribe-page">
+    <div class="shell feedback-grid">
+        <div class="section-head left">
+            <span class="kicker">STAY CONNECTED</span>
+            <h2>Join TheStoreWare.<br><em>Stay ahead.</em></h2>
+            <p>
+                Subscribe to receive updates about new AI experiences, learning content,
+                smart tools, knowledge resources and upcoming TheStoreWare features.
+            </p>
+
+            <div class="feedback-prompts">
+                <span>AI & AI-Agent</span>
+                <span>Courses & Learning</span>
+                <span>Exams & Quizzes</span>
+                <span>Professional</span>
+                <span>Knowledge Hub</span>
+                <span>Smart Tools</span>
+                <span>AI Lab</span>
+            </div>
+
+            <p class="feedback-note">
+                Only your email address and consent are required. The remaining information
+                is optional and helps us understand what content may be most useful to you.
+            </p>
+        </div>
+
+        <div>
+            {% if subscribe_success %}
+            <div class="feedback-card">
+                <div class="success-message">
+                    <strong>Thank you for joining TheStoreWare!</strong>
+                    Your subscription has been saved successfully.
+                </div>
+                <p>We will use <strong>{{ subscriber_email }}</strong> for TheStoreWare updates.</p>
+                <a class="button feedback-submit" href="{% url 'home' %}">Return to TheStoreWare <span>→</span></a>
+            </div>
+            {% else %}
+            <form class="feedback-card" method="post" action="{% url 'subscribe_profile' %}">
+                {% csrf_token %}
+
+                {% if subscribe_error %}
+                    <div class="error-message">{{ subscribe_error }}</div>
+                {% endif %}
+
+                <label for="subscriber-email">Email <small>(required)</small></label>
+                <input id="subscriber-email" type="email" name="email" maxlength="254"
+                       value="{{ subscriber_email|default:'' }}" placeholder="you@example.com" required>
+
+                <div class="form-two">
+                    <div>
+                        <label for="first-name">First name <small>(optional)</small></label>
+                        <input id="first-name" name="first_name" maxlength="120"
+                               value="{{ first_name|default:'' }}" placeholder="First name">
+                    </div>
+                    <div>
+                        <label for="last-name">Last name <small>(optional)</small></label>
+                        <input id="last-name" name="last_name" maxlength="120"
+                               value="{{ last_name|default:'' }}" placeholder="Last name">
+                    </div>
+                </div>
+
+                <div class="form-two">
+                    <div>
+                        <label for="country">Country of residence <small>(optional)</small></label>
+                        <input id="country" name="country" maxlength="100"
+                               value="{{ country|default:'' }}" placeholder="Country">
+                    </div>
+                    <div>
+                        <label for="mobile-number">Mobile number <small>(optional)</small></label>
+                        <input id="mobile-number" type="tel" name="mobile_number" maxlength="40"
+                               value="{{ mobile_number|default:'' }}" placeholder="+965 ...">
+                    </div>
+                </div>
+
+                <label for="preferred-language">Preferred language <small>(optional)</small></label>
+                <select id="preferred-language" name="preferred_language">
+                    <option value="" {% if not preferred_language %}selected{% endif %}>Select a language</option>
+                    <option value="en" {% if preferred_language == "en" %}selected{% endif %}>English</option>
+                    <option value="ar" {% if preferred_language == "ar" %}selected{% endif %}>Arabic</option>
+                    <option value="fr" {% if preferred_language == "fr" %}selected{% endif %}>French</option>
+                    <option value="other" {% if preferred_language == "other" %}selected{% endif %}>Other</option>
+                </select>
+
+                <div class="form-two">
+                    <div>
+                        <label for="company">Company / Organization <small>(optional)</small></label>
+                        <input id="company" name="company_organization" maxlength="180"
+                               value="{{ company_organization|default:'' }}" placeholder="Company or organization">
+                    </div>
+                    <div>
+                        <label for="job-title">Job title <small>(optional)</small></label>
+                        <input id="job-title" name="job_title" maxlength="150"
+                               value="{{ job_title|default:'' }}" placeholder="Job title">
+                    </div>
+                </div>
+
+                <label for="areas-of-interest">Areas of interest <small>(optional)</small></label>
+                <textarea id="areas-of-interest" name="areas_of_interest" maxlength="1000"
+                          placeholder="For example: AI-Agent, courses, professional learning, smart tools...">{{ areas_of_interest|default:'' }}</textarea>
+
+                <label class="subscribe-consent" for="consent-to-updates">
+                    <input id="consent-to-updates" type="checkbox" name="consent_to_updates" required
+                           {% if consent_to_updates %}checked{% endif %}>
+                    <span>I agree to receive updates from TheStoreWare. <small>(required)</small></span>
+                </label>
+
+                <button type="submit" class="button feedback-submit">
+                    Join TheStoreWare <span>→</span>
+                </button>
+
+                <small class="feedback-note">
+                    You can choose how much information to share. Your email address is required
+                    for the subscription; the other profile fields are optional.
+                </small>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</section>
+</main>
+
+<footer class="site-footer">
+    <div class="shell footer footer-expanded">
+        <div class="footer-brand">
+            <a class="logo" href="{% url 'home' %}">
+                <span class="logo-mark">S</span><span>TheStore<span>Ware</span></span>
+            </a>
+            <p>Your Knowledge. Your AI.</p>
+            <a class="footer-email" href="mailto:info@thestoreware.com">✉ info@thestoreware.com</a>
+            <small class="footer-official">Official contact for TheStoreWare</small>
+        </div>
+        <div class="footer-subscribe">
+            <strong>Stay Updated</strong>
+            <p>You are in the right place to join TheStoreWare.</p>
+            <a class="button button-small" href="{% url 'home' %}">Back to Home</a>
+        </div>
+    </div>
+    <div class="shell footer-bottom">© 2026 TheStoreWare. All rights reserved.</div>
+</footer>
+</body>
+</html>
