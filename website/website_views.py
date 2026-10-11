@@ -1,5 +1,9 @@
 from django.conf import settings
-from django.core.mail import EmailMessage, get_connection, send_mail
+import json
+import urllib.error
+import urllib.parse
+import urllib.request
+
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -12,27 +16,168 @@ from mentor.ai_agent_models import GenericKnowledgeCandidate, ConversationExpres
 from mentor.services.external_ai_service import ask_external_ai
 
 
-def get_thestoreware_email_connection():
-    """Return a dedicated Microsoft 365 SMTP connection for TheStoreWare."""
-    return get_connection(
-        backend="django.core.mail.backends.smtp.EmailBackend",
-        host=getattr(settings, "THESTOREWARE_EMAIL_HOST", "smtp.office365.com"),
-        port=getattr(settings, "THESTOREWARE_EMAIL_PORT", 587),
-        username=getattr(settings, "THESTOREWARE_EMAIL_USER", ""),
-        password=getattr(settings, "THESTOREWARE_EMAIL_PASSWORD", ""),
-        use_tls=getattr(settings, "THESTOREWARE_EMAIL_USE_TLS", True),
-        fail_silently=False,
+def _graph_setting(*names):
+    """Return the first configured Microsoft Graph setting."""
+    for name in names:
+        value = getattr(settings, name, "")
+        if value:
+            return str(value).strip()
+    return ""
+
+
+def get_thestoreware_graph_config():
+    """Return and validate the Microsoft Graph application configuration."""
+    tenant_id = _graph_setting(
+        "THESTOREWARE_MS_TENANT_ID",
+        "MICROSOFT_TENANT_ID",
+        "AZURE_TENANT_ID",
+        "TENANT_ID",
     )
+    client_id = _graph_setting(
+        "THESTOREWARE_MS_CLIENT_ID",
+        "MICROSOFT_CLIENT_ID",
+        "AZURE_CLIENT_ID",
+        "CLIENT_ID",
+    )
+    client_secret = _graph_setting(
+        "THESTOREWARE_MS_CLIENT_SECRET",
+        "MICROSOFT_CLIENT_SECRET",
+        "AZURE_CLIENT_SECRET",
+        "CLIENT_SECRET",
+    )
+    sender = _graph_setting(
+        "THESTOREWARE_EMAIL_USER",
+        "THESTOREWARE_EMAIL_FROM",
+    )
+
+    missing = []
+    if not tenant_id:
+        missing.append("tenant ID")
+    if not client_id:
+        missing.append("client ID")
+    if not client_secret:
+        missing.append("client secret")
+    if not sender:
+        missing.append("THESTOREWARE_EMAIL_USER")
+
+    if missing:
+        raise ValueError(
+            "Missing Microsoft Graph configuration: " + ", ".join(missing)
+        )
+
+    return tenant_id, client_id, client_secret, sender
+
+
+def get_thestoreware_graph_access_token():
+    """Get an app-only Microsoft Graph access token using client credentials."""
+    tenant_id, client_id, client_secret, _sender = get_thestoreware_graph_config()
+
+    token_url = (
+        "https://login.microsoftonline.com/"
+        f"{urllib.parse.quote(tenant_id, safe='')}/oauth2/v2.0/token"
+    )
+    token_data = urllib.parse.urlencode(
+        {
+            "client_id": client_id,
+            "client_secret": client_secret,
+            "scope": "https://graph.microsoft.com/.default",
+            "grant_type": "client_credentials",
+        }
+    ).encode("utf-8")
+
+    request = urllib.request.Request(
+        token_url,
+        data=token_data,
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        details = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(
+            f"Microsoft token request failed ({exc.code}): {details[:1000]}"
+        ) from exc
+
+    access_token = payload.get("access_token")
+    if not access_token:
+        raise RuntimeError("Microsoft Graph did not return an access token.")
+
+    return access_token
+
+
+def send_thestoreware_graph_email(subject, body, recipients, reply_to=None):
+    """Send email as the TheStoreWare mailbox through Microsoft Graph."""
+    _tenant_id, _client_id, _client_secret, sender = get_thestoreware_graph_config()
+
+    recipients = list(dict.fromkeys(
+        str(address).strip()
+        for address in recipients
+        if str(address).strip()
+    ))
+    if not recipients:
+        raise ValueError("At least one email recipient is required.")
+
+    message = {
+        "subject": subject,
+        "body": {
+            "contentType": "Text",
+            "content": body,
+        },
+        "toRecipients": [
+            {"emailAddress": {"address": address}}
+            for address in recipients
+        ],
+    }
+
+    if reply_to:
+        message["replyTo"] = [
+            {"emailAddress": {"address": str(reply_to).strip()}}
+        ]
+
+    payload = json.dumps(
+        {
+            "message": message,
+            "saveToSentItems": True,
+        }
+    ).encode("utf-8")
+
+    access_token = get_thestoreware_graph_access_token()
+    sender_path = urllib.parse.quote(sender, safe="@.")
+    graph_url = f"https://graph.microsoft.com/v1.0/users/{sender_path}/sendMail"
+
+    request = urllib.request.Request(
+        graph_url,
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=20) as response:
+            # Microsoft Graph sendMail normally returns HTTP 202 Accepted.
+            if response.status not in (200, 202):
+                raise RuntimeError(
+                    f"Microsoft Graph returned unexpected status {response.status}."
+                )
+    except urllib.error.HTTPError as exc:
+        details = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(
+            f"Microsoft Graph sendMail failed ({exc.code}): {details[:1000]}"
+        ) from exc
+
+    return True
 
 
 def send_thestoreware_acknowledgement(name, recipient_email):
-    """Send an automatic acknowledgement from info@thestoreware.com."""
+    """Send an automatic acknowledgement from info@thestoreware.com via Graph."""
     if not recipient_email:
         return
-
-    from_email = getattr(settings, "THESTOREWARE_EMAIL_USER", "").strip()
-    if not from_email:
-        raise ValueError("THESTOREWARE_EMAIL_USER is not configured.")
 
     greeting = f"Dear {name}," if name else "Hello,"
     body = (
@@ -45,15 +190,11 @@ def send_thestoreware_acknowledgement(name, recipient_email):
         "info@thestoreware.com"
     )
 
-    connection = get_thestoreware_email_connection()
-    email_message = EmailMessage(
+    send_thestoreware_graph_email(
         subject="Thank you for contacting TheStoreWare",
         body=body,
-        from_email=from_email,
-        to=[recipient_email],
-        connection=connection,
+        recipients=[recipient_email],
     )
-    email_message.send(fail_silently=False)
 
 
 AREAS = [
@@ -176,42 +317,29 @@ def submit_feedback(request):
         )
 
         try:
-            # Send the internal notification through the dedicated
-            # TheStoreWare Microsoft 365 mailbox (info@thestoreware.com).
-            from_email = getattr(settings, "THESTOREWARE_EMAIL_USER", "").strip()
-            if not from_email:
-                raise ValueError("THESTOREWARE_EMAIL_USER is not configured.")
+            # Send the internal notification through Microsoft Graph.
+            _tenant_id, _client_id, _client_secret, from_email = (
+                get_thestoreware_graph_config()
+            )
 
-            connection = get_thestoreware_email_connection()
-            # Send the internal notification to both TheStoreWare
-            # and the existing Gmail notification address.
+            # Send to both TheStoreWare and the configured notification address.
             notification_recipients = [
                 address
                 for address in [from_email, notification_email]
                 if address
             ]
-            # Avoid sending twice if both settings contain the same address.
             notification_recipients = list(dict.fromkeys(notification_recipients))
 
-            notification_message = EmailMessage(
+            send_thestoreware_graph_email(
                 subject=subject,
                 body=body,
-                from_email=from_email,
-                to=notification_recipients,
-                reply_to=[email] if email else None,
-                connection=connection,
+                recipients=notification_recipients,
+                reply_to=email or None,
             )
-            sent_count = notification_message.send(fail_silently=False)
 
-            if sent_count == 1:
-                feedback.notification_sent = True
-                feedback.notification_sent_at = timezone.now()
-                feedback.notification_error = ""
-            else:
-                feedback.notification_sent = False
-                feedback.notification_error = (
-                    "Email backend returned 0 messages sent."
-                )
+            feedback.notification_sent = True
+            feedback.notification_sent_at = timezone.now()
+            feedback.notification_error = ""
 
         except Exception as exc:
             # The feedback remains safely stored even if email notification fails.
