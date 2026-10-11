@@ -186,4 +186,13 @@ THESTOREWARE_EMAIL_PASSWORD = os.environ.get(
     ''
 )
 
+
+# ============================================================
+# TheStoreWare Microsoft Graph configuration
+# ============================================================
+# Used by website_views.py for Microsoft Graph app-only email.
+THESTOREWARE_MS_TENANT_ID = os.environ.get('THESTOREWARE_GRAPH_TENANT_ID', '')
+THESTOREWARE_MS_CLIENT_ID = os.environ.get('THESTOREWARE_GRAPH_CLIENT_ID', '')
+THESTOREWARE_MS_CLIENT_SECRET = os.environ.get('THESTOREWARE_GRAPH_CLIENT_SECRET', '')
+
 GEOIP_PATH = BASE_DIR / 'geoip'
