@@ -61,13 +61,38 @@ def dashboard(request):
         .order_by("-total")
     )
 
-    countries = (
-        VisitSession.objects
-        .exclude(country_name="")
-        .values("country_name")
-        .annotate(total=Count("id"))
-        .order_by("-total")[:10]
+    # Country breakdown must reconcile exactly with Total Visitors.
+    # Count each Visitor once, using the country from that visitor's latest session.
+    # Visitors without a resolved country are grouped as Unknown / Not Identified.
+    country_totals = {}
+
+    visitors_with_latest_session = (
+        Visitor.objects
+        .prefetch_related("sessions")
+        .all()
     )
+
+    for visitor in visitors_with_latest_session:
+        latest_session = max(
+            visitor.sessions.all(),
+            key=lambda session: session.started_at,
+            default=None,
+        )
+
+        country_name = ""
+        if latest_session is not None:
+            country_name = (latest_session.country_name or "").strip()
+
+        country_name = country_name or "Unknown / Not Identified"
+        country_totals[country_name] = country_totals.get(country_name, 0) + 1
+
+    countries = [
+        {"country_name": country_name, "total": total}
+        for country_name, total in sorted(
+            country_totals.items(),
+            key=lambda item: (-item[1], item[0]),
+        )
+    ]
 
     context = {
         "total_visitors": total_visitors,

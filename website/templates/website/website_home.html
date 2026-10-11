@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="TheStoreWare — explore AI, learning, exams, knowledge, entertainment and smart tools.">
+    <meta name="description" content="TheStoreWare — a multilingual digital knowledge encyclopedia for learning, practice, testing and discovery.">
     <title>TheStoreWare | {% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}. Learn. Create. Solve.</title>
     <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
     <script defer src="{% static 'website/js/website_home.js' %}"></script>
@@ -194,10 +194,11 @@ html[dir="rtl"] .tsw-storeware-guidance {
     <div class="hero-glow glow-b"></div>
     <div class="shell platform-hero-inner reveal">
         <div class="launch-badge">{% if CURRENT_LANGUAGE == 'ar' %}THESTOREWARE • نبني للجميع{% elif CURRENT_LANGUAGE == 'fr' %}THESTOREWARE • CONÇU POUR TOUS{% else %}THESTOREWARE • BUILDING FOR EVERYONE{% endif %}</div>
-        <h1>{% if CURRENT_LANGUAGE == 'ar' %}استكشف. تعلّم. ابتكر.<br><em>حلّ. مع الذكاء الاصطناعي.</em>{% elif CURRENT_LANGUAGE == 'fr' %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}z. Apprenez. Créez.<br><em>Résolvez. Avec l’IA.</em>{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}. Learn. Create.<br><em>Solve. With AI.</em>{% endif %}</h1>
+        <h1>{% if CURRENT_LANGUAGE == 'ar' %}تعلّم. تطوّر. استكشف.<br><em>مع TheStoreWare.</em>{% elif CURRENT_LANGUAGE == 'fr' %}Apprenez. Progressez. Explorez.<br><em>Avec TheStoreWare.</em>{% else %}Learn. Grow. Explore.<br><em>With TheStoreWare.</em>{% endif %}</h1>
         <p>
-            A growing knowledge and technology platform bringing together artificial intelligence,
-            learning, professional development, entertainment, useful information and smart digital tools.
+            {% if CURRENT_LANGUAGE == 'ar' %}موسوعة معرفية رقمية متعددة اللغات للتعلّم، والتدريب، والاختبار، والاستكشاف.
+            {% elif CURRENT_LANGUAGE == 'fr' %}Une encyclopédie numérique multilingue du savoir pour apprendre, pratiquer, s’évaluer et découvrir.
+            {% else %}A Multilingual Digital Knowledge Encyclopedia for Learning, Practice, Testing &amp; Discovery.{% endif %}
         </p>
         <div class="hero-actions">
             <a class="button" href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف ما هو قادم <span>↓</span>{% elif CURRENT_LANGUAGE == 'fr' %}Découvrez ce qui arrive <span>↓</span>{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} What's Coming <span>↓</span>{% endif %}</a>
@@ -205,7 +206,7 @@ html[dir="rtl"] .tsw-storeware-guidance {
         </div>
         <div class="coming-banner" id="coming">
             <span class="pulse-dot"></span>
-            <div><strong>{% if CURRENT_LANGUAGE == 'ar' %}قريباً{% elif CURRENT_LANGUAGE == 'fr' %}BIENTÔT{% else %}COMING SOON{% endif %}</strong><small>{% if CURRENT_LANGUAGE == 'ar' %}نعمل خطوة بخطوة على تطوير تجارب ومواضيع وأدوات جديدة.{% elif CURRENT_LANGUAGE == 'fr' %}De nouvelles expériences, thématiques et outils sont développés étape par étape.{% else %}New experiences, subjects and tools are being built step by step.{% endif %}</small></div>
+            <div><strong>{% if CURRENT_LANGUAGE == 'ar' %}THESTOREWARE تتطور{% elif CURRENT_LANGUAGE == 'fr' %}THESTOREWARE ÉVOLUE{% else %}THESTOREWARE IS GROWING{% endif %}</strong><small>{% if CURRENT_LANGUAGE == 'ar' %}نعمل خطوة بخطوة على تطوير المعرفة والاختبارات والدورات والأدوات الجديدة.{% elif CURRENT_LANGUAGE == 'fr' %}De nouvelles connaissances, des examens, des cours et des outils sont développés étape par étape.{% else %}New knowledge, exams, courses and tools are being developed step by step.{% endif %}</small></div>
         </div>
     </div>
 </section>
@@ -220,11 +221,12 @@ html[dir="rtl"] .tsw-storeware-guidance {
 
         <div class="portal-grid">
             {% for item in areas %}
+            {% if item.slug != "ai-agent" %}
             <a class="portal-card reveal" href="{% url 'area_detail' item.slug %}">
                 <div class="portal-art {{ item.art_class }}">
                     <span class="portal-icon">{{ item.icon }}</span>
-                    {% if item.slug == "ai-agent" %}
-                    <span class="status">{% if CURRENT_LANGUAGE == 'ar' %}متاح الآن{% elif CURRENT_LANGUAGE == 'fr' %}DISPONIBLE{% else %}AVAILABLE NOW{% endif %}</span>
+                    {% if item.slug == "exams-quizzes" %}
+                    <span class="status">{% if CURRENT_LANGUAGE == 'ar' %}قيد التطوير{% elif CURRENT_LANGUAGE == 'fr' %}EN DÉVELOPPEMENT{% else %}IN DEVELOPMENT{% endif %}</span>
                     {% else %}
                     <span class="status coming-soon-status">{% if CURRENT_LANGUAGE == 'ar' %}قريباً{% elif CURRENT_LANGUAGE == 'fr' %}BIENTÔT{% else %}COMING SOON{% endif %}</span>
                     {% endif %}
@@ -233,7 +235,7 @@ html[dir="rtl"] .tsw-storeware-guidance {
                     {% if CURRENT_LANGUAGE == 'ar' %}
                         {% if item.slug == "ai-agent" %}<h3>الوكيل الذكي</h3><p>تفاعل مع مساعد ذكي للإجابة والتحليل والاستكشاف.</p><span class="portal-link">اكتشف الوكيل الذكي <b>←</b></span>
                         {% elif item.slug == "courses" %}<h3>الدورات</h3><p>تعلّم من خلال محتوى منظم وعملي ومتطور باستمرار.</p><span class="portal-link">اكتشف الدورات <b>←</b></span>
-                        {% elif item.slug == "exams-quizzes" %}<h3>الاختبارات والمسابقات</h3><p>اختبر معلوماتك وتدرّب وتابع تقدمك.</p><span class="portal-link">اكتشف الاختبارات والمسابقات <b>←</b></span>
+                        {% elif item.slug == "exams-quizzes" %}<h3>الاختبارات والمسابقات</h3><p>تدرّب مجاناً من خلال اختبارات عملية، أسئلة عشوائية، نتائج، إجابات وشروحات تساعدك على الاستعداد والتطور.</p><span class="portal-link">اكتشف الاختبارات والمسابقات <b>←</b></span>
                         {% elif item.slug == "professional" %}<h3>التطوير المهني</h3><p>معرفة وأدوات تساعد على تطوير المهارات والعمل.</p><span class="portal-link">اكتشف التطوير المهني <b>←</b></span>
                         {% elif item.slug == "entertainment-discovery" %}<h3>الترفيه والاستكشاف</h3><p>اكتشف مواضيع وأماكن وأفكاراً وتجارب جديدة.</p><span class="portal-link">اكتشف الترفيه والاستكشاف <b>←</b></span>
                         {% elif item.slug == "knowledge-hub" %}<h3>مركز المعرفة</h3><p>استكشف معلومات مفيدة ومنظمة في مجالات متنوعة.</p><span class="portal-link">اكتشف مركز المعرفة <b>←</b></span>
@@ -243,7 +245,7 @@ html[dir="rtl"] .tsw-storeware-guidance {
                     {% elif CURRENT_LANGUAGE == 'fr' %}
                         {% if item.slug == "ai-agent" %}<h3>Agent IA</h3><p>Interagissez avec un assistant intelligent pour répondre, analyser et explorer.</p><span class="portal-link">Découvrir l’Agent IA <b>→</b></span>
                         {% elif item.slug == "courses" %}<h3>Cours</h3><p>Apprenez grâce à un contenu structuré, pratique et en constante évolution.</p><span class="portal-link">Découvrir les cours <b>→</b></span>
-                        {% elif item.slug == "exams-quizzes" %}<h3>Examens & Quiz</h3><p>Testez vos connaissances, entraînez-vous et suivez vos progrès.</p><span class="portal-link">Découvrir les examens & quiz <b>→</b></span>
+                        {% elif item.slug == "exams-quizzes" %}<h3>Examens & Quiz</h3><p>Entraînez-vous gratuitement avec des quiz pratiques, des questions aléatoires, des résultats, des réponses et des explications pour mieux vous préparer.</p><span class="portal-link">Découvrir les examens & quiz <b>→</b></span>
                         {% elif item.slug == "professional" %}<h3>Développement professionnel</h3><p>Des connaissances et des outils pour développer vos compétences et votre travail.</p><span class="portal-link">Découvrir le professionnel <b>→</b></span>
                         {% elif item.slug == "entertainment-discovery" %}<h3>Divertissement & Découverte</h3><p>Explorez de nouveaux sujets, lieux, idées et expériences.</p><span class="portal-link">Découvrir et explorer <b>→</b></span>
                         {% elif item.slug == "knowledge-hub" %}<h3>Centre de connaissances</h3><p>Explorez des informations utiles et structurées dans différents domaines.</p><span class="portal-link">Découvrir le centre de connaissances <b>→</b></span>
@@ -252,11 +254,16 @@ html[dir="rtl"] .tsw-storeware-guidance {
                         {% else %}<h3>{{ item.title }}</h3><p>{{ item.summary }}</p><span class="portal-link">Découvrir {{ item.title }} <b>→</b></span>{% endif %}
                     {% else %}
                         <h3>{{ item.title }}</h3>
+                        {% if item.slug == "exams-quizzes" %}
+                        <p>Practice for free with practical quizzes, random questions, scores, answers and explanations designed to help you prepare and improve.</p>
+                        {% else %}
                         <p>{{ item.summary }}</p>
+                        {% endif %}
                         <span class="portal-link">Discover {{ item.title }} <b>→</b></span>
                     {% endif %}
                 </div>
             </a>
+            {% endif %}
             {% endfor %}
         </div>
     </div>

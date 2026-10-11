@@ -156,7 +156,7 @@
             </div>
 
             <div class="panel">
-                <h2>Top Countries</h2>
+                <h2>Visitors by Country</h2>
                 {% for item in countries %}
                     <div class="stat-row"><span>{{ item.country_name|default:"Unknown" }}</span><strong>{{ item.total }}</strong></div>
                 {% empty %}
