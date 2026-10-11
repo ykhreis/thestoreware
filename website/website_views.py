@@ -365,14 +365,16 @@ def submit_feedback(request):
             ]
         )
 
-    # Send a separate acknowledgement to the visitor using the
-    # TheStoreWare Microsoft 365 mailbox. A failure here must never
-    # prevent the already-stored feedback from being accepted.
-    if email:
-        try:
-            send_thestoreware_acknowledgement(name, email)
-        except Exception:
-            pass
+    # TEMPORARILY DISABLED:
+    # Automatic acknowledgement to the visitor is paused while Microsoft
+    # resolves the Exchange Online outbound restriction (550 5.7.708 / AS(7910)).
+    # Re-enable the block below once Microsoft removes the restriction.
+    #
+    # if email:
+    #     try:
+    #         send_thestoreware_acknowledgement(name, email)
+    #     except Exception:
+    #         pass
 
     return redirect(reverse("home") + "?feedback=success#feedback")
 
