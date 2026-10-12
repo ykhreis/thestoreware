@@ -1,0 +1,11 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Project Management Exams & Quizzes | TheStoreWare</title><link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+<style>
+.hero{padding:70px 20px 45px;background:linear-gradient(135deg,#0d4fa8,#0e8d94);color:#fff;text-align:center}.wrap{max-width:1100px;margin:auto;padding:45px 20px 70px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}.card{padding:25px;border:1px solid #e2e8f0;border-radius:20px;background:#fff;text-decoration:none;color:inherit}.card.active{border:2px solid #0e8d94}.badge{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#17324d;color:#fff;font-weight:900}.status{font-size:.75rem;font-weight:900;color:#64748b}.active .status{color:#087b79}@media(max-width:700px){.grid{grid-template-columns:1fr}}
+</style></head><body><section class="hero"><div>EXAMS &amp; QUIZZES</div><h1>Project Management</h1><p>Choose a certification to access its quizzes and exam practice.</p></section>
+<main class="wrap"><p><a href="{% url 'courses_exams' %}">← Back to exam areas</a></p><div class="grid">
+{% for course in courses %}{% if course.active %}<a class="card active" href="{% url 'pba_quiz_list' %}">{% else %}<div class="card">{% endif %}
+<div class="badge">{{ course.badge }}</div><h2>{{ course.code }}</h2><p>{{ course.name }}</p><span class="status">{{ course.status }}</span>
+{% if course.active %}</a>{% else %}</div>{% endif %}{% endfor %}
+</div></main></body></html>

@@ -1,3 +1,2 @@
-from django.contrib import admin
-
-# Register your models here.
+"""Django admin autodiscovery loader for TheStoreWare website app."""
+from .website_admin import *  # noqa: F401,F403

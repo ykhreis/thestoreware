@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240" role="img" aria-label="PMI-PBA course badge">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#95684a"/><stop offset="1" stop-color="#182f49"/></linearGradient></defs>
+<circle cx="120" cy="120" r="115" fill="url(#bg)"/><circle cx="120" cy="120" r="99" fill="none" stroke="#ffffff" stroke-opacity=".7" stroke-width="2"/>
+<circle cx="120" cy="120" r="79" fill="#ffffff" fill-opacity=".12" stroke="#ffffff" stroke-opacity=".45" stroke-width="1.5"/>
+<path d="M74 72 L120 49 L166 72" fill="none" stroke="#fff" stroke-opacity=".65" stroke-width="2"/>
+<text x="120" y="108" font-family="Arial,sans-serif" font-size="11" letter-spacing="2" font-weight="700" fill="white" text-anchor="middle">CERTIFICATION</text>
+<text x="120" y="143" font-family="Arial,sans-serif" font-size="30" font-weight="800" fill="white" text-anchor="middle">PBA</text>
+<path d="M74 163 L120 185 L166 163" fill="none" stroke="#fff" stroke-opacity=".65" stroke-width="2"/>
+</svg>

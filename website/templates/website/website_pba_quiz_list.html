@@ -1,0 +1,15 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PMI-PBA Quizzes | TheStoreWare</title><link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+<style>
+.hero{padding:70px 20px 45px;background:linear-gradient(135deg,#0d4fa8,#0e8d94);color:#fff;text-align:center}.hero h1{font-size:clamp(2rem,5vw,3.6rem);margin:8px 0}.wrap{max-width:1000px;margin:auto;padding:38px 20px 70px}.back a{text-decoration:none;font-weight:800;color:#1265c7}
+.quiz{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin:18px 0;padding:25px;border:1px solid #e1e8ef;border-radius:20px;background:#fff;box-shadow:0 10px 28px rgba(20,50,80,.07)}.quiz h2{margin:0 0 8px;color:#17324d}.meta{color:#64748b}.start{padding:12px 20px;border-radius:12px;background:#0e8d94;color:#fff;text-decoration:none;font-weight:900}.empty{text-align:center;padding:45px;border:1px dashed #cbd5e1;border-radius:18px;color:#64748b}
+@media(max-width:650px){.quiz{grid-template-columns:1fr}.start{text-align:center}}
+</style></head><body>
+<section class="hero"><div>PROJECT MANAGEMENT • PMI-PBA</div><h1>Practice Quizzes</h1><p>Select a quiz to begin.</p></section>
+<main class="wrap"><div class="back"><a href="{% url 'project_management_courses' %}">← Back to PMI certifications</a></div>
+{% for row in quizzes %}
+<div class="quiz"><div><h2>{{ row.quiz.title }}</h2><div class="meta">{{ row.question_count }} question{{ row.question_count|pluralize }} • Recommended time {{ row.recommended_time }}</div>{% if row.quiz.description %}<p>{{ row.quiz.description }}</p>{% endif %}</div>
+<a class="start" href="{% url 'pba_quiz_start' row.quiz.id %}">Start Quiz</a></div>
+{% empty %}<div class="empty"><h2>No quizzes published yet</h2><p>Create PMI-PBA Quiz 1 in Django Admin and add questions from the Question Bank.</p></div>{% endfor %}
+</main></body></html>

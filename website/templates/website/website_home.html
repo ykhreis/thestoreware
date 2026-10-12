@@ -184,6 +184,10 @@ html[dir="rtl"] .tsw-storeware-guidance {
                         class="{% if CURRENT_LANGUAGE == 'fr' %}active{% endif %}">FR</button>
             </form>
         </div>
+        {% if user.is_authenticated and user.is_staff %}
+        <a class="button button-small" href="/analytics/">Analytics</a>
+        <a class="button button-small" href="{% url 'pba_quiz_list' %}">PMI-PBA</a>
+        {% endif %}
         <a class="button button-small" href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف TheStoreWare{% elif CURRENT_LANGUAGE == 'fr' %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}r TheStoreWare{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} TheStoreWare{% endif %}</a>
     </div>
 </header>
@@ -222,7 +226,11 @@ html[dir="rtl"] .tsw-storeware-guidance {
         <div class="portal-grid">
             {% for item in areas %}
             {% if item.slug != "ai-agent" %}
+            {% if item.slug == "courses" or item.slug == "exams-quizzes" %}
+            <a class="portal-card reveal" href="{% url 'courses_exams' %}">
+            {% else %}
             <a class="portal-card reveal" href="{% url 'area_detail' item.slug %}">
+            {% endif %}
                 <div class="portal-art {{ item.art_class }}">
                     <span class="portal-icon">{{ item.icon }}</span>
                     {% if item.slug == "exams-quizzes" %}

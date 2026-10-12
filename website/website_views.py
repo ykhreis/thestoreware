@@ -10,8 +10,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
+from django.contrib.auth.decorators import user_passes_test
 
-from .website_models import WebsiteSubscriber, WebsiteUserFeedback
+from .website_models import WebsiteSubscriber, WebsiteUserFeedback, QuizExam, QuestionBank
 from mentor.ai_agent_models import GenericKnowledgeCandidate, ConversationExpression
 from mentor.services.external_ai_service import ask_external_ai
 
@@ -256,6 +257,111 @@ AREAS = [
     },
 ]
 
+
+
+PROJECT_MANAGEMENT_EXAMS = [
+    {"code": "PMP", "name": "Project Management Professional", "status": "COMING SOON", "badge": "PMP"},
+    {"code": "PMI-ACP", "name": "Agile Certified Practitioner", "status": "COMING SOON", "badge": "ACP"},
+    {"code": "PMI-RMP", "name": "Risk Management Professional", "status": "COMING SOON", "badge": "RMP"},
+    {"code": "PMI-SP", "name": "Scheduling Professional", "status": "COMING SOON", "badge": "SP"},
+    {"code": "PMI-PBA", "name": "Professional in Business Analysis", "status": "UNDER DEVELOPMENT", "badge": "PBA", "active": True},
+    {"code": "PMI-PMOCP", "name": "PMO Certified Professional", "status": "COMING SOON", "badge": "PMO"},
+    {"code": "PgMP", "name": "Program Management Professional", "status": "COMING SOON", "badge": "PgMP"},
+    {"code": "PfMP", "name": "Portfolio Management Professional", "status": "COMING SOON", "badge": "PfMP"},
+]
+
+EXAM_CATEGORIES = [
+    {"slug": "project-management", "name": "Project Management", "short": "PM",
+     "description": "Professional certification practice quizzes and exam preparation.",
+     "status": "AVAILABLE", "active": True},
+    {"slug": "oracle", "name": "Oracle", "short": "ORACLE",
+     "description": "Oracle knowledge checks, quizzes and certification practice.",
+     "status": "COMING SOON"},
+    {"slug": "artificial-intelligence", "name": "Artificial Intelligence", "short": "AI",
+     "description": "AI knowledge checks, quizzes and practical assessments.",
+     "status": "COMING SOON"},
+    {"slug": "cybersecurity", "name": "Cybersecurity", "short": "CYBER",
+     "description": "Cybersecurity quizzes, knowledge checks and exam practice.",
+     "status": "COMING SOON"},
+]
+
+
+def courses_exams(request):
+    """Exams & Quizzes category landing page. No course content is shown here."""
+    return render(
+        request,
+        "website/website_courses_exams.html",
+        {"categories": EXAM_CATEGORIES},
+    )
+
+
+def project_management_courses(request):
+    """Project Management certifications available under Exams & Quizzes."""
+    return render(
+        request,
+        "website/website_project_management_courses.html",
+        {"courses": PROJECT_MANAGEMENT_EXAMS, "exam_mode": True},
+    )
+
+
+def _staff_only(user):
+    return user.is_authenticated and user.is_staff
+
+
+@user_passes_test(_staff_only, login_url="/admin/login/")
+def pba_quiz_list(request):
+    """List published/active PMI-PBA quizzes and their question counts."""
+    quizzes = (
+        QuizExam.objects
+        .filter(certification="PMI-PBA", is_active=True)
+        .prefetch_related("question_links")
+        .order_by("id")
+    )
+    quiz_rows = []
+    for quiz in quizzes:
+        question_count = quiz.question_links.count()
+        total_seconds = question_count * quiz.seconds_per_question
+        quiz_rows.append({
+            "quiz": quiz,
+            "question_count": question_count,
+            "recommended_seconds": total_seconds,
+            "recommended_time": f"{total_seconds // 60}:{total_seconds % 60:02d}",
+        })
+    return render(
+        request,
+        "website/website_pba_quiz_list.html",
+        {"quizzes": quiz_rows},
+    )
+
+
+@user_passes_test(_staff_only, login_url="/admin/login/")
+def pba_quiz_start(request, quiz_id):
+    """Run one PMI-PBA quiz. Timer is guidance only and never auto-submits."""
+    quiz = get_object_or_404(
+        QuizExam,
+        pk=quiz_id,
+        certification="PMI-PBA",
+        is_active=True,
+    )
+    links = list(
+        quiz.question_links
+        .select_related("question")
+        .filter(question__is_active=True)
+        .order_by("sort_order", "id")
+    )
+    questions = [link.question for link in links]
+    total_seconds = len(questions) * quiz.seconds_per_question
+
+    return render(
+        request,
+        "website/website_pba_quiz.html",
+        {
+            "quiz": quiz,
+            "questions": questions,
+            "total_seconds": total_seconds,
+            "question_count": len(questions),
+        },
+    )
 
 def home(request):
     return render(
