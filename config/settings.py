@@ -131,7 +131,7 @@ LOCALE_PATHS = [
     BASE_DIR / 'locale',
 ]
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kuwait'
 USE_I18N = True
 USE_TZ = True
 
