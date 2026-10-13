@@ -155,6 +155,34 @@ html[dir="rtl"] .tsw-storeware-guidance {
     color: rgba(255,255,255,.72) !important;
     font-weight: 700;
 }
+/* Keep administrator controls available on phones/tablets without depending on desktop nav width. */
+.tsw-admin-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+    .shell.nav {
+        flex-wrap: wrap;
+        row-gap: 8px;
+    }
+
+    .tsw-admin-controls {
+        order: 20;
+        width: 100%;
+        justify-content: center;
+        padding: 4px 0 8px;
+    }
+
+    .tsw-admin-controls .button {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+}
+
 </style>
 
 </head>
@@ -185,8 +213,10 @@ html[dir="rtl"] .tsw-storeware-guidance {
             </form>
         </div>
         {% if user.is_authenticated and user.is_staff %}
-        <a class="button button-small" href="/analytics/">Analytics</a>
-        <a class="button button-small" href="{% url 'pba_quiz_list' %}">PMI-PBA</a>
+        <div class="tsw-admin-controls" aria-label="Administrator controls">
+            <a class="button button-small" href="/analytics/">Analytics</a>
+            <a class="button button-small" href="{% url 'pba_quiz_list' %}">PMI-PBA</a>
+        </div>
         {% endif %}
         <a class="button button-small" href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف TheStoreWare{% elif CURRENT_LANGUAGE == 'fr' %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}r TheStoreWare{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} TheStoreWare{% endif %}</a>
     </div>

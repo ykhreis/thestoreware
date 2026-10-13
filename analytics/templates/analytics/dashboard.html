@@ -82,6 +82,22 @@
             padding: 4px 10px;
             font-weight: 700;
         }
+        .refresh-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin: 0 0 18px;
+            color: #6a7b91;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .refresh-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #08aeb4;
+        }
+
         @media (max-width: 850px) {
             .cards, .grid { grid-template-columns: 1fr; }
         }
@@ -97,6 +113,10 @@
         <div class="eyebrow">FIRST-PARTY WEBSITE INTELLIGENCE</div>
         <h1>Analytics Dashboard</h1>
         <p class="subtitle">Private analytics powered directly by TheStoreWare PostgreSQL data.</p>
+        <div class="refresh-status" aria-label="Automatic refresh status">
+            <span class="refresh-dot"></span>
+            <span id="refreshCountdown">Auto-refresh in 60s</span>
+        </div>
 
         <section class="cards">
             <div class="card"><div class="label">TOTAL VISITORS</div><div class="value">{{ total_visitors }}</div></div>
@@ -212,5 +232,25 @@
             </div>
         </section>
     </main>
+    <script>
+        // Visible countdown for the private admin analytics dashboard.
+        (function () {
+            const countdown = document.getElementById('refreshCountdown');
+            let secondsRemaining = 60;
+
+            const timer = window.setInterval(function () {
+                secondsRemaining -= 1;
+
+                if (countdown) {
+                    countdown.textContent = 'Auto-refresh in ' + secondsRemaining + 's';
+                }
+
+                if (secondsRemaining <= 0) {
+                    window.clearInterval(timer);
+                    window.location.reload();
+                }
+            }, 1000);
+        })();
+    </script>
 </body>
 </html>
