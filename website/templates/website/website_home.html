@@ -163,6 +163,21 @@ html[dir="rtl"] .tsw-storeware-guidance {
     flex: 0 0 auto;
 }
 
+.tsw-account-end {
+    margin-left: 26px;
+    padding-left: 22px;
+    border-left: 1px solid rgba(255,255,255,.35);
+}
+
+html[dir="rtl"] .tsw-account-end {
+    margin-left: 0;
+    margin-right: 26px;
+    padding-left: 0;
+    padding-right: 22px;
+    border-left: 0;
+    border-right: 1px solid rgba(255,255,255,.35);
+}
+
 @media (max-width: 900px) {
     .shell.nav {
         flex-wrap: wrap;
@@ -180,6 +195,16 @@ html[dir="rtl"] .tsw-storeware-guidance {
         display: inline-flex !important;
         visibility: visible !important;
         opacity: 1 !important;
+    }
+
+    .tsw-account-end,
+    html[dir="rtl"] .tsw-account-end {
+        margin-left: 0;
+        margin-right: 0;
+        padding-left: 0;
+        padding-right: 0;
+        border-left: 0;
+        border-right: 0;
     }
 }
 
@@ -212,13 +237,25 @@ html[dir="rtl"] .tsw-storeware-guidance {
                         class="{% if CURRENT_LANGUAGE == 'fr' %}active{% endif %}">FR</button>
             </form>
         </div>
-        {% if user.is_authenticated and user.is_staff %}
-        <div class="tsw-admin-controls" aria-label="Administrator controls">
-            <a class="button button-small" href="/analytics/">Analytics</a>
-            <a class="button button-small" href="{% url 'pba_quiz_list' %}">PMI-PBA</a>
+        <div class="tsw-admin-controls tsw-account-end" aria-label="Account controls">
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                    <a class="button button-small" href="/admin/">Content Management</a>
+                    <a class="button button-small" href="/admin/">Administration</a>
+                    <a class="button button-small" href="/analytics/">Analytics</a>
+                    <a class="button button-small" href="{% url 'pba_quiz_list' %}">PMI-PBA</a>
+                {% else %}
+                    <span class="button button-small" style="cursor:default;">My Account</span>
+                {% endif %}
+                <form method="post" action="{% url 'logout' %}" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" class="button button-small">Sign Out</button>
+                </form>
+            {% else %}
+                <a class="button button-small" href="{% url 'user_login' %}">Sign In</a>
+                <span class="button button-small" style="cursor:default;" title="Registration coming soon">Sign Up</span>
+            {% endif %}
         </div>
-        {% endif %}
-        <a class="button button-small" href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف TheStoreWare{% elif CURRENT_LANGUAGE == 'fr' %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}r TheStoreWare{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} TheStoreWare{% endif %}</a>
     </div>
 </header>
 
@@ -255,7 +292,6 @@ html[dir="rtl"] .tsw-storeware-guidance {
 
         <div class="portal-grid">
             {% for item in areas %}
-            {% if item.slug != "ai-agent" %}
             {% if item.slug == "courses" or item.slug == "exams-quizzes" %}
             <a class="portal-card reveal" href="{% url 'courses_exams' %}">
             {% else %}
@@ -301,7 +337,6 @@ html[dir="rtl"] .tsw-storeware-guidance {
                     {% endif %}
                 </div>
             </a>
-            {% endif %}
             {% endfor %}
         </div>
     </div>

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'axes',
     'website.website_apps.WebsiteConfig',
     'analytics.apps.AnalyticsConfig',
     'mentor.ai_agent_apps.MentorConfig',
@@ -58,9 +59,34 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# ============================================================
+# Authentication / brute-force protection
+# ============================================================
+AUTHENTICATION_BACKENDS = [
+    'axes.backends.AxesStandaloneBackend',
+    'website.authentication.EmailAuthenticationBackend',
+    
+]
+
+# Lock an authentication identity after 5 consecutive failures.
+AXES_FAILURE_LIMIT = 5
+
+# Allow another attempt after a 30-minute cooldown.
+AXES_COOLOFF_TIME = 0.5
+
+# Reset the failure counter after a successful login.
+AXES_RESET_ON_SUCCESS = True
+
+# Track failed authentication by username and IP address together.
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]
+
+# Return HTTP 429 (Too Many Requests) when locked out.
+AXES_HTTP_RESPONSE_CODE = 429
 
 ROOT_URLCONF = 'config.urls'
 

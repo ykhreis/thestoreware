@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheStoreWare | Sign In</title>
+<style>
+* { box-sizing: border-box; }
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.box {
+    background: #fff;
+    width: 100%;
+    max-width: 410px;
+    padding: 38px;
+    border-radius: 12px;
+    box-shadow: 0 5px 24px rgba(0,0,0,.10);
+}
+.brand {
+    text-align: center;
+    font-size: 30px;
+    font-weight: 700;
+    margin: 0 0 6px;
+}
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 28px;
+}
+label {
+    display: block;
+    margin-top: 16px;
+    font-weight: 600;
+}
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 7px;
+    border: 1px solid #cfd5dc;
+    border-radius: 6px;
+    font-size: 15px;
+}
+.password-wrap {
+    position: relative;
+}
+.password-wrap input {
+    padding-right: 68px;
+}
+.show-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-42%);
+    border: 0;
+    background: transparent;
+    width: auto;
+    padding: 4px;
+    margin: 0;
+    font-size: 13px;
+    cursor: pointer;
+}
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+.actions a {
+    font-size: 14px;
+    text-decoration: none;
+}
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 22px;
+    cursor: pointer;
+    border: 0;
+    border-radius: 6px;
+    font-size: 16px;
+}
+.error {
+    color: #b42318;
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 16px;
+    font-size: 14px;
+}
+.security-note {
+    text-align: center;
+    color: #777;
+    font-size: 12px;
+    margin-top: 20px;
+}
+</style>
+</head>
+<body>
+<div class="box">
+    <div class="brand">TheStoreWare</div>
+    <div class="subtitle">Secure Sign In</div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <label for="{{ form.username.id_for_label }}">Email address</label>
+        {{ form.username }}
+
+        <label for="{{ form.password.id_for_label }}">Password</label>
+        <div class="password-wrap">
+            {{ form.password }}
+            <button type="button" class="show-password" id="togglePassword"
+                    aria-label="Show password" aria-pressed="false">Show</button>
+        </div>
+
+        <div class="actions">
+            <a href="{% url 'password_reset' %}">Forgot Password?</a>
+        </div>
+
+        <button class="submit-btn" type="submit">Sign In</button>
+
+        {% if form.errors %}
+        <div class="error">Invalid email address or password.</div>
+        {% endif %}
+
+        {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+    </form>
+
+    <div class="security-note">Protected access to TheStoreWare</div>
+</div>
+
+<script>
+(function () {
+    const toggle = document.getElementById("togglePassword");
+    const password = document.getElementById("id_password");
+    const email = document.getElementById("id_username");
+
+    if (email) {
+        email.setAttribute("type", "email");
+        email.setAttribute("autocomplete", "email");
+        email.setAttribute("inputmode", "email");
+        email.setAttribute("placeholder", "name@example.com");
+        email.setAttribute("aria-label", "Email address");
+    }
+
+    if (!toggle || !password) return;
+
+    toggle.addEventListener("click", function () {
+        const showing = password.type === "text";
+        password.type = showing ? "password" : "text";
+        toggle.textContent = showing ? "Show" : "Hide";
+        toggle.setAttribute("aria-label", showing ? "Show password" : "Hide password");
+        toggle.setAttribute("aria-pressed", showing ? "false" : "true");
+    });
+})();
+</script>
+</body>
+</html>

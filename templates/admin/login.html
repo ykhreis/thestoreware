@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration | TheStoreWare</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f4f6f8;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #202124;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.10);
+            overflow: hidden;
+        }
+
+        .login-header {
+            background: #417690;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .login-header h1 {
+            margin: 0;
+            color: #f5dd5d;
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .login-body {
+            padding: 30px 34px 34px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .field input {
+            width: 100%;
+            height: 44px;
+            padding: 10px 12px;
+            border: 1px solid #c8ccd0;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+
+        .field input:focus {
+            outline: none;
+            border-color: #417690;
+            box-shadow: 0 0 0 2px rgba(65,118,144,0.15);
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-wrapper input {
+            padding-right: 65px;
+        }
+
+        .show-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: #417690;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .sign-in-button {
+            width: 100%;
+            height: 44px;
+            border: none;
+            border-radius: 5px;
+            background: #417690;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .sign-in-button:hover {
+            background: #315d73;
+        }
+
+        .error-box {
+            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 5px;
+            background: #fff1f1;
+            color: #ba2121;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-card">
+
+    <div class="login-header">
+        <h1>TheStoreWare Administration</h1>
+    </div>
+
+    <div class="login-body">
+
+        {% if form.errors %}
+        <div class="error-box">
+            Unable to sign in with the provided credentials.
+        </div>
+        {% endif %}
+
+        <form action="{{ app_path }}" method="post">
+            {% csrf_token %}
+
+            <div class="field">
+                <label for="{{ form.username.id_for_label }}">
+                    Email address
+                </label>
+
+                {{ form.username }}
+            </div>
+
+            <div class="field">
+                <label for="{{ form.password.id_for_label }}">
+                    Password
+                </label>
+
+                <div class="password-wrapper">
+                    {{ form.password }}
+
+                    <button
+                        type="button"
+                        class="show-password"
+                        id="togglePassword">
+                        Show
+                    </button>
+                </div>
+            </div>
+
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <button type="submit" class="sign-in-button">
+                Sign In
+            </button>
+
+        </form>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const password = document.getElementById("id_password");
+    const toggle = document.getElementById("togglePassword");
+
+    if (password && toggle) {
+
+        toggle.addEventListener("click", function () {
+
+            if (password.type === "password") {
+                password.type = "text";
+                toggle.textContent = "Hide";
+            } else {
+                password.type = "password";
+                toggle.textContent = "Show";
+            }
+
+        });
+    }
+});
+</script>
+
+</body>
+</html>

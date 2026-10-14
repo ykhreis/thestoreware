@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib.auth.decorators import login_required, user_passes_test
 
 from .website_models import WebsiteSubscriber, WebsiteUserFeedback, QuizExam, QuestionBank
 from mentor.ai_agent_models import GenericKnowledgeCandidate, ConversationExpression
@@ -379,6 +379,12 @@ def area_detail(request, slug):
     if area is None:
         from django.http import Http404
         raise Http404("Area not found")
+
+    # AI-Agent is visible publicly as a TheStoreWare capability,
+    # but entering its area requires a signed-in TheStoreWare account.
+    if slug == "ai-agent" and not request.user.is_authenticated:
+        return redirect(f"{reverse('user_login')}?next={request.path}")
+
     return render(request, "website/website_area_detail.html", {"area": area})
 
 

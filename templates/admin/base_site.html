@@ -1,0 +1,7 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | TheStoreWare Administration{% endblock %}
+{% block branding %}
+<div id="site-name"><a href="{% url 'admin:index' %}">TheStoreWare Administration</a></div>
+{% endblock %}
+{% block nav-global %}{% endblock %}
