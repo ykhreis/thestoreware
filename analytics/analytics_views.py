@@ -1,6 +1,6 @@
 from django.contrib.admin.views.decorators import staff_member_required
 from django.db.models import Count
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, Coalesce
 from django.utils import timezone
 from django.shortcuts import render
 from datetime import timedelta, datetime
@@ -51,14 +51,14 @@ def dashboard(request):
     # Overall totals remain available in the headline cards.
     total_visitors = Visitor.objects.count()
     total_sessions = VisitSession.objects.count()
-    unique_ips = (
-        VisitSession.objects
-        .exclude(ip_address__isnull=True)
-        .exclude(ip_address="")
-        .values("ip_address")
-        .distinct()
-        .count()
-    )
+    # Count unique stored IP values. Strip whitespace first so blank/space-only
+    # values are not treated as real IPs.
+    all_ip_values = {
+        (value or "").strip()
+        for value in VisitSession.objects.values_list("ip_address", flat=True)
+        if (value or "").strip()
+    }
+    unique_ips = len(all_ip_values)
     total_page_views = PageView.objects.count()
     todays_visitors = Visitor.objects.filter(first_seen__date=today).count()
     total_subscribers = WebsiteSubscriber.objects.filter(is_active=True).count()
@@ -73,24 +73,28 @@ def dashboard(request):
     )
 
     filtered_session_count = filtered_sessions_qs.count()
-    sessions_with_ip = (
-        filtered_sessions_qs
-        .exclude(ip_address__isnull=True)
-        .exclude(ip_address="")
+    filtered_ip_values = {
+        (value or "").strip()
+        for value in filtered_sessions_qs.values_list("ip_address", flat=True)
+        if (value or "").strip()
+    }
+
+    # If sessions exist but none contains an IP value, show N/A rather than
+    # a misleading zero. Otherwise count distinct IP values in the period.
+    filtered_unique_ips = (
+        len(filtered_ip_values)
+        if filtered_ip_values
+        else ("N/A" if filtered_session_count > 0 else 0)
     )
-    filtered_unique_ip_count = (
-        sessions_with_ip
-        .values("ip_address")
+
+    # Count actual visitors who had at least one session in the selected period.
+    filtered_visitors = (
+        filtered_sessions_qs
+        .exclude(visitor__isnull=True)
+        .values("visitor_id")
         .distinct()
         .count()
     )
-
-    # Avoid showing a misleading 0 when sessions exist but those records
-    # do not contain stored IP data (common in the local development DB).
-    if filtered_session_count > 0 and not sessions_with_ip.exists():
-        filtered_unique_ips = "N/A"
-    else:
-        filtered_unique_ips = filtered_unique_ip_count
 
     # Page views for sessions in the selected period.
     filtered_page_views = PageView.objects.filter(
@@ -238,6 +242,7 @@ def dashboard(request):
         "filter_to_date": session_to_date.strftime("%Y-%m-%d"),
         "has_date_filter": has_date_filter,
         "filtered_session_count": filtered_session_count,
+        "filtered_visitors": filtered_visitors,
         "filtered_unique_ips": filtered_unique_ips,
         "filtered_page_views": filtered_page_views,
         "filtered_new_visitors": filtered_new_visitors,
