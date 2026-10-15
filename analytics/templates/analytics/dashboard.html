@@ -101,11 +101,64 @@
             background: #08aeb4;
         }
 
+
+        .date-filter {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: end;
+            gap: 12px;
+            margin: 0 0 24px;
+            padding: 18px 20px;
+        }
+        .date-field { display: flex; flex-direction: column; gap: 6px; }
+        .date-field label { color: #718096; font-size: 12px; font-weight: 800; }
+        .date-field input {
+            border: 1px solid #d9e3ef;
+            border-radius: 10px;
+            padding: 10px 12px;
+            color: #10243e;
+            background: #fff;
+            font: inherit;
+        }
+        .filter-btn, .quick-link {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 800;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .filter-btn { background: #2468e8; color: #fff; }
+        .quick-link { background: #eef7ff; color: #2468e8; }
+        .filter-summary {
+            margin-left: auto;
+            color: #6a7b91;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .period-cards {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin: -8px 0 24px;
+        }
+        .period-card {
+            background: #fff;
+            border: 1px solid #e4ebf4;
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+        .period-card .label { color: #718096; font-size: 11px; font-weight: 800; }
+        .period-card .value { font-size: 24px; font-weight: 800; margin-top: 5px; }
+
         @media (max-width: 1100px) {
             .cards { grid-template-columns: repeat(3, 1fr); }
+            .period-cards { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 850px) {
-            .cards, .grid { grid-template-columns: 1fr; }
+            .cards, .grid, .period-cards { grid-template-columns: 1fr; }
+            .filter-summary { margin-left: 0; width: 100%; }
         }
     </style>
 </head>
@@ -123,6 +176,32 @@
             <span class="refresh-dot"></span>
             <span id="refreshCountdown">Auto-refresh in 60s</span>
         </div>
+
+        <form class="panel date-filter" method="get">
+            <div class="date-field">
+                <label for="from_date">FROM DATE</label>
+                <input id="from_date" name="from_date" type="date" value="{{ filter_from_date }}">
+            </div>
+            <div class="date-field">
+                <label for="to_date">TO DATE</label>
+                <input id="to_date" name="to_date" type="date" value="{{ filter_to_date }}">
+            </div>
+            <button class="filter-btn" type="submit">Apply</button>
+            <a class="quick-link" href="?from_date={{ today_iso }}&to_date={{ today_iso }}">Today</a>
+            <a class="quick-link" href="?from_date={{ yesterday_iso }}&to_date={{ yesterday_iso }}">Yesterday</a>
+            <a class="quick-link" href="?from_date={{ last7_iso }}&to_date={{ today_iso }}">Last 7 Days</a>
+            <a class="quick-link" href="?from_date={{ last30_iso }}&to_date={{ today_iso }}">Last 30 Days</a>
+            <div class="filter-summary">
+                Session period: {{ filter_from_date }} → {{ filter_to_date }}
+            </div>
+        </form>
+
+        <section class="period-cards">
+            <div class="period-card"><div class="label">SESSIONS IN PERIOD</div><div class="value">{{ filtered_session_count }}</div></div>
+            <div class="period-card"><div class="label">UNIQUE IPs IN PERIOD</div><div class="value">{{ filtered_unique_ips }}</div></div>
+            <div class="period-card"><div class="label">PAGE VIEWS IN PERIOD</div><div class="value">{{ filtered_page_views }}</div></div>
+            <div class="period-card"><div class="label">NEW VISITORS IN PERIOD</div><div class="value">{{ filtered_new_visitors }}</div></div>
+        </section>
 
         <section class="cards">
             <div class="card"><div class="label">TOTAL VISITORS</div><div class="value">{{ total_visitors }}</div></div>
@@ -170,7 +249,7 @@
 
         <section class="grid">
             <div class="panel">
-                <h2>Recent Sessions</h2>
+                <h2>Sessions — {{ filter_from_date }} to {{ filter_to_date }}</h2>
                 <table>
                     <thead><tr><th>Started</th><th>IP</th><th>Country</th><th>Region</th><th>City</th><th>Browser</th><th>Device</th><th>Views</th></tr></thead>
                     <tbody>
@@ -186,7 +265,7 @@
                             <td>{{ item.page_view_count }}</td>
                         </tr>
                     {% empty %}
-                        <tr><td colspan="8">No sessions yet.</td></tr>
+                        <tr><td colspan="8">No sessions found for the selected period.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>

@@ -3,11 +3,21 @@ from django.db.models import Count
 from django.db.models.functions import TruncDate
 from django.utils import timezone
 from django.shortcuts import render
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 # Unique Analytics model module name
 from .analytics_models import Visitor, VisitSession, PageView
 from website.website_models import WebsiteSubscriber
+
+
+def _parse_date(value):
+    """Parse YYYY-MM-DD safely; return None when missing/invalid."""
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return None
 
 
 @staff_member_required(login_url="/admin/login/")
@@ -15,8 +25,30 @@ def dashboard(request):
     """
     Private TheStoreWare analytics dashboard.
     Shows anonymous visitor/session/page-view activity.
+
+    Optional GET filters:
+      ?from_date=YYYY-MM-DD&to_date=YYYY-MM-DD
+    With no dates supplied, the dashboard keeps the overall summary while
+    Recent Sessions defaults to Today.
     """
 
+    today = timezone.localdate()
+    from_date = _parse_date(request.GET.get("from_date"))
+    to_date = _parse_date(request.GET.get("to_date"))
+
+    # If only one side is supplied, use it for both sides.
+    if from_date and not to_date:
+        to_date = from_date
+    elif to_date and not from_date:
+        from_date = to_date
+
+    # Protect against reversed ranges.
+    if from_date and to_date and from_date > to_date:
+        from_date, to_date = to_date, from_date
+
+    has_date_filter = bool(from_date and to_date)
+
+    # Overall totals remain available in the headline cards.
     total_visitors = Visitor.objects.count()
     total_sessions = VisitSession.objects.count()
     unique_ips = (
@@ -28,11 +60,52 @@ def dashboard(request):
         .count()
     )
     total_page_views = PageView.objects.count()
-    todays_visitors = Visitor.objects.filter(first_seen__date=timezone.localdate()).count()
+    todays_visitors = Visitor.objects.filter(first_seen__date=today).count()
     total_subscribers = WebsiteSubscriber.objects.filter(is_active=True).count()
 
+    # Session date range: explicit selection, otherwise Today.
+    session_from_date = from_date if has_date_filter else today
+    session_to_date = to_date if has_date_filter else today
+
+    filtered_sessions_qs = VisitSession.objects.filter(
+        started_at__date__gte=session_from_date,
+        started_at__date__lte=session_to_date,
+    )
+
+    filtered_session_count = filtered_sessions_qs.count()
+    sessions_with_ip = (
+        filtered_sessions_qs
+        .exclude(ip_address__isnull=True)
+        .exclude(ip_address="")
+    )
+    filtered_unique_ip_count = (
+        sessions_with_ip
+        .values("ip_address")
+        .distinct()
+        .count()
+    )
+
+    # Avoid showing a misleading 0 when sessions exist but those records
+    # do not contain stored IP data (common in the local development DB).
+    if filtered_session_count > 0 and not sessions_with_ip.exists():
+        filtered_unique_ips = "N/A"
+    else:
+        filtered_unique_ips = filtered_unique_ip_count
+
+    # Page views for sessions in the selected period.
+    filtered_page_views = PageView.objects.filter(
+        session__started_at__date__gte=session_from_date,
+        session__started_at__date__lte=session_to_date,
+    ).count()
+
+    # Visitors whose first visit occurred in the selected period.
+    filtered_new_visitors = Visitor.objects.filter(
+        first_seen__date__gte=session_from_date,
+        first_seen__date__lte=session_to_date,
+    ).count()
+
     # 30-day trend: new unique visitors and sessions per calendar day.
-    trend_start_date = timezone.localdate() - timedelta(days=29)
+    trend_start_date = today - timedelta(days=29)
 
     visitor_rows = (
         Visitor.objects
@@ -69,10 +142,12 @@ def dashboard(request):
         .order_by("-subscribed_at")[:25]
     )
 
+    # Show up to 250 sessions for the chosen date/range instead of only the
+    # latest 25 sessions across the whole database.
     recent_sessions = (
-        VisitSession.objects
+        filtered_sessions_qs
         .select_related("visitor")
-        .order_by("-started_at")[:25]
+        .order_by("-started_at")[:250]
     )
 
     popular_pages = (
@@ -157,6 +232,19 @@ def dashboard(request):
         "browsers": browsers,
         "operating_systems": operating_systems,
         "countries": countries,
+
+        # Date-filter context.
+        "filter_from_date": session_from_date.strftime("%Y-%m-%d"),
+        "filter_to_date": session_to_date.strftime("%Y-%m-%d"),
+        "has_date_filter": has_date_filter,
+        "filtered_session_count": filtered_session_count,
+        "filtered_unique_ips": filtered_unique_ips,
+        "filtered_page_views": filtered_page_views,
+        "filtered_new_visitors": filtered_new_visitors,
+        "today_iso": today.strftime("%Y-%m-%d"),
+        "yesterday_iso": (today - timedelta(days=1)).strftime("%Y-%m-%d"),
+        "last7_iso": (today - timedelta(days=6)).strftime("%Y-%m-%d"),
+        "last30_iso": (today - timedelta(days=29)).strftime("%Y-%m-%d"),
     }
 
     return render(request, "analytics/dashboard.html", context)
