@@ -139,7 +139,7 @@
         }
         .period-cards {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 12px;
             margin: -8px 0 24px;
         }
@@ -197,26 +197,144 @@
         </form>
 
         <section class="period-cards">
-            <div class="period-card"><div class="label">VISITORS IN PERIOD</div><div class="value">{{ filtered_visitors }}</div></div>
-            <div class="period-card"><div class="label">UNIQUE IPs IN PERIOD</div><div class="value">{{ filtered_unique_ips }}</div></div>
-            <div class="period-card"><div class="label">SESSIONS IN PERIOD</div><div class="value">{{ filtered_session_count }}</div></div>
-            <div class="period-card"><div class="label">PAGE VIEWS IN PERIOD</div><div class="value">{{ filtered_page_views }}</div></div>
+            <div class="period-card"><div class="label">ESTIMATED REAL VISITORS</div><div class="value js-count-up" data-target="{{ estimated_human_visitors }}">0</div></div>
+            <div class="period-card"><div class="label">UNIQUE IPs IN PERIOD</div><div class="value js-count-up" data-target="{{ filtered_unique_ips }}">0</div></div>
+            <div class="period-card"><div class="label">SESSIONS IN PERIOD</div><div class="value js-count-up" data-target="{{ filtered_session_count }}">0</div></div>
+            <div class="period-card"><div class="label">PAGE VIEWS IN PERIOD</div><div class="value js-count-up" data-target="{{ filtered_page_views }}">0</div></div>
+            <div class="period-card"><div class="label">SUSPICIOUS IPs</div><div class="value js-count-up" data-target="{{ suspicious_ip_count }}">0</div></div>
+        </section>
+
+        <section class="panel" style="margin:-8px 0 24px; padding:14px 18px;">
+            <div class="stat-row"><span>Raw visitor records in selected period</span><strong>{{ filtered_visitors }}</strong></div>
+            <div class="stat-row"><span>Suspicious IPs identified</span><strong>{{ suspicious_ip_count }}</strong></div>
+            <p class="subtitle" style="margin:10px 0 0;">Estimated Real Visitors collapses highly concentrated automated/suspicious bursts from the same IP into one visitor/source. Raw records are retained for audit and security analysis.</p>
+        </section>
+
+        <section class="panel" style="margin-bottom:24px; overflow-x:auto;">
+            <h2>IP Traffic Analysis — {{ filter_from_date }} to {{ filter_to_date }}</h2>
+            <p class="subtitle" style="margin-top:-8px;">
+                Diagnostic view of the busiest IP addresses. Normal = ordinary pattern; Review = unusual but still counted; Automated / Suspicious = concentrated burst excluded from the estimated visitor count. Historical data is not deleted.
+            </p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>IP</th>
+                        <th>Visitor IDs</th>
+                        <th>Sessions</th>
+                        <th>Page Views</th>
+                        <th>First Activity</th>
+                        <th>Last Activity</th>
+                        <th>Visitor Rate/min</th>
+                        <th>Classification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in ip_traffic_analysis %}
+                    <tr>
+                        <td>{{ item.ip_address|default:"Unknown" }}</td>
+                        <td><span class="pill">{{ item.visitor_ids }}</span></td>
+                        <td>{{ item.sessions }}</td>
+                        <td>{{ item.page_views }}</td>
+                        <td>{{ item.first_activity|date:"d M Y H:i:s" }}</td>
+                        <td>{{ item.last_activity|date:"d M Y H:i:s" }}</td>
+                        <td>{{ item.visitor_rate_per_minute }}</td>
+                        <td>{{ item.traffic_classification }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8">No IP traffic data found for the selected period.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+
+        <section class="panel" style="margin-bottom:24px; overflow-x:auto;">
+            <h2>Security Monitoring — {{ filter_from_date }} to {{ filter_to_date }}</h2>
+            <p class="subtitle" style="margin-top:-8px;">
+                Monitor-only security evidence. No IP address is automatically blocked. A traffic pattern marked Suspicious above is not automatically a security threat; this section evaluates actual request paths and responses.
+            </p>
+
+            <section class="period-cards" style="margin:18px 0 22px;">
+                <div class="period-card"><div class="label">SECURITY EVENTS</div><div class="value js-count-up" data-target="{{ security_event_count }}">0</div></div>
+                <div class="period-card"><div class="label">IPs MONITORED</div><div class="value js-count-up" data-target="{{ security_ips_monitored }}">0</div></div>
+                <div class="period-card"><div class="label">UNDER REVIEW</div><div class="value js-count-up" data-target="{{ security_review_count }}">0</div></div>
+                <div class="period-card"><div class="label">POTENTIAL THREATS</div><div class="value js-count-up" data-target="{{ security_potential_threat_count }}">0</div></div>
+                <div class="period-card"><div class="label">HIGH RISK</div><div class="value js-count-up" data-target="{{ security_high_risk_count }}">0</div></div>
+            </section>
+
+            <h2 style="font-size:17px; margin-top:8px;">Latest Security Activity</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>IP</th>
+                        <th>Method</th>
+                        <th>Path</th>
+                        <th>Status</th>
+                        <th>Risk</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for event in latest_security_activity %}
+                    <tr>
+                        <td>{{ event.occurred_at|date:"d M Y H:i:s" }}</td>
+                        <td>{{ event.ip_address|default:"Unknown" }}</td>
+                        <td>{{ event.method|default:"-" }}</td>
+                        <td style="max-width:340px; word-break:break-word;">{{ event.path }}</td>
+                        <td>{{ event.status_code|default:"-" }}</td>
+                        <td>
+                            {% if event.risk_level == "high" %}
+                                <strong>High Risk</strong>
+                            {% elif event.risk_level == "potential_threat" %}
+                                <strong>Potential Threat</strong>
+                            {% elif event.risk_level == "review" %}
+                                Review
+                            {% else %}
+                                Low
+                            {% endif %}
+                        </td>
+                        <td style="max-width:360px; word-break:break-word;">{{ event.risk_reason|default:"Monitoring event" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7">
+                            No security events recorded for this period yet. This is normal immediately after enabling the security monitor.
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <p class="subtitle" style="margin:12px 0 0;">
+                Classification is evidence-based monitoring only. Potential Threat does not by itself prove that an IP is an attacker.
+            </p>
         </section>
 
         <section class="cards">
-            <div class="card"><div class="label">TOTAL VISITORS</div><div class="value">{{ total_visitors }}</div></div>
-            <div class="card"><div class="label">UNIQUE IPs</div><div class="value">{{ unique_ips }}</div></div>
-            <div class="card"><div class="label">SESSIONS</div><div class="value">{{ total_sessions }}</div></div>
-            <div class="card"><div class="label">PAGE VIEWS</div><div class="value">{{ total_page_views }}</div></div>
-            <div class="card"><div class="label">TODAY'S NEW VISITORS</div><div class="value">{{ todays_visitors }}</div></div>
-            <div class="card"><div class="label">ACTIVE SUBSCRIBERS</div><div class="value">{{ total_subscribers }}</div></div>
+            <div class="card">
+                <div class="label">ESTIMATED REAL VISITORS — ALL TIME</div>
+                <div class="value js-count-up" data-target="{{ total_visitors }}">0</div>
+                <div style="margin-top:8px; color:#718096; font-size:11px; font-weight:700;">
+                    {% if analytics_first_date %}
+                        {{ analytics_first_date|date:"d M Y" }} → {{ analytics_last_date|date:"d M Y" }}
+                    {% else %}
+                        No analytics history yet
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card"><div class="label">UNIQUE IPs</div><div class="value js-count-up" data-target="{{ unique_ips }}">0</div></div>
+            <div class="card"><div class="label">TOTAL SESSIONS</div><div class="value js-count-up" data-target="{{ total_sessions }}">0</div></div>
+            <div class="card"><div class="label">TOTAL PAGE VIEWS</div><div class="value js-count-up" data-target="{{ total_page_views }}">0</div></div>
+            <div class="card"><div class="label">TODAY'S ESTIMATED VISITORS</div><div class="value js-count-up" data-target="{{ todays_visitors }}">0</div></div>
+            <div class="card"><div class="label">ACTIVE SUBSCRIBERS</div><div class="value js-count-up" data-target="{{ total_subscribers }}">0</div></div>
         </section>
 
         <section class="panel trend-panel">
-            <h2>Visitor Growth — Last 30 Days</h2>
-            <p class="subtitle" style="margin-top:-8px;">Daily new unique visitors compared with website sessions.</p>
+            <h2>Estimated Real Visitor Trend — Last 30 Days</h2>
+            <p class="subtitle" style="margin-top:-8px;">Daily realistic visitors compared with recorded website sessions.</p>
             <div class="chart-wrap">
-                <canvas id="visitorTrendChart" aria-label="Visitor growth over the last 30 days"></canvas>
+                <canvas id="visitorTrendChart" aria-label="Realistic visitor trend over the last 30 days"></canvas>
             </div>
         </section>
 
@@ -224,7 +342,7 @@
 
         <section class="grid">
             <div class="panel">
-                <h2>Popular Pages</h2>
+                <h2>Popular Pages — Estimated Real Traffic</h2><p class="subtitle">Page views from Automated / Suspicious IP traffic are excluded.</p>
                 <table>
                     <thead><tr><th>Page</th><th>Views</th></tr></thead>
                     <tbody>
@@ -238,7 +356,7 @@
             </div>
 
             <div class="panel">
-                <h2>Devices</h2>
+                <h2>Devices — Estimated Real Visitors</h2><p class="subtitle">Distinct visitor identities from non-suspicious traffic, not raw sessions.</p>
                 {% for item in devices %}
                     <div class="stat-row"><span>{{ item.device_type|default:"Unknown" }}</span><strong>{{ item.total }} <span style="color:#718096; font-weight:600;">({{ item.percentage }}%)</span></strong></div>
                 {% empty %}
@@ -342,7 +460,7 @@
                     labels: trend.map(item => item.date),
                     datasets: [
                         {
-                            label: 'New Visitors',
+                            label: 'Estimated Real Visitors',
                             data: trend.map(item => item.visitors),
                             tension: 0.25,
                             fill: false
@@ -393,5 +511,49 @@
             }, 1000);
         })();
     </script>
+
+
+
+
+<script>
+(function () {
+    const counters = document.querySelectorAll(".js-count-up");
+    const duration = 2800;
+
+    counters.forEach(function (counter) {
+        const rawTarget = (counter.dataset.target || "0").replace(/,/g, "").trim();
+        const target = Number(rawTarget);
+
+        if (!Number.isFinite(target) || target < 0) {
+            counter.textContent = rawTarget || "0";
+            return;
+        }
+
+        if (target === 0) {
+            counter.textContent = "0";
+            return;
+        }
+
+        const startTime = performance.now();
+
+        function animate(now) {
+            const progress = Math.min((now - startTime) / duration, 1);
+            const eased = 1 - Math.pow(1 - progress, 3);
+            const current = Math.max(1, Math.floor(target * eased));
+
+            counter.textContent = current.toLocaleString();
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                counter.textContent = target.toLocaleString();
+            }
+        }
+
+        requestAnimationFrame(animate);
+    });
+})();
+</script>
+
 </body>
 </html>

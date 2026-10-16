@@ -260,3 +260,43 @@ class ServiceUsage(models.Model):
             f"{'Allowed' if self.allowed else 'Blocked'}"
         )
 
+class SecurityRequest(models.Model):
+    """
+    Security-monitoring record for potentially interesting web requests.
+
+    This table is deliberately separate from normal visitor/page-view analytics.
+    Version 1 is monitor-only: it records evidence and never blocks a request.
+    """
+
+    RISK_CHOICES = [
+        ("low", "Low"),
+        ("review", "Review"),
+        ("potential_threat", "Potential Threat"),
+        ("high", "High Risk"),
+    ]
+
+    occurred_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
+    ip_hash = models.CharField(max_length=64, blank=True, db_index=True)
+    method = models.CharField(max_length=10, blank=True)
+    path = models.TextField()
+    status_code = models.PositiveSmallIntegerField(null=True, blank=True, db_index=True)
+    user_agent = models.TextField(blank=True)
+    risk_level = models.CharField(
+        max_length=20,
+        choices=RISK_CHOICES,
+        default="low",
+        db_index=True,
+    )
+    risk_reason = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-occurred_at"]
+        indexes = [
+            models.Index(fields=["ip_address", "occurred_at"]),
+            models.Index(fields=["risk_level", "occurred_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.ip_address or 'Unknown IP'} - {self.method} {self.path}"
+

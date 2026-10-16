@@ -7,7 +7,7 @@ from django.contrib.gis.geoip2 import GeoIP2
 from django.db.models import F
 from django.utils import timezone
 
-from .analytics_models import Visitor, VisitSession, PageView
+from .analytics_models import Visitor, VisitSession, PageView, SecurityRequest
 
 
 class AnalyticsMiddleware:
@@ -67,6 +67,87 @@ class AnalyticsMiddleware:
         except Exception:
             return {"country_code": "", "country_name": "", "region": "", "city": ""}
 
+    @staticmethod
+    def _security_risk(path, method, status_code):
+        """
+        Conservative monitoring-only classification.
+        A suspicious-looking path is evidence for review, not proof of an attack.
+        """
+        path_lower = (path or "").lower()
+
+        high_interest_tokens = (
+            "/.env",
+            "/wp-admin",
+            "/wp-login",
+            "/phpmyadmin",
+            "/administrator",
+            "/config.php",
+            "/server-status",
+            "/.git",
+            "/vendor/phpunit",
+            "/cgi-bin",
+        )
+
+        sensitive_tokens = (
+            "/admin",
+            "/login",
+            "/accounts/login",
+        )
+
+        if any(token in path_lower for token in high_interest_tokens):
+            return "potential_threat", "Probe for a sensitive or unrelated application path"
+
+        if method not in ("GET", "HEAD", "POST"):
+            return "review", f"Unusual HTTP method: {method}"
+
+        if status_code in (401, 403) and any(token in path_lower for token in sensitive_tokens):
+            return "review", "Denied request to an authentication/administration path"
+
+        if status_code == 404:
+            return "review", "Request returned 404 Not Found"
+
+        return "low", ""
+
+    def _record_security_request(self, request, response):
+        """
+        Record security-relevant evidence separately from normal analytics.
+        This function never blocks the request and failures never affect the site.
+        """
+        try:
+            client_ip = self._get_client_ip(request)
+            method = (request.method or "")[:10]
+            path = (request.path or "")[:2000]
+            status_code = getattr(response, "status_code", None)
+            user_agent = request.META.get("HTTP_USER_AGENT", "")[:2000]
+
+            risk_level, risk_reason = self._security_risk(
+                path,
+                method,
+                status_code,
+            )
+
+            # Keep the first version focused: record abnormal responses,
+            # suspicious paths/methods, and admin/authentication activity.
+            should_record = (
+                risk_level != "low"
+                or status_code in (400, 401, 403, 404, 405, 429, 500, 502, 503)
+                or path.lower().startswith(("/admin", "/login", "/accounts/"))
+            )
+
+            if should_record:
+                SecurityRequest.objects.create(
+                    ip_address=client_ip,
+                    ip_hash=self._hash_ip(client_ip),
+                    method=method,
+                    path=path,
+                    status_code=status_code,
+                    user_agent=user_agent,
+                    risk_level=risk_level,
+                    risk_reason=risk_reason,
+                )
+        except Exception as exc:
+            print(f"TheStoreWare Security Monitor Error: {exc}")
+
     def __call__(self, request):
 
         # ---------------------------------------------
@@ -87,7 +168,9 @@ class AnalyticsMiddleware:
             request.method != "GET"
             or request.path.lower().startswith(excluded_paths)
         ):
-            return self.get_response(request)
+            response = self.get_response(request)
+            self._record_security_request(request, response)
+            return response
 
         visitor = None
         visit_session = None
@@ -302,6 +385,11 @@ class AnalyticsMiddleware:
         # =============================================
 
         response = self.get_response(request)
+
+        # =============================================
+        # SECURITY MONITORING (MONITOR ONLY)
+        # =============================================
+        self._record_security_request(request, response)
 
         # =============================================
         # 9. SAVE ANONYMOUS VISITOR COOKIE
