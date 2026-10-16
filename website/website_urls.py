@@ -8,6 +8,7 @@ urlpatterns = [
     path("area/<slug:slug>/", website_views.area_detail, name="area_detail"),
     path("courses-exams/", website_views.courses_exams, name="courses_exams"),
     path("courses-exams/project-management/", website_views.project_management_courses, name="project_management_courses"),
+    path("exams-quizzes/import-questions/", website_views.quiz_question_import, name="quiz_question_import"),
     path("exams-quizzes/project-management/pmi-pba/", website_views.pba_quiz_list, name="pba_quiz_list"),
     path("exams-quizzes/project-management/pmi-pba/quiz/<int:quiz_id>/", website_views.pba_quiz_start, name="pba_quiz_start"),
     path("feedback/", website_views.submit_feedback, name="submit_feedback"),

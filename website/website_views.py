@@ -7,12 +7,13 @@ import urllib.request
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.db import transaction
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required, user_passes_test
 
-from .website_models import WebsiteSubscriber, WebsiteUserFeedback, QuizExam, QuestionBank
+from .website_models import WebsiteSubscriber, WebsiteUserFeedback, QuizExam, QuestionBank, QuizExamQuestion
 from mentor.ai_agent_models import GenericKnowledgeCandidate, ConversationExpression
 from mentor.services.external_ai_service import ask_external_ai
 
@@ -362,6 +363,218 @@ def pba_quiz_start(request, quiz_id):
             "question_count": len(questions),
         },
     )
+
+
+@user_passes_test(_staff_only, login_url="/admin/login/")
+def quiz_question_import(request):
+    """Universal Excel importer for TheStoreWare Exams & Quizzes."""
+    import base64
+    import io
+
+    required_columns = [
+        "Question No.", "Question", "Option A", "Option B", "Option C", "Option D", "Correct Option"
+    ]
+
+    def clean(value):
+        if value is None:
+            return ""
+        if isinstance(value, float) and value.is_integer():
+            return str(int(value))
+        return str(value).strip()
+
+    def parse_workbook(file_bytes):
+        try:
+            from openpyxl import load_workbook
+        except ImportError as exc:
+            raise ValidationError("Excel support requires openpyxl. Install it with: pip install openpyxl") from exc
+
+        workbook = load_workbook(io.BytesIO(file_bytes), read_only=True, data_only=True)
+        sheet = workbook.active
+        rows = list(sheet.iter_rows(values_only=True))
+        if not rows:
+            raise ValidationError("The Excel file is empty.")
+
+        headers = [clean(value) for value in rows[0]]
+        missing = [name for name in required_columns if name not in headers]
+        if missing:
+            raise ValidationError("Missing required column(s): " + ", ".join(missing))
+
+        index = {name: headers.index(name) for name in headers if name}
+        parsed = []
+        seen_numbers = set()
+
+        for excel_row, values in enumerate(rows[1:], start=2):
+            if not any(clean(v) for v in values):
+                continue
+
+            def cell(name):
+                pos = index.get(name)
+                return clean(values[pos]) if pos is not None and pos < len(values) else ""
+
+            errors = []
+            q_no_text = cell("Question No.")
+            try:
+                question_no = int(float(q_no_text))
+                if question_no <= 0:
+                    raise ValueError
+            except (TypeError, ValueError):
+                question_no = None
+                errors.append("Question No. must be a positive number.")
+
+            if question_no is not None:
+                if question_no in seen_numbers:
+                    errors.append("Duplicate Question No. in this Excel file.")
+                seen_numbers.add(question_no)
+
+            question = cell("Question")
+            options = {letter: cell(f"Option {letter}") for letter in "ABCD"}
+            correct = cell("Correct Option").upper()
+
+            if not question:
+                errors.append("Question is required.")
+            for letter, text in options.items():
+                if not text:
+                    errors.append(f"Option {letter} is required.")
+            if correct not in {"A", "B", "C", "D"}:
+                errors.append("Correct Option must be A, B, C or D.")
+
+            correct_answer_text = cell("Correct Answer")
+            if correct in options and correct_answer_text:
+                if correct_answer_text.casefold() != options[correct].casefold():
+                    errors.append("Correct Answer text does not match the selected Correct Option.")
+
+            parsed.append({
+                "excel_row": excel_row,
+                "question_no": question_no,
+                "question": question,
+                "option_a": options["A"],
+                "option_b": options["B"],
+                "option_c": options["C"],
+                "option_d": options["D"],
+                "correct_option": correct,
+                "correct_answer_text": correct_answer_text,
+                "explanation": cell("Explanation"),
+                "source_reference": cell("Source Video") or cell("Source Reference"),
+                "source_question_id": cell("Source Question ID"),
+                "errors": errors,
+            })
+
+        if not parsed:
+            raise ValidationError("No question rows were found in the Excel file.")
+        return parsed
+
+    context = {
+        "quizzes": QuizExam.objects.filter(is_active=True).order_by("category", "certification", "title"),
+    }
+
+    if request.method == "POST":
+        action = request.POST.get("action", "preview")
+        quiz_id = request.POST.get("quiz_id", "").strip()
+        quiz = QuizExam.objects.filter(pk=quiz_id, is_active=True).first() if quiz_id else None
+        context["selected_quiz_id"] = quiz_id
+        context["selected_quiz"] = quiz
+
+        if not quiz:
+            context["import_error"] = "Please select the quiz that will receive these questions."
+            return render(request, "website/website_quiz_question_import.html", context, status=400)
+
+        try:
+            if action == "confirm":
+                encoded = request.POST.get("workbook_data", "")
+                if not encoded:
+                    raise ValidationError("The preview data has expired. Please upload the Excel file again.")
+                file_bytes = base64.b64decode(encoded.encode("ascii"), validate=True)
+                filename = request.POST.get("filename", "questions.xlsx")
+            else:
+                upload = request.FILES.get("excel_file")
+                if not upload:
+                    raise ValidationError("Please choose an Excel (.xlsx) file.")
+                filename = upload.name
+                if not filename.lower().endswith(".xlsx"):
+                    raise ValidationError("Only .xlsx Excel files are supported.")
+                if upload.size > 5 * 1024 * 1024:
+                    raise ValidationError("The Excel file is too large. Maximum size is 5 MB.")
+                file_bytes = upload.read()
+
+            parsed = parse_workbook(file_bytes)
+
+            # Existing questions in the selected quiz are safe duplicates:
+            # mark them to be skipped instead of treating them as validation errors.
+            existing_texts = {
+                text.strip().casefold()
+                for text in QuestionBank.objects.filter(quiz_links__quiz_exam=quiz)
+                .values_list("question_text", flat=True)
+                if text
+            }
+            for row in parsed:
+                row["skip_existing"] = (
+                    bool(row["question"])
+                    and row["question"].strip().casefold() in existing_texts
+                )
+
+            has_errors = any(row["errors"] for row in parsed)
+            ready_count = sum(1 for row in parsed if not row["errors"] and not row["skip_existing"])
+            skipped_count = sum(1 for row in parsed if row["skip_existing"])
+
+            if action == "confirm":
+                if has_errors:
+                    raise ValidationError("Import stopped because validation errors were found. Please correct the Excel file and preview it again.")
+
+                with transaction.atomic():
+                    imported = 0
+                    skipped = 0
+                    for row in parsed:
+                        if row["skip_existing"]:
+                            skipped += 1
+                            continue
+                        question = QuestionBank.objects.create(
+                            category=quiz.category,
+                            certification=quiz.certification,
+                            question_type="quiz",
+                            question_format="single_choice",
+                            question_text=row["question"],
+                            option_a=row["option_a"],
+                            option_b=row["option_b"],
+                            option_c=row["option_c"],
+                            option_d=row["option_d"],
+                            correct_answer=row["correct_option"],
+                            source_explanation=row["explanation"],
+                            thestoreware_explanation=row["explanation"],
+                            source_type="other",
+                            source_reference=row["source_reference"] or filename,
+                            source_question_id=row["source_question_id"] or str(row["question_no"] or ""),
+                            status="draft",
+                            is_active=True,
+                        )
+                        QuizExamQuestion.objects.create(
+                            quiz_exam=quiz,
+                            question=question,
+                            sort_order=row["question_no"] or 0,
+                        )
+                        imported += 1
+
+                context["import_success"] = (
+                    f"{imported} question(s) imported successfully into {quiz.title}. "
+                    f"{skipped} existing question(s) skipped."
+                )
+                return render(request, "website/website_quiz_question_import.html", context)
+
+            context.update({
+                "preview_rows": parsed,
+                "preview_count": len(parsed),
+                "ready_count": ready_count,
+                "skipped_count": skipped_count,
+                "has_errors": has_errors,
+                "filename": filename,
+                "workbook_data": base64.b64encode(file_bytes).decode("ascii"),
+            })
+
+        except (ValidationError, ValueError) as exc:
+            message = exc.messages[0] if isinstance(exc, ValidationError) else str(exc)
+            context["import_error"] = message
+            return render(request, "website/website_quiz_question_import.html", context, status=400)
+
+    return render(request, "website/website_quiz_question_import.html", context)
 
 def home(request):
     return render(
