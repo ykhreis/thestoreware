@@ -1059,10 +1059,17 @@ def sitemap_xml(request):
 
     public_urls = [
         f"{base_url}/",
+
+        # Main public areas
         *[
             f"{base_url}{reverse('area_detail', kwargs={'slug': area['slug']})}"
             for area in AREAS
         ],
+
+        # Exams & Quizzes SEO pages
+        f"{base_url}{reverse('courses_exams')}",
+        f"{base_url}{reverse('project_management_courses')}",
+        f"{base_url}{reverse('pba_quiz_list')}",
     ]
 
     xml_urls = "\n".join(
