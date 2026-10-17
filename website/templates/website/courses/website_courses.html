@@ -1,0 +1,22 @@
+{% load static i18n %}
+<!DOCTYPE html>
+{% get_current_language as CURRENT_LANGUAGE %}
+<html lang="{{ CURRENT_LANGUAGE }}" dir="{% if CURRENT_LANGUAGE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TheStoreWare Courses | Learn & Develop</title>
+<meta name="description" content="Explore structured learning areas and courses on TheStoreWare.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://thestoreware.com/courses/">
+<link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+</head>
+<body>
+<header class="header"><div class="shell nav"><a class="logo" href="{% url 'home' %}"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a><nav><a href="{% url 'home' %}">Home</a></nav></div></header>
+<main>
+<section class="area-hero"><div class="area-inner"><span class="kicker">THESTOREWARE LEARNING</span><h1>Courses</h1><p>Structured learning content and practical development paths.</p></div></section>
+<section class="section"><div class="shell"><div class="section-head"><span class="kicker">COURSE AREAS</span><h2>Learning areas are being prepared.</h2><p>Course areas and course content will be managed from the database through Content Management.</p></div></div></section>
+</main>
+<footer class="site-footer"><div class="shell footer-bottom">© 2026 TheStoreWare. All rights reserved.</div></footer>
+</body>
+</html>

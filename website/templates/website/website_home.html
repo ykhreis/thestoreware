@@ -5,41 +5,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- =========================================================
-         TheStoreWare SEO Foundation
-         ========================================================= -->
-
-    <title>{% if CURRENT_LANGUAGE == 'ar' %}TheStoreWare | منصة المعرفة والتعلم والذكاء الاصطناعي{% elif CURRENT_LANGUAGE == 'fr' %}TheStoreWare | Connaissance, apprentissage et intelligence artificielle{% else %}TheStoreWare | AI, Knowledge, Learning, Exams &amp; Digital Tools{% endif %}</title>
-
-    <meta name="description" content="{% if CURRENT_LANGUAGE == 'ar' %}TheStoreWare منصة رقمية متعددة اللغات للمعرفة والتعلم والذكاء الاصطناعي والدورات والاختبارات والأدوات الرقمية.{% elif CURRENT_LANGUAGE == 'fr' %}TheStoreWare est une plateforme numérique multilingue dédiée à la connaissance, l'apprentissage, l'intelligence artificielle, aux cours, examens et outils numériques.{% else %}TheStoreWare is a multilingual digital platform for AI-powered knowledge, learning, courses, professional exams, quizzes and intelligent digital tools.{% endif %}">
-
-    <meta name="robots" content="index, follow, max-image-preview:large">
-    <meta name="googlebot" content="index, follow">
-
-    <link rel="canonical" href="https://thestoreware.com/">
-
-    <!-- Brand / Social SEO -->
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="TheStoreWare">
-    <meta property="og:title" content="TheStoreWare | AI, Knowledge, Learning &amp; Digital Tools">
-    <meta property="og:description" content="Explore TheStoreWare — a multilingual platform for AI-powered knowledge, learning, courses, exams, quizzes and intelligent digital tools.">
-    <meta property="og:url" content="https://thestoreware.com/">
-
-    <!-- TheStoreWare Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "TheStoreWare",
-        "alternateName": [
-            "The StoreWare",
-            "StoreWare"
-        ],
-        "url": "https://thestoreware.com/",
-        "description": "TheStoreWare is a multilingual digital platform for AI-powered knowledge, learning, courses, professional exams, quizzes and intelligent digital tools.",
-        "inLanguage": ["en", "ar", "fr"]
-    }
-    </script>
+    <meta name="description" content="TheStoreWare — a multilingual digital knowledge encyclopedia for learning, practice, testing and discovery.">
+    <title>TheStoreWare | {% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %}. Learn. Create. Solve.</title>
     <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
     <script defer src="{% static 'website/js/website_home.js' %}"></script>
 
@@ -276,7 +243,7 @@ html[dir="rtl"] .tsw-account-end {
                     <a class="button button-small" href="/admin/">Content Management</a>
                     <a class="button button-small" href="/admin/">Administration</a>
                     <a class="button button-small" href="/analytics/">Analytics</a>
-                    <a class="button button-small" href="{% url 'pba_quiz_list' %}">PMI-PBA</a>
+                    <a class="button button-small" href="{% url 'exams_quizzes' %}">Exams &amp; Quizzes</a>
                 {% else %}
                     <span class="button button-small" style="cursor:default;">My Account</span>
                 {% endif %}
@@ -300,9 +267,9 @@ html[dir="rtl"] .tsw-account-end {
         <div class="launch-badge">{% if CURRENT_LANGUAGE == 'ar' %}THESTOREWARE • نبني للجميع{% elif CURRENT_LANGUAGE == 'fr' %}THESTOREWARE • CONÇU POUR TOUS{% else %}THESTOREWARE • BUILDING FOR EVERYONE{% endif %}</div>
         <h1>{% if CURRENT_LANGUAGE == 'ar' %}تعلّم. تطوّر. استكشف.<br><em>مع TheStoreWare.</em>{% elif CURRENT_LANGUAGE == 'fr' %}Apprenez. Progressez. Explorez.<br><em>Avec TheStoreWare.</em>{% else %}Learn. Grow. Explore.<br><em>With TheStoreWare.</em>{% endif %}</h1>
         <p>
-            {% if CURRENT_LANGUAGE == 'ar' %}TheStoreWare — منصتك الرقمية متعددة اللغات للمعرفة والتعلّم والذكاء الاصطناعي والتدريب والاختبارات والاستكشاف.
-            {% elif CURRENT_LANGUAGE == 'fr' %}TheStoreWare — votre plateforme numérique multilingue pour la connaissance, l’apprentissage, l’intelligence artificielle, la pratique, les examens et la découverte.
-            {% else %}TheStoreWare — your multilingual digital platform for AI-powered knowledge, learning, practice, exams, quizzes and discovery.{% endif %}
+            {% if CURRENT_LANGUAGE == 'ar' %}موسوعة معرفية رقمية متعددة اللغات للتعلّم، والتدريب، والاختبار، والاستكشاف.
+            {% elif CURRENT_LANGUAGE == 'fr' %}Une encyclopédie numérique multilingue du savoir pour apprendre, pratiquer, s’évaluer et découvrir.
+            {% else %}A Multilingual Digital Knowledge Encyclopedia for Learning, Practice, Testing &amp; Discovery.{% endif %}
         </p>
         <div class="hero-actions">
             <a class="button" href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف ما هو قادم <span>↓</span>{% elif CURRENT_LANGUAGE == 'fr' %}Découvrez ce qui arrive <span>↓</span>{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} What's Coming <span>↓</span>{% endif %}</a>
@@ -325,8 +292,10 @@ html[dir="rtl"] .tsw-account-end {
 
         <div class="portal-grid">
             {% for item in areas %}
-            {% if item.slug == "courses" or item.slug == "exams-quizzes" %}
-            <a class="portal-card reveal" href="{% url 'courses_exams' %}">
+            {% if item.slug == "exams-quizzes" %}
+            <a class="portal-card reveal" href="{% url 'exams_quizzes' %}">
+            {% elif item.slug == "courses" %}
+            <a class="portal-card reveal" href="{% url 'courses' %}">
             {% else %}
             <a class="portal-card reveal" href="{% url 'area_detail' item.slug %}">
             {% endif %}

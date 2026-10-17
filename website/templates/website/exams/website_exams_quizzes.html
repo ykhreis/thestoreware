@@ -1,0 +1,59 @@
+{% load static i18n %}
+<!DOCTYPE html>
+{% get_current_language as CURRENT_LANGUAGE %}
+<html lang="{{ CURRENT_LANGUAGE }}" dir="{% if CURRENT_LANGUAGE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- TheStoreWare Exams & Quizzes SEO -->
+<title>TheStoreWare Exams & Quizzes | Practice, Test & Learn</title>
+<meta name="description" content="Practice with TheStoreWare Exams & Quizzes, test your knowledge, review results and explore professional certification assessment areas.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="googlebot" content="index, follow">
+
+<link rel="canonical" href="https://thestoreware.com/exams-quizzes/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TheStoreWare">
+<meta property="og:title" content="TheStoreWare Exams & Quizzes | Practice, Test & Learn">
+<meta property="og:description" content="Practice, test your knowledge, review results and explore professional certification assessment areas with TheStoreWare.">
+<meta property="og:url" content="https://thestoreware.com/exams-quizzes/">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "TheStoreWare Exams & Quizzes",
+  "description": "Practice, test your knowledge, review results and explore professional certification assessment areas with TheStoreWare.",
+  "url": "https://thestoreware.com/exams-quizzes/",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "TheStoreWare",
+    "url": "https://thestoreware.com/"
+  }
+}
+</script>
+
+<link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+</head>
+<body>
+<header class="header"><div class="shell nav">
+<a class="logo" href="{% url 'home' %}"><span class="logo-mark">S</span><span>TheStore<span>Ware</span></span></a>
+<nav><a href="{% url 'home' %}">Home</a></nav>
+</div></header>
+<main>
+<section class="exams-landing-hero"><span class="exams-landing-eyebrow">THESTOREWARE ASSESSMENT</span><h1>Exams &amp; Quizzes</h1>
+<p>Choose an area to practice, test your knowledge and review your results.</p></section>
+<div class="exams-landing-back"><a href="{% url 'home' %}">← Back to TheStoreWare</a></div>
+<section class="exams-landing-wrap">
+<div class="exams-landing-head"><span class="kicker">EXAM AREAS</span><h2>Choose your assessment area</h2>
+<p>Select an area to continue to its certifications and quizzes.</p></div>
+<div class="exams-landing-grid">
+{% for category in categories %}
+{% if category.active %}<a class="exams-landing-card active" href="{% url 'exam_area' category.slug %}">{% else %}<div class="exams-landing-card">{% endif %}
+<div class="exams-landing-icon">{{ category.short }}</div><h3>{{ category.name }}</h3><p>{{ category.description }}</p><span class="exams-landing-status">{{ category.status }}</span>
+{% if category.active %}</a>{% else %}</div>{% endif %}
+{% endfor %}
+</div>
+</section></main>
+<footer class="site-footer"><div class="shell footer-bottom">© 2026 TheStoreWare. All rights reserved.</div></footer>
+</body></html>

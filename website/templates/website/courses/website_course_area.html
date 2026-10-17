@@ -1,0 +1,6 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ area.name }} Courses | TheStoreWare</title><meta name="robots" content="index, follow"><link rel="stylesheet" href="{% static 'website/css/website_style.css' %}"></head>
+<body><main class="area-hero"><div class="area-inner"><span class="kicker">COURSES</span><h1>{{ area.name }}</h1><p>{{ area.description }}</p></div></main><section class="section"><div class="shell"><p><a href="{% url 'courses' %}">← Back to Courses</a></p></div></section></body>
+</html>

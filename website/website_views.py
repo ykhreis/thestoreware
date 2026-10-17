@@ -287,75 +287,126 @@ EXAM_CATEGORIES = [
 ]
 
 
-def courses_exams(request):
+def exams_quizzes(request):
     """Exams & Quizzes category landing page. No course content is shown here."""
     return render(
         request,
-        "website/website_courses_exams.html",
+        "website/exams/website_exams_quizzes.html",
         {"categories": EXAM_CATEGORIES},
     )
 
 
-def project_management_courses(request):
-    """Project Management certifications available under Exams & Quizzes."""
+def exam_area(request, area_slug):
+    """Generic exam-area page. The area slug determines the content, not the template."""
+    area = next((item for item in EXAM_CATEGORIES if item["slug"] == area_slug), None)
+    if area is None:
+        from django.http import Http404
+        raise Http404("Exam area not found")
+
+    certifications = PROJECT_MANAGEMENT_EXAMS if area_slug == "project-management" else []
+
+    # Connect active certification cards to their existing active quiz in PostgreSQL.
+    # Resolve the quiz dynamically so no database ID is hard-coded.
+    if area_slug == "project-management":
+        certifications = [dict(certification) for certification in certifications]
+
+        for certification in certifications:
+            if not certification.get("active"):
+                continue
+
+            quiz = (
+                QuizExam.objects
+                .filter(
+                    certification__iexact=certification["code"],
+                    is_active=True,
+                )
+                .order_by("id")
+                .first()
+            )
+
+            if quiz is not None:
+                certification["quiz_id"] = quiz.id
+
     return render(
         request,
-        "website/website_project_management_courses.html",
-        {"courses": PROJECT_MANAGEMENT_EXAMS, "exam_mode": True},
+        "website/exams/website_exam_area.html",
+        {
+            "area": area,
+            "certifications": certifications,
+        },
     )
+
+
+def courses(request):
+    """Generic Courses landing page."""
+    return render(request, "website/courses/website_courses.html")
+
+
+@user_passes_test(lambda user: user.is_authenticated and user.is_superuser, login_url="/admin/login/")
+def courses_management(request):
+    """Administrator-only generic Courses Management workspace."""
+    return render(request, "website/management/courses/website_courses_management.html")
 
 
 def _staff_only(user):
     return user.is_authenticated and user.is_staff
 
 
-@user_passes_test(_staff_only, login_url="/admin/login/")
-def pba_quiz_list(request):
-    """List published/active PMI-PBA quizzes and their question counts."""
-    quizzes = (
-        QuizExam.objects
-        .filter(certification="PMI-PBA", is_active=True)
-        .prefetch_related("question_links")
-        .order_by("id")
-    )
-    quiz_rows = []
-    for quiz in quizzes:
-        question_count = quiz.question_links.count()
-        total_seconds = question_count * quiz.seconds_per_question
-        quiz_rows.append({
-            "quiz": quiz,
-            "question_count": question_count,
-            "recommended_seconds": total_seconds,
-            "recommended_time": f"{total_seconds // 60}:{total_seconds % 60:02d}",
-        })
+def _admin_only(user):
+    return user.is_authenticated and user.is_superuser
+
+
+@user_passes_test(_admin_only, login_url="/admin/login/")
+def content_management(request):
+    """Staff-only Content Management dashboard for TheStoreWare."""
     return render(
         request,
-        "website/website_pba_quiz_list.html",
-        {"quizzes": quiz_rows},
+        "website/management/website_content_management.html",
     )
 
 
+@user_passes_test(_admin_only, login_url="/admin/login/")
+def exam_quiz_management(request):
+    """Administrator-only generic management page for all exams and quizzes."""
+    quiz_exams = (
+        QuizExam.objects
+        .filter(is_active=True)
+        .prefetch_related("questions")
+        .order_by("category", "certification", "quiz_type", "title")
+    )
+
+    return render(
+        request,
+        "website/management/exams/website_exam_quiz_management.html",
+        {
+            "quiz_exams": quiz_exams,
+        },
+    )
+
+
+
 @user_passes_test(_staff_only, login_url="/admin/login/")
-def pba_quiz_start(request, quiz_id):
-    """Run one PMI-PBA quiz. Timer is guidance only and never auto-submits."""
+def exam_quiz_start(request, quiz_id):
+    """Run any active quiz/exam using the generic assessment player."""
     quiz = get_object_or_404(
         QuizExam,
         pk=quiz_id,
-        certification="PMI-PBA",
         is_active=True,
     )
+
     links = list(
         quiz.question_links
         .select_related("question")
         .filter(question__is_active=True)
         .order_by("sort_order", "id")
     )
+
     questions = [link.question for link in links]
     total_seconds = len(questions) * quiz.seconds_per_question
 
     return render(
         request,
-        "website/website_pba_quiz.html",
+        "website/exams/website_exam_quiz.html",
         {
             "quiz": quiz,
             "questions": questions,
@@ -365,7 +416,10 @@ def pba_quiz_start(request, quiz_id):
     )
 
 
-@user_passes_test(_staff_only, login_url="/admin/login/")
+
+
+
+@user_passes_test(_admin_only, login_url="/admin/login/")
 def quiz_question_import(request):
     """Universal Excel importer for TheStoreWare Exams & Quizzes."""
     import base64
@@ -476,7 +530,7 @@ def quiz_question_import(request):
 
         if not quiz:
             context["import_error"] = "Please select the quiz that will receive these questions."
-            return render(request, "website/website_quiz_question_import.html", context, status=400)
+            return render(request, "website/management/exams/website_quiz_question_import.html", context, status=400)
 
         try:
             if action == "confirm":
@@ -557,7 +611,7 @@ def quiz_question_import(request):
                     f"{imported} question(s) imported successfully into {quiz.title}. "
                     f"{skipped} existing question(s) skipped."
                 )
-                return render(request, "website/website_quiz_question_import.html", context)
+                return render(request, "website/management/exams/website_quiz_question_import.html", context)
 
             context.update({
                 "preview_rows": parsed,
@@ -572,9 +626,9 @@ def quiz_question_import(request):
         except (ValidationError, ValueError) as exc:
             message = exc.messages[0] if isinstance(exc, ValidationError) else str(exc)
             context["import_error"] = message
-            return render(request, "website/website_quiz_question_import.html", context, status=400)
+            return render(request, "website/management/exams/website_quiz_question_import.html", context, status=400)
 
-    return render(request, "website/website_quiz_question_import.html", context)
+    return render(request, "website/management/exams/website_quiz_question_import.html", context)
 
 def home(request):
     return render(
@@ -1067,9 +1121,8 @@ def sitemap_xml(request):
         ],
 
         # Exams & Quizzes SEO pages
-        f"{base_url}{reverse('courses_exams')}",
-        f"{base_url}{reverse('project_management_courses')}",
-        f"{base_url}{reverse('pba_quiz_list')}",
+        f"{base_url}{reverse('exams_quizzes')}",
+        f"{base_url}{reverse('exam_area', kwargs={'area_slug': 'project-management'})}",
     ]
 
     xml_urls = "\n".join(

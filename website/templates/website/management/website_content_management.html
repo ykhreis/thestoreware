@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Content Management | TheStoreWare</title>
+    <style>
+        :root {
+            --bg: #f5f7fb; --panel: #fff; --text: #172033; --muted: #667085;
+            --line: #e5e9f0; --primary: #2457d6; --primary-dark: #1943ad;
+            --soft: #eef4ff; --success: #137a4b;
+        }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: var(--bg); color: var(--text); }
+        .topbar { background: #111827; color: white; padding: 18px 24px; }
+        .topbar-inner { max-width: 1180px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 20px; }
+        .brand { font-size: 20px; font-weight: 700; }
+        .admin { font-size: 13px; opacity: .8; }
+        main { max-width: 1180px; margin: 0 auto; padding: 38px 24px 60px; }
+        .hero { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 30px; margin-bottom: 26px; }
+        .hero h1 { margin: 0 0 8px; font-size: 30px; }
+        .hero p { margin: 0; color: var(--muted); line-height: 1.6; }
+        .section-title { margin: 30px 0 14px; font-size: 18px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+        .card { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px; min-height: 190px; display: flex; flex-direction: column; }
+        .card.active { border-top: 4px solid var(--primary); }
+        .card h2 { margin: 0 0 8px; font-size: 19px; }
+        .card p { margin: 0 0 18px; color: var(--muted); line-height: 1.5; font-size: 14px; flex: 1; }
+        .status { display: inline-block; width: fit-content; padding: 5px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; margin-bottom: 14px; background: #f2f4f7; color: #475467; }
+        .status.available { background: #eaf8f1; color: var(--success); }
+        .button { display: inline-block; width: fit-content; text-decoration: none; padding: 10px 14px; border-radius: 9px; font-size: 13px; font-weight: 700; color: white; background: var(--primary); border: 1px solid var(--primary); }
+        .button:hover { background: var(--primary-dark); }
+        .footer-note { margin-top: 28px; padding: 16px 18px; border-radius: 12px; background: var(--soft); color: #344054; font-size: 13px; line-height: 1.5; }
+        @media (max-width: 640px) {
+            .topbar-inner { align-items: flex-start; flex-direction: column; }
+            main { padding: 24px 16px 45px; }
+            .hero { padding: 22px; }
+            .hero h1 { font-size: 25px; }
+        }
+    </style>
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="brand">TheStoreWare · Content Management</div>
+        <div class="admin">Administrator access only · {{ request.user.username }}</div>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <h1>Content Management</h1>
+        <p>Central administration area for managing TheStoreWare content and operational tools. This page is restricted to authenticated administrators.</p>
+    </section>
+
+    <h2 class="section-title">Content Areas</h2>
+
+    <section class="grid">
+        <article class="card active">
+            <span class="status available">AVAILABLE</span>
+            <h2>Courses</h2>
+            <p>Manage course areas, courses and learning content through one generic administrator workspace.</p>
+            <a class="button" href="{% url 'courses_management' %}">Manage Courses</a>
+        </article>
+
+        <article class="card active">
+            <span class="status available">AVAILABLE</span>
+            <h2>Exams &amp; Quizzes</h2>
+            <p>Manage exam and quiz content from one scalable area. Exams, quizzes and question banks will be managed from the database rather than fixed on this dashboard.</p>
+            <a class="button" href="{% url 'exam_quiz_management' %}">Manage Exams &amp; Quizzes</a>
+        </article>
+
+        <article class="card">
+            <span class="status">PLANNED</span>
+            <h2>AI &amp; Knowledge</h2>
+            <p>Future management area for AI knowledge, reviewed content and knowledge lifecycle activities.</p>
+        </article>
+
+        <article class="card">
+            <span class="status">PLANNED</span>
+            <h2>Website Content</h2>
+            <p>Future controls for public website content, areas, announcements and published information.</p>
+        </article>
+
+        <article class="card">
+            <span class="status">PLANNED</span>
+            <h2>Subscribers</h2>
+            <p>Future administrator workspace for reviewing and managing TheStoreWare subscriber information.</p>
+        </article>
+
+        <article class="card">
+            <span class="status">PLANNED</span>
+            <h2>Feedback</h2>
+            <p>Future workspace for reviewing visitor ideas, comments and submitted feedback.</p>
+        </article>
+
+        <article class="card">
+            <span class="status">EXISTING TOOL</span>
+            <h2>Analytics</h2>
+            <p>Website analytics remains a separate protected administrative capability and can be integrated into Content Management later.</p>
+        </article>
+    </section>
+
+    <div class="footer-note">
+        Security: access to this dashboard is enforced by the Django administrator/superuser check in the server-side view. The page is also marked noindex/nofollow because it is an internal administration page.
+    </div>
+</main>
+</body>
+</html>

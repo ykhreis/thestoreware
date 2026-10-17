@@ -883,3 +883,46 @@ footer{border-top:1px solid var(--line);padding:32px 0;background:#fff}.footer{d
     font-weight: 600;
     line-height: 1.45;
 }
+
+/* =========================================================
+   GENERIC EXAMS & QUIZZES AREA - PROFESSIONAL
+   ========================================================= */
+.exam-area-hero{position:relative;overflow:hidden;padding:36px 20px 32px;background:radial-gradient(circle at 18% 0%,rgba(255,255,255,.14),transparent 30%),radial-gradient(circle at 82% 100%,rgba(255,255,255,.10),transparent 30%),linear-gradient(110deg,#123d73 0%,#1769aa 52%,#0aa5a5 100%);color:#fff;text-align:center}
+.exam-area-eyebrow{display:inline-flex;padding:4px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.09);font-size:8px;font-weight:900;letter-spacing:1.4px}
+.exam-area-hero h1{margin:9px 0 6px;font-size:clamp(32px,3vw,42px);line-height:1;letter-spacing:-1.7px}
+.exam-area-hero p{max-width:680px;margin:auto;color:rgba(255,255,255,.88);font-size:11.5px;line-height:1.45}
+.exam-area-wrap{width:min(1120px,90%);margin:auto;padding:22px 0 48px}
+.exam-area-back{margin:0 0 18px;font-size:10px;font-weight:800}.exam-area-back a{color:#526b83}.exam-area-back a:hover{color:var(--blue)}
+.exam-area-section-head{margin-bottom:15px}.exam-area-kicker{display:block;margin-bottom:3px;color:var(--teal);font-size:8px;font-weight:900;letter-spacing:1.25px}.exam-area-section-head h2{margin:0 0 4px;color:#102b46;font-size:21px;line-height:1.15;letter-spacing:-.6px}.exam-area-section-head p{margin:0;color:var(--muted);font-size:10.5px}
+.exam-area-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.exam-area-card{position:relative;display:flex;min-width:0;min-height:160px;flex-direction:column;padding:15px;overflow:hidden;border:1px solid #dfe8f1;border-radius:16px;background:linear-gradient(180deg,#fff,#fbfdff);color:inherit;box-shadow:0 7px 20px rgba(20,48,82,.05);transition:.2s}
+.exam-area-card:before{content:"";position:absolute;top:0;right:0;width:76px;height:76px;border-radius:0 0 0 76px;background:linear-gradient(135deg,rgba(37,99,235,.04),rgba(8,167,165,.07))}
+a.exam-area-card:hover{transform:translateY(-3px);border-color:#b9d7e5;box-shadow:0 14px 30px rgba(20,48,82,.10)}.exam-area-card.active{border-color:#8bcfca;background:linear-gradient(180deg,#fff,#f8fffe);box-shadow:0 8px 24px rgba(8,167,165,.08)}
+.exam-area-badge{position:relative;z-index:1;width:44px;height:44px;display:grid;place-items:center;margin-bottom:11px;border-radius:13px;background:linear-gradient(135deg,#173d66,#195986);color:#fff;box-shadow:0 7px 15px rgba(23,61,102,.14);font-size:8px;font-weight:950}.exam-area-card.active .exam-area-badge{background:linear-gradient(135deg,#1769aa,#0aa5a5)}
+.exam-area-card h2{position:relative;z-index:1;margin:0 0 3px;color:#102b46;font-size:15px;line-height:1.2;letter-spacing:-.35px}.exam-area-card>p{position:relative;z-index:1;margin:0 0 12px;color:#718399;font-size:9.5px;line-height:1.4}
+.exam-area-card-footer{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:9px;border-top:1px solid #edf2f6}.exam-area-status{display:inline-flex;align-items:center;min-height:20px;padding:3px 7px;border-radius:999px;background:#f0f4f8;color:#6c7f93;font-size:6.5px;font-weight:950;letter-spacing:.65px;text-transform:uppercase}.exam-area-card.active .exam-area-status{background:#e8f8f5;color:#087b79}.exam-area-open{width:23px;height:23px;display:grid;place-items:center;border-radius:8px;background:#edf7f7;color:#087b79;font-size:13px;font-weight:900}
+@media(min-width:701px) and (max-width:1050px){.exam-area-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.exam-area-hero{padding:30px 16px 27px}.exam-area-hero h1{font-size:clamp(28px,8.5vw,36px)}.exam-area-wrap{width:91%;padding:19px 0 36px}.exam-area-section-head h2{font-size:19px}.exam-area-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.exam-area-card{min-height:150px;padding:13px}.exam-area-badge{width:40px;height:40px;border-radius:11px}}
+@media(max-width:470px){.exam-area-grid{grid-template-columns:1fr}.exam-area-card{min-height:132px}}
+
+/* =========================================================
+   EXAMS & QUIZZES LANDING PAGE - GENERIC COMPACT DESIGN
+   ========================================================= */
+.exams-landing-hero{padding:30px 20px 27px;background:radial-gradient(circle at 18% 0%,rgba(255,255,255,.14),transparent 30%),radial-gradient(circle at 82% 100%,rgba(255,255,255,.10),transparent 30%),linear-gradient(110deg,#123d73 0%,#1769aa 52%,#0aa5a5 100%);color:#fff;text-align:center}
+.exams-landing-eyebrow{display:inline-flex;padding:4px 10px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(255,255,255,.09);font-size:8px;font-weight:900;letter-spacing:1.35px}
+.exams-landing-hero h1{margin:9px 0 6px;font-size:clamp(32px,3vw,42px);line-height:1;letter-spacing:-1.7px}
+.exams-landing-hero p{max-width:700px;margin:auto;color:rgba(255,255,255,.88);font-size:11.5px;line-height:1.45}
+.exams-landing-back{width:min(1120px,90%);margin:16px auto 0;font-size:10px;font-weight:800}.exams-landing-back a{color:#526b83}.exams-landing-back a:hover{color:var(--blue)}
+.exams-landing-wrap{width:min(1120px,90%);margin:auto;padding:16px 0 42px}
+.exams-landing-head{text-align:center;margin-bottom:16px}.exams-landing-head .kicker{font-size:8px;letter-spacing:1.25px}.exams-landing-head h2{margin:4px 0;font-size:22px;line-height:1.15;color:#17324d;letter-spacing:-.6px}.exams-landing-head p{margin:0;color:#64748b;font-size:10.5px}
+.exams-landing-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:0 auto}
+.exams-landing-card{position:relative;min-width:0;min-height:158px;padding:15px;border:1px solid #e3eaf2;border-radius:16px;background:linear-gradient(180deg,#fff,#fbfdff);box-shadow:0 7px 20px rgba(26,56,86,.05);display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.exams-landing-card.active{border-color:#8bcfca;background:linear-gradient(180deg,#fff,#f8fffe);box-shadow:0 8px 24px rgba(8,167,165,.08)}
+a.exams-landing-card:hover{transform:translateY(-3px);border-color:#b9d7e5;box-shadow:0 14px 30px rgba(20,48,82,.10)}
+.exams-landing-icon{width:44px;height:44px;display:grid;place-items:center;margin-bottom:11px;border-radius:13px;background:linear-gradient(135deg,#173d66,#195986);color:#fff;box-shadow:0 7px 15px rgba(23,61,102,.14);font-size:8px;font-weight:950}.exams-landing-card.active .exams-landing-icon{background:linear-gradient(135deg,#1769aa,#0aa5a5)}
+.exams-landing-card h3{margin:0 0 3px;color:#17324d;font-size:15px;line-height:1.2;letter-spacing:-.35px}.exams-landing-card p{margin:0 0 12px;color:#66788a;font-size:9.5px;line-height:1.4}
+.exams-landing-status{margin-top:auto;display:inline-flex;align-self:flex-start;min-height:20px;padding:3px 7px;border-radius:999px;background:#f0f4f8;color:#6c7f93;font-size:6.5px;font-weight:950;letter-spacing:.65px;text-transform:uppercase}.exams-landing-card.active .exams-landing-status{background:#e8f8f5;color:#087b79}
+@media(min-width:701px) and (max-width:1050px){.exams-landing-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.exams-landing-hero{padding:27px 16px 24px}.exams-landing-hero h1{font-size:clamp(28px,8.5vw,36px)}.exams-landing-wrap{width:91%;padding:15px 0 34px}.exams-landing-back{width:91%;margin-top:14px}.exams-landing-head h2{font-size:19px}.exams-landing-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.exams-landing-card{min-height:148px;padding:13px}.exams-landing-icon{width:40px;height:40px;border-radius:11px}}
+@media(max-width:470px){.exams-landing-grid{grid-template-columns:1fr}.exams-landing-card{min-height:132px}}
+

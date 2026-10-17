@@ -1,0 +1,288 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{{ quiz.title }} | TheStoreWare</title>
+<link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+<link rel="stylesheet" href="{% static 'website/css/exams_quizzes.css' %}">
+</head>
+<body>
+<div class="top">
+ <div class="topin">
+  <div>
+   <div class="title">{{ quiz.title }}</div>
+   <div class="sub">{{ quiz.category }}{% if quiz.certification %} · {{ quiz.certification }}{% endif %} · {{ quiz.seconds_per_question }} sec/question</div>
+  </div>
+  <div class="topright">
+   <div id="timer" class="timer">--:--</div>
+   <button id="finishTop" class="finish-top" type="button">Finish Test</button>
+  </div>
+ </div>
+</div>
+
+{% if questions %}
+<div class="modebar">
+ <div class="modebox">
+  <div class="modecopy">
+   <strong>Test Mode</strong>
+   <span id="modeHint" class="modehint">Practice Mode: use “See Answer” anytime for immediate feedback.</span>
+  </div>
+  <div class="modes">
+   <button id="practiceMode" class="modebtn active" type="button">Practice Mode</button>
+   <button id="examMode" class="modebtn" type="button">Exam Mode</button>
+  </div>
+ </div>
+</div>
+<div class="layout" id="quizLayout">
+ <aside class="sidebar">
+  <div class="side-title">Question Navigator</div>
+  <div class="side-sub">Move freely between questions.</div>
+  <div class="progressbar"><div id="progressFill" class="progressfill"></div></div>
+  <div id="progressText" class="progress-text">0 of {{ question_count }} answered</div>
+  <div class="legend">
+   <span><i class="dot"></i> Unanswered</span>
+   <span><i class="dot answered"></i> Answered</span>
+   <span><i class="dot marked"></i> Marked</span>
+  </div>
+  <div class="navigator">
+   {% for q in questions %}
+   <button class="qnav {% if forloop.first %}current{% endif %}" type="button" data-goto="{{ forloop.counter0 }}">{{ forloop.counter }}</button>
+   {% endfor %}
+  </div>
+  <div class="side-note">Your selected answers, marked questions and personal remarks are kept while you move through this test.</div>
+ </aside>
+
+ <main class="main">
+  <form id="quizForm">
+  {% for q in questions %}
+   <section class="qstep {% if not forloop.first %}hidden{% endif %}" data-step="{{ forloop.counter0 }}" data-qid="{{ q.id }}" data-correct="{{ q.correct_answer|escape }}">
+    <div class="question-head">
+     <div class="progress">Question {{ forloop.counter }} of {{ question_count }}</div>
+     <button class="markbtn" type="button">☆ Mark for Review</button>
+    </div>
+    <div class="qcard">
+     <div class="question">{{ q.question_text }}</div>
+     {% if q.option_a %}<label class="choice" data-value="A"><input type="radio" name="q{{ q.id }}" value="A"> A. {{ q.option_a }}</label>{% endif %}
+     {% if q.option_b %}<label class="choice" data-value="B"><input type="radio" name="q{{ q.id }}" value="B"> B. {{ q.option_b }}</label>{% endif %}
+     {% if q.option_c %}<label class="choice" data-value="C"><input type="radio" name="q{{ q.id }}" value="C"> C. {{ q.option_c }}</label>{% endif %}
+     {% if q.option_d %}<label class="choice" data-value="D"><input type="radio" name="q{{ q.id }}" value="D"> D. {{ q.option_d }}</label>{% endif %}
+
+     <div class="note-box">
+      <div class="note-label"><span>My Remark / Note</span><span class="note-hint">Personal note for this question</span></div>
+      <textarea class="remark" placeholder="Write a note, reminder, or point to review later..."></textarea>
+     </div>
+
+     <div class="feedback hidden">
+      <div class="result"></div>
+      <h3>Correct Answer</h3><p class="correct-text"></p>
+      <div class="answer-review">
+       <h3>Why each answer is correct or incorrect</h3>
+       {% if q.option_a_explanation %}<div class="rationale {% if q.correct_answer == 'A' %}correct-rationale{% else %}wrong-rationale{% endif %}"><div class="rationale-title">A. {% if q.correct_answer == 'A' %}Correct Answer{% else %}Incorrect Answer{% endif %}</div><p>{{ q.option_a_explanation }}</p></div>{% endif %}
+       {% if q.option_b_explanation %}<div class="rationale {% if q.correct_answer == 'B' %}correct-rationale{% else %}wrong-rationale{% endif %}"><div class="rationale-title">B. {% if q.correct_answer == 'B' %}Correct Answer{% else %}Incorrect Answer{% endif %}</div><p>{{ q.option_b_explanation }}</p></div>{% endif %}
+       {% if q.option_c_explanation %}<div class="rationale {% if q.correct_answer == 'C' %}correct-rationale{% else %}wrong-rationale{% endif %}"><div class="rationale-title">C. {% if q.correct_answer == 'C' %}Correct Answer{% else %}Incorrect Answer{% endif %}</div><p>{{ q.option_c_explanation }}</p></div>{% endif %}
+       {% if q.option_d_explanation %}<div class="rationale {% if q.correct_answer == 'D' %}correct-rationale{% else %}wrong-rationale{% endif %}"><div class="rationale-title">D. {% if q.correct_answer == 'D' %}Correct Answer{% else %}Incorrect Answer{% endif %}</div><p>{{ q.option_d_explanation }}</p></div>{% endif %}
+      </div>
+      {% if q.thestoreware_explanation %}<h3>Overall Explanation</h3><p>{{ q.thestoreware_explanation }}</p>{% endif %}
+      {% if q.exam_tip %}<h3>Exam Tip</h3><p>{{ q.exam_tip }}</p>{% endif %}
+     </div>
+    </div>
+
+    <div class="navbar">
+     <div class="nav-left">
+      <button class="btn secondary prev" type="button">← Previous</button>
+      <button class="btn skip skip-question" type="button">Skip</button>
+     </div>
+     <div class="nav-right">
+      <button class="btn answerbtn see-answer" type="button">See Answer</button>
+      <button class="btn primary next" type="button">Next →</button>
+     </div>
+    </div>
+   </section>
+  {% endfor %}
+  </form>
+
+  <section id="finishPanel" class="finish hidden">
+   <h1>{{ quiz.title }} Completed</h1>
+   <div class="score"><span id="scoreCorrect">0</span> / {{ question_count }}</div>
+   <p><strong>Score:</strong> <span id="scorePercent">0</span>%</p>
+   <div class="summary">
+    <span>Correct: <strong id="correctCount">0</strong></span>
+    <span>Incorrect: <strong id="incorrectCount">0</strong></span>
+    <span>Unanswered: <strong id="unansweredCount">0</strong></span>
+    <span>Marked: <strong id="markedCount">0</strong></span>
+   </div>
+   <p><strong>Recommended time:</strong> <span id="recommendedTime"></span></p>
+   <p><strong>Actual time:</strong> <span id="elapsed"></span></p>
+   <p><a href="{% url 'exam_quiz_management' %}">Back to Exams &amp; Quizzes Management</a></p>
+  </section>
+ </main>
+</div>
+{% else %}
+<main style="max-width:900px;margin:40px auto;padding:20px"><div class="finish"><h2>This quiz has no active questions yet.</h2><a href="{% url 'exam_quiz_management' %}">Back to Exams &amp; Quizzes Management</a></div></main>
+{% endif %}
+
+<script>
+(function(){
+ const total={{ total_seconds|default:0 }};
+ const started=Date.now();
+ const timer=document.getElementById('timer');
+ const steps=[...document.querySelectorAll('.qstep')];
+ const navs=[...document.querySelectorAll('.qnav')];
+ const state={};
+ let current=0;
+ let mode='practice';
+ const practiceMode=document.getElementById('practiceMode');
+ const examMode=document.getElementById('examMode');
+ const modeHint=document.getElementById('modeHint');
+
+ function setMode(nextMode){
+  mode=nextMode;
+  practiceMode.classList.toggle('active',mode==='practice');
+  examMode.classList.toggle('active',mode==='exam');
+  modeHint.textContent=mode==='practice'
+   ? 'Practice Mode: use “See Answer” anytime for immediate feedback.'
+   : 'Exam Mode: answers and explanations stay hidden until you finish the test.';
+  document.querySelectorAll('.see-answer').forEach(btn=>{
+   const step=btn.closest('.qstep');
+   const idx=Number(step.dataset.step);
+   btn.classList.toggle('hidden',mode==='exam');
+   if(mode==='practice' && state[idx]?.revealed){
+    btn.classList.remove('hidden');
+    btn.textContent='Answer Shown';
+    btn.disabled=true;
+   }
+  });
+ }
+ practiceMode?.addEventListener('click',()=>setMode('practice'));
+ examMode?.addEventListener('click',()=>{
+  const alreadyRevealed=Object.values(state).some(s=>s.revealed);
+  if(alreadyRevealed && !confirm('Some answers have already been revealed in Practice Mode. Switch to Exam Mode anyway?')) return;
+  setMode('exam');
+ });
+
+ function fmt(s){
+  s=Math.max(0,Math.floor(s));
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  return h?`${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`:`${m}:${String(sec).padStart(2,'0')}`;
+ }
+ function tick(){
+  const elapsed=Math.floor((Date.now()-started)/1000),left=Math.max(0,total-elapsed);
+  timer.textContent=fmt(left);
+  if(left===0)timer.classList.add('expired');
+ }
+ tick(); setInterval(tick,1000);
+
+ steps.forEach((step,i)=>{
+  state[i]={answer:null,marked:false,note:"",revealed:false};
+  step.querySelectorAll('input[type=radio]').forEach(input=>{
+   input.addEventListener('change',()=>{
+    state[i].answer=input.value;
+    step.querySelectorAll('.choice').forEach(c=>c.classList.toggle('selected',c.dataset.value===input.value));
+    updateNavigator();
+   });
+  });
+  step.querySelector('.remark')?.addEventListener('input',e=>{state[i].note=e.target.value;});
+  step.querySelector('.markbtn')?.addEventListener('click',e=>{
+   state[i].marked=!state[i].marked;
+   e.currentTarget.classList.toggle('active',state[i].marked);
+   e.currentTarget.textContent=state[i].marked?'★ Marked for Review':'☆ Mark for Review';
+   updateNavigator();
+  });
+ });
+
+ function show(i){
+  if(i<0||i>=steps.length)return;
+  steps[current]?.classList.add('hidden');
+  current=i;
+  steps[current]?.classList.remove('hidden');
+  navs.forEach((n,x)=>n.classList.toggle('current',x===current));
+  steps[current].querySelector('.prev').disabled=current===0;
+  steps[current].querySelector('.next').textContent=current===steps.length-1?'Finish / Review':'Next →';
+  window.scrollTo({top:0,behavior:'smooth'});
+ }
+ function updateNavigator(){
+  let answered=0;
+  navs.forEach((n,i)=>{
+   const has=!!state[i].answer;
+   if(has)answered++;
+   n.classList.toggle('answered',has);
+   n.classList.toggle('marked',state[i].marked);
+  });
+  document.getElementById('progressText').textContent=`${answered} of ${steps.length} answered`;
+  document.getElementById('progressFill').style.width=(steps.length?(answered/steps.length)*100:0)+'%';
+ }
+ navs.forEach(n=>n.addEventListener('click',()=>show(Number(n.dataset.goto))));
+
+ document.querySelectorAll('.prev').forEach(b=>b.addEventListener('click',()=>show(current-1)));
+ document.querySelectorAll('.skip-question').forEach(b=>b.addEventListener('click',()=>current===steps.length-1?show(0):show(current+1)));
+ document.querySelectorAll('.next').forEach(b=>b.addEventListener('click',()=>{
+  if(current===steps.length-1){finishTest();return;}
+  show(current+1);
+ }));
+
+ document.querySelectorAll('.see-answer').forEach((btn,i)=>{
+  btn.addEventListener('click',()=>{
+   const step=btn.closest('.qstep');
+   const selected=step.querySelector('input[type=radio]:checked');
+   if(!selected){alert('Please select an answer first.');return;}
+   const correct=step.dataset.correct,chosen=selected.value;
+   state[i].revealed=true;
+   step.querySelectorAll('.choice').forEach(label=>{
+    label.classList.remove('correct','wrong');
+    if(label.dataset.value===correct)label.classList.add('correct');
+    if(label.dataset.value===chosen&&chosen!==correct)label.classList.add('wrong');
+   });
+   const feedback=step.querySelector('.feedback');
+   const result=feedback.querySelector('.result');
+   result.textContent=chosen===correct?'Your answer is correct.':'Your answer is incorrect.';
+   result.className='result '+(chosen===correct?'good':'bad');
+   const correctLabel=step.querySelector(`.choice[data-value="${correct}"]`);
+   feedback.querySelector('.correct-text').textContent=correctLabel?correctLabel.textContent.trim():correct;
+   feedback.classList.remove('hidden');
+   btn.textContent='Answer Shown';
+   btn.disabled=true;
+  });
+ });
+
+ function finishTest(){
+  const unanswered=Object.values(state).filter(s=>!s.answer).length;
+  if(unanswered){
+   if(!confirm(`You still have ${unanswered} unanswered question(s). Finish the test anyway?`))return;
+  }else if(!confirm('Finish this test and view your result?'))return;
+
+  let correct=0,answered=0,marked=0;
+  steps.forEach((step,i)=>{
+   if(state[i].answer){
+    answered++;
+    if(state[i].answer===step.dataset.correct)correct++;
+   }
+   if(state[i].marked)marked++;
+   step.classList.add('hidden');
+  });
+  document.querySelector('.sidebar')?.classList.add('hidden');
+  document.getElementById('finishTop')?.classList.add('hidden');
+  const panel=document.getElementById('finishPanel');
+  panel.classList.remove('hidden');
+  document.getElementById('scoreCorrect').textContent=correct;
+  document.getElementById('correctCount').textContent=correct;
+  document.getElementById('incorrectCount').textContent=answered-correct;
+  document.getElementById('unansweredCount').textContent=steps.length-answered;
+  document.getElementById('markedCount').textContent=marked;
+  document.getElementById('scorePercent').textContent=steps.length?Math.round((correct/steps.length)*100):0;
+  document.getElementById('recommendedTime').textContent=fmt(total);
+  document.getElementById('elapsed').textContent=fmt(Math.floor((Date.now()-started)/1000));
+  document.getElementById('quizLayout').style.gridTemplateColumns='1fr';
+  window.scrollTo({top:0,behavior:'smooth'});
+ }
+ document.getElementById('finishTop')?.addEventListener('click',finishTest);
+
+ show(0);
+ updateNavigator();
+ setMode('practice');
+})();
+</script>
+</body>
+</html>
