@@ -4,7 +4,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- TheStoreWare Area SEO -->
     <title>{{ area.title }} | TheStoreWare</title>
+    <meta name="description" content="{{ area.description|striptags }}">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="googlebot" content="index, follow">
+
+    <link rel="canonical" href="https://thestoreware.com/area/{{ area.slug }}/">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="TheStoreWare">
+    <meta property="og:title" content="{{ area.title }} | TheStoreWare">
+    <meta property="og:description" content="{{ area.description|striptags }}">
+    <meta property="og:url" content="https://thestoreware.com/area/{{ area.slug }}/">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "{{ area.title|escapejs }} | TheStoreWare",
+        "description": "{{ area.description|striptags|escapejs }}",
+        "url": "https://thestoreware.com/area/{{ area.slug }}/",
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "TheStoreWare",
+            "url": "https://thestoreware.com/"
+        }
+    }
+    </script>
+
     <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
 </head>
 <body>
