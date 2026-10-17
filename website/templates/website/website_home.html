@@ -35,7 +35,9 @@
             "The StoreWare",
             "StoreWare"
         ],
-        "url": "https://www.thestoreware.com/"
+        "url": "https://www.thestoreware.com/",
+        "description": "TheStoreWare is a multilingual digital platform for AI-powered knowledge, learning, courses, professional exams, quizzes and intelligent digital tools.",
+        "inLanguage": ["en", "ar", "fr"]
     }
     </script>
     <link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
@@ -298,9 +300,9 @@ html[dir="rtl"] .tsw-account-end {
         <div class="launch-badge">{% if CURRENT_LANGUAGE == 'ar' %}THESTOREWARE • نبني للجميع{% elif CURRENT_LANGUAGE == 'fr' %}THESTOREWARE • CONÇU POUR TOUS{% else %}THESTOREWARE • BUILDING FOR EVERYONE{% endif %}</div>
         <h1>{% if CURRENT_LANGUAGE == 'ar' %}تعلّم. تطوّر. استكشف.<br><em>مع TheStoreWare.</em>{% elif CURRENT_LANGUAGE == 'fr' %}Apprenez. Progressez. Explorez.<br><em>Avec TheStoreWare.</em>{% else %}Learn. Grow. Explore.<br><em>With TheStoreWare.</em>{% endif %}</h1>
         <p>
-            {% if CURRENT_LANGUAGE == 'ar' %}موسوعة معرفية رقمية متعددة اللغات للتعلّم، والتدريب، والاختبار، والاستكشاف.
-            {% elif CURRENT_LANGUAGE == 'fr' %}Une encyclopédie numérique multilingue du savoir pour apprendre, pratiquer, s’évaluer et découvrir.
-            {% else %}A Multilingual Digital Knowledge Encyclopedia for Learning, Practice, Testing &amp; Discovery.{% endif %}
+            {% if CURRENT_LANGUAGE == 'ar' %}TheStoreWare — منصتك الرقمية متعددة اللغات للمعرفة والتعلّم والذكاء الاصطناعي والتدريب والاختبارات والاستكشاف.
+            {% elif CURRENT_LANGUAGE == 'fr' %}TheStoreWare — votre plateforme numérique multilingue pour la connaissance, l’apprentissage, l’intelligence artificielle, la pratique, les examens et la découverte.
+            {% else %}TheStoreWare — your multilingual digital platform for AI-powered knowledge, learning, practice, exams, quizzes and discovery.{% endif %}
         </p>
         <div class="hero-actions">
             <a class="button" href="#explore">{% if CURRENT_LANGUAGE == 'ar' %}استكشف ما هو قادم <span>↓</span>{% elif CURRENT_LANGUAGE == 'fr' %}Découvrez ce qui arrive <span>↓</span>{% else %}{% if CURRENT_LANGUAGE == 'ar' %}استكشف{% elif CURRENT_LANGUAGE == 'fr' %}Explorer{% else %}Explore{% endif %} What's Coming <span>↓</span>{% endif %}</a>
