@@ -345,7 +345,7 @@ def courses(request):
 @user_passes_test(lambda user: user.is_authenticated and user.is_superuser, login_url="/admin/login/")
 def courses_management(request):
     """Administrator-only generic Courses Management workspace."""
-    return render(request, "website/management/courses/website_courses_management.html")
+    return render(request, "website/content_management/courses/website_courses_management.html")
 
 
 def _staff_only(user):
@@ -361,7 +361,7 @@ def content_management(request):
     """Staff-only Content Management dashboard for TheStoreWare."""
     return render(
         request,
-        "website/management/website_content_management.html",
+        "website/content_management/website_content_management.html",
     )
 
 
@@ -377,7 +377,7 @@ def exam_quiz_management(request):
 
     return render(
         request,
-        "website/management/exams/website_exam_quiz_management.html",
+        "website/content_management/questions_answers/website_management.html",
         {
             "quiz_exams": quiz_exams,
         },
@@ -517,20 +517,34 @@ def quiz_question_import(request):
             raise ValidationError("No question rows were found in the Excel file.")
         return parsed
 
-    context = {
-        "quizzes": QuizExam.objects.filter(is_active=True).order_by("category", "certification", "title"),
-    }
+    certifications = sorted({
+        value.strip()
+        for value in QuestionBank.objects.exclude(certification="")
+        .values_list("certification", flat=True)
+        if value and value.strip()
+    })
+    for item in PROJECT_MANAGEMENT_EXAMS:
+        code = str(item.get("code") or "").strip()
+        if code and code not in certifications:
+            certifications.append(code)
+    certifications = sorted(certifications, key=str.casefold)
+
+    context = {"certifications": certifications}
 
     if request.method == "POST":
         action = request.POST.get("action", "preview")
-        quiz_id = request.POST.get("quiz_id", "").strip()
-        quiz = QuizExam.objects.filter(pk=quiz_id, is_active=True).first() if quiz_id else None
-        context["selected_quiz_id"] = quiz_id
-        context["selected_quiz"] = quiz
+        certification = request.POST.get("certification", "").strip()
+        source = request.POST.get("source", "").strip()
+        source_description = request.POST.get("source_description", "").strip()
+        context.update({
+            "selected_certification": certification,
+            "selected_source": source,
+            "selected_source_description": source_description,
+        })
 
-        if not quiz:
-            context["import_error"] = "Please select the quiz that will receive these questions."
-            return render(request, "website/management/exams/website_quiz_question_import.html", context, status=400)
+        if not certification or not source or not source_description:
+            context["import_error"] = "Please select a certification and enter both Source and Description / Group."
+            return render(request, "website/content_management/questions_answers/website_import.html", context, status=400)
 
         try:
             if action == "confirm":
@@ -552,11 +566,11 @@ def quiz_question_import(request):
 
             parsed = parse_workbook(file_bytes)
 
-            # Existing questions in the selected quiz are safe duplicates:
-            # mark them to be skipped instead of treating them as validation errors.
+            # Question Bank duplicates are checked within the selected certification.
+            # Quiz assignment happens later when quizzes are generated from the bank.
             existing_texts = {
                 text.strip().casefold()
-                for text in QuestionBank.objects.filter(quiz_links__quiz_exam=quiz)
+                for text in QuestionBank.objects.filter(certification__iexact=certification)
                 .values_list("question_text", flat=True)
                 if text
             }
@@ -582,9 +596,9 @@ def quiz_question_import(request):
                             skipped += 1
                             continue
                         question = QuestionBank.objects.create(
-                            category=quiz.category,
-                            certification=quiz.certification,
-                            question_type="quiz",
+                            category="Project Management",
+                            certification=certification,
+                            question_type="practice",
                             question_format="single_choice",
                             question_text=row["question"],
                             option_a=row["option_a"],
@@ -595,23 +609,19 @@ def quiz_question_import(request):
                             source_explanation=row["explanation"],
                             thestoreware_explanation=row["explanation"],
                             source_type="other",
-                            source_reference=row["source_reference"] or filename,
+                            source_reference=source,
+                            source_description=source_description,
                             source_question_id=row["source_question_id"] or str(row["question_no"] or ""),
                             status="draft",
                             is_active=True,
                         )
-                        QuizExamQuestion.objects.create(
-                            quiz_exam=quiz,
-                            question=question,
-                            sort_order=row["question_no"] or 0,
-                        )
                         imported += 1
 
                 context["import_success"] = (
-                    f"{imported} question(s) imported successfully into {quiz.title}. "
+                    f"{imported} question(s) imported successfully into the Question Bank. "
                     f"{skipped} existing question(s) skipped."
                 )
-                return render(request, "website/management/exams/website_quiz_question_import.html", context)
+                return render(request, "website/content_management/questions_answers/website_import.html", context)
 
             context.update({
                 "preview_rows": parsed,
@@ -626,9 +636,430 @@ def quiz_question_import(request):
         except (ValidationError, ValueError) as exc:
             message = exc.messages[0] if isinstance(exc, ValidationError) else str(exc)
             context["import_error"] = message
-            return render(request, "website/management/exams/website_quiz_question_import.html", context, status=400)
+            return render(request, "website/content_management/questions_answers/website_import.html", context, status=400)
 
-    return render(request, "website/management/exams/website_quiz_question_import.html", context)
+    return render(request, "website/content_management/questions_answers/website_import.html", context)
+
+
+@user_passes_test(_admin_only, login_url="/admin/login/")
+def question_bank_export(request):
+    """Administrator-only Excel export for the central Question Bank."""
+    import re
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.utils import get_column_letter
+
+    certification = request.GET.get("certification", "").strip()
+    source = request.GET.get("source", "").strip()
+    source_description = request.GET.get("source_description", "").strip()
+
+    certifications = list(
+        QuestionBank.objects.exclude(certification="")
+        .values_list("certification", flat=True)
+        .distinct()
+        .order_by("certification")
+    )
+
+    source_qs = QuestionBank.objects.exclude(source_reference="")
+    if certification:
+        source_qs = source_qs.filter(certification__iexact=certification)
+    sources = list(
+        source_qs.values_list("source_reference", flat=True)
+        .distinct()
+        .order_by("source_reference")
+    )
+
+    description_qs = QuestionBank.objects.exclude(source_description="")
+    if certification:
+        description_qs = description_qs.filter(certification__iexact=certification)
+    if source:
+        description_qs = description_qs.filter(source_reference__iexact=source)
+    descriptions = list(
+        description_qs.values_list("source_description", flat=True)
+        .distinct()
+        .order_by("source_description")
+    )
+
+    questions = QuestionBank.objects.all()
+    if certification:
+        questions = questions.filter(certification__iexact=certification)
+    if source:
+        questions = questions.filter(source_reference__iexact=source)
+    if source_description:
+        questions = questions.filter(source_description__iexact=source_description)
+    # Export in business/source sequence rather than PostgreSQL primary-key order.
+    # Source Question ID is stored as text, so numeric IDs are cast for correct
+    # ordering (1, 2, 3 ... 10 instead of 1, 10, 11 ... 2).
+    from django.db.models import IntegerField
+    from django.db.models.functions import Cast
+
+    questions = (
+        questions
+        .annotate(source_question_id_numeric=Cast("source_question_id", IntegerField()))
+        .order_by(
+            "source_reference",
+            "source_description",
+            "source_question_id_numeric",
+            "source_question_id",
+            "id",
+        )
+    )
+
+    context = {
+        "certifications": certifications,
+        "sources": sources,
+        "descriptions": descriptions,
+        "selected_certification": certification,
+        "selected_source": source,
+        "selected_source_description": source_description,
+        "result_count": questions.count(),
+    }
+
+    if request.GET.get("export") != "1":
+        return render(
+            request,
+            "website/content_management/questions_answers/website_export.html",
+            context,
+        )
+
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Question Bank"
+
+    headers = [
+        "Question ID", "Category", "Certification", "Source", "Description / Group",
+        "Source Question ID", "Domain", "Topic", "Difficulty", "Question",
+        "Option A", "Option B", "Option C", "Option D", "Correct Option",
+        "Option A Explanation", "Option B Explanation", "Option C Explanation",
+        "Option D Explanation", "Source Explanation", "TheStoreWare Explanation",
+        "Exam Tip", "Question Type", "Question Format", "Source Type", "Status",
+        "Active", "Created At", "Updated At",
+    ]
+    sheet.append(headers)
+
+    header_fill = PatternFill("solid", fgColor="1F4E78")
+    header_font = Font(color="FFFFFF", bold=True)
+    for cell in sheet[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+
+    for question in questions:
+        created_at = question.created_at
+        updated_at = question.updated_at
+        if created_at and getattr(created_at, "tzinfo", None):
+            created_at = created_at.replace(tzinfo=None)
+        if updated_at and getattr(updated_at, "tzinfo", None):
+            updated_at = updated_at.replace(tzinfo=None)
+
+        sheet.append([
+            question.id,
+            question.category,
+            question.certification,
+            question.source_reference,
+            question.source_description,
+            question.source_question_id,
+            question.domain,
+            question.topic,
+            question.difficulty,
+            question.question_text,
+            question.option_a,
+            question.option_b,
+            question.option_c,
+            question.option_d,
+            question.correct_answer,
+            question.option_a_explanation,
+            question.option_b_explanation,
+            question.option_c_explanation,
+            question.option_d_explanation,
+            question.source_explanation,
+            question.thestoreware_explanation,
+            question.exam_tip,
+            question.question_type,
+            question.question_format,
+            question.source_type,
+            question.status,
+            question.is_active,
+            created_at,
+            updated_at,
+        ])
+
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = sheet.dimensions
+    widths = {
+        1: 12, 2: 22, 3: 18, 4: 22, 5: 25, 6: 20, 7: 22, 8: 22, 9: 14,
+        10: 60, 11: 38, 12: 38, 13: 38, 14: 38, 15: 16,
+        16: 45, 17: 45, 18: 45, 19: 45, 20: 55, 21: 55, 22: 40,
+        23: 18, 24: 18, 25: 16, 26: 14, 27: 12, 28: 22, 29: 22,
+    }
+    for index, width in widths.items():
+        sheet.column_dimensions[get_column_letter(index)].width = width
+    for row in sheet.iter_rows(min_row=2):
+        for cell in row:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+    def safe_name(value, fallback):
+        value = value.strip() if value else fallback
+        value = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-_")
+        return value or fallback
+
+    filename = "_".join([
+        safe_name(certification, "All-Certifications"),
+        safe_name(source, "All-Sources"),
+        safe_name(source_description, "All-Groups"),
+        "Question-Bank.xlsx",
+    ])
+
+    response = HttpResponse(
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    workbook.save(response)
+    return response
+
+
+@user_passes_test(_admin_only, login_url="/admin/login/")
+def quiz_exam_generator(request):
+    """Administrator-only generator for quizzes and certification-based exams."""
+    import random
+    import re
+
+    certifications = sorted({
+        value.strip()
+        for value in QuestionBank.objects.filter(is_active=True).exclude(certification="")
+        .values_list("certification", flat=True)
+        if value and value.strip()
+    }, key=str.casefold)
+
+    assessment_type = request.POST.get("assessment_type", request.GET.get("assessment_type", "quiz")).strip().lower()
+    if assessment_type not in {"quiz", "exam"}:
+        assessment_type = "quiz"
+
+    certification = request.POST.get("certification", request.GET.get("certification", "")).strip()
+    selected_sources = [v.strip() for v in request.POST.getlist("sources") if v.strip()]
+    selected_descriptions = [v.strip() for v in request.POST.getlist("descriptions") if v.strip()]
+
+    base_qs = QuestionBank.objects.filter(is_active=True)
+    if certification:
+        base_qs = base_qs.filter(certification__iexact=certification)
+
+    sources = list(
+        base_qs.exclude(source_reference="")
+        .values_list("source_reference", flat=True)
+        .distinct().order_by("source_reference")
+    )
+
+    description_qs = base_qs.exclude(source_description="")
+    if selected_sources:
+        description_qs = description_qs.filter(source_reference__in=selected_sources)
+    descriptions = list(
+        description_qs.values_list("source_description", flat=True)
+        .distinct().order_by("source_description")
+    )
+
+    eligible = base_qs
+    if selected_sources:
+        eligible = eligible.filter(source_reference__in=selected_sources)
+    if selected_descriptions:
+        eligible = eligible.filter(source_description__in=selected_descriptions)
+    # Track question reuse across existing generated quizzes for this certification.
+    # Deleting a quiz automatically releases questions that are no longer used by
+    # any other existing quiz because usage is derived from QuizExamQuestion links.
+    used_question_ids = set()
+    if certification:
+        used_question_ids = set(
+            QuizExamQuestion.objects.filter(
+                quiz_exam__quiz_type="quiz",
+                quiz_exam__certification__iexact=certification,
+                quiz_exam__is_active=True,
+            ).values_list("question_id", flat=True)
+        )
+
+    total_matching_count = eligible.count() if certification else 0
+    used_matching_count = eligible.filter(id__in=used_question_ids).count() if certification else 0
+    new_matching_count = total_matching_count - used_matching_count
+
+    selection_mode = request.POST.get("selection_mode", "new_only").strip().lower()
+    if selection_mode not in {"new_only", "all_random", "used_only"}:
+        selection_mode = "new_only"
+
+    if selection_mode == "new_only":
+        selection_qs = eligible.exclude(id__in=used_question_ids)
+    elif selection_mode == "used_only":
+        selection_qs = eligible.filter(id__in=used_question_ids)
+    else:
+        selection_qs = eligible
+
+    available_count = selection_qs.count() if certification else 0
+
+    # Delete one or multiple generated quizzes. QuizExamQuestion links are
+    # removed with the quiz; QuestionBank records are never deleted here.
+    if request.method == "POST" and request.POST.get("action") == "delete_selected":
+        selected_quiz_ids = request.POST.getlist("selected_quizzes")
+        selected_quiz_ids = [value for value in selected_quiz_ids if str(value).isdigit()]
+
+        if not selected_quiz_ids:
+            context_delete_error = "Please select at least one quiz to delete."
+        else:
+            quizzes_to_delete = QuizExam.objects.filter(
+                id__in=selected_quiz_ids,
+                quiz_type="quiz",
+            )
+            deleted_count = quizzes_to_delete.count()
+            quizzes_to_delete.delete()
+            context_delete_success = (
+                f"{deleted_count} quiz(es) deleted successfully. "
+                "Question Bank questions were not deleted."
+            )
+
+    # Administrator inspection of the exact questions selected for a quiz.
+    view_quiz = None
+    view_question_links = []
+    view_quiz_id = request.POST.get("view_quiz_id", "").strip()
+    if request.method == "POST" and view_quiz_id:
+        if view_quiz_id.isdigit():
+            view_quiz = (
+                QuizExam.objects
+                .filter(id=int(view_quiz_id), quiz_type="quiz", is_active=True)
+                .first()
+            )
+            if view_quiz is not None:
+                view_question_links = list(
+                    view_quiz.question_links
+                    .select_related("question")
+                    .filter(question__is_active=True)
+                    .order_by("sort_order", "id")
+                )
+
+    # Show generated quizzes in the same workspace so the administrator can
+    # select/open an existing generated quiz instead of falling back to an old ID.
+    generated_quizzes = (
+        QuizExam.objects
+        .filter(quiz_type="quiz", is_active=True)
+        .prefetch_related("questions")
+        .order_by("-created_at", "-id")
+    )
+    if certification:
+        generated_quizzes = generated_quizzes.filter(certification__iexact=certification)
+
+    context = {
+        "certifications": certifications,
+        "assessment_type": assessment_type,
+        "selected_certification": certification,
+        "sources": sources,
+        "selected_sources": selected_sources,
+        "descriptions": descriptions,
+        "selected_descriptions": selected_descriptions,
+        "available_count": available_count,
+        "total_matching_count": total_matching_count,
+        "new_matching_count": new_matching_count,
+        "used_matching_count": used_matching_count,
+        "selection_mode": selection_mode,
+        "title_value": request.POST.get("title", "").strip(),
+        "question_count_value": request.POST.get("question_count", "").strip(),
+        "publication_status": request.POST.get("publication_status", "draft").strip().lower(),
+        "generated_quizzes": generated_quizzes,
+        "view_quiz": view_quiz,
+        "view_question_links": view_question_links,
+        "delete_error": locals().get("context_delete_error", ""),
+        "delete_success": locals().get("context_delete_success", ""),
+    }
+
+    if request.method == "POST" and request.POST.get("action") == "generate":
+        title = request.POST.get("title", "").strip()
+        publication_status = request.POST.get("publication_status", "draft").strip().lower()
+        if publication_status not in {"draft", "published"}:
+            publication_status = "draft"
+        context["publication_status"] = publication_status
+
+        if not certification:
+            context["generator_error"] = "Please select a certification."
+        elif not selected_sources:
+            context["generator_error"] = "Please select at least one Source."
+        elif not selected_descriptions:
+            context["generator_error"] = "Please select at least one Description / Group."
+        elif not title:
+            context["generator_error"] = "Please enter a title."
+        elif QuizExam.objects.filter(
+            quiz_type="quiz",
+            certification__iexact=certification,
+            title__iexact=title,
+            is_active=True,
+        ).exists():
+            context["generator_error"] = (
+                f'A quiz with the title "{title}" already exists for {certification}. '
+                "Please use a different title."
+            )
+        elif assessment_type == "exam":
+            # Exam generation will be enabled after certification Exam Rules are added.
+            context["generator_error"] = (
+                "Exam configuration is required before an exam can be generated."
+            )
+        else:
+            try:
+                requested_count = int(request.POST.get("question_count", "0"))
+            except (TypeError, ValueError):
+                requested_count = 0
+
+            if requested_count <= 0:
+                context["generator_error"] = "Number of Questions must be greater than zero."
+            elif requested_count > available_count:
+                mode_label = {
+                    "new_only": "new",
+                    "all_random": "matching",
+                    "used_only": "previously used",
+                }[selection_mode]
+                context["generator_error"] = (
+                    f"Only {available_count} {mode_label} question(s) are available for this selection mode. "
+                    "Please reduce the requested number of questions or choose another Question Selection option."
+                )
+            else:
+                question_ids = list(selection_qs.values_list("id", flat=True))
+                chosen_ids = random.sample(question_ids, requested_count)
+
+                slug_base = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-") or "quiz"
+                slug = slug_base[:160]
+                suffix = 2
+                while QuizExam.objects.filter(slug=slug).exists():
+                    suffix_text = f"-{suffix}"
+                    slug = f"{slug_base[:160-len(suffix_text)]}{suffix_text}"
+                    suffix += 1
+
+                category = (
+                    eligible.exclude(category="").values_list("category", flat=True).first()
+                    or "Project Management"
+                )
+
+                with transaction.atomic():
+                    quiz = QuizExam.objects.create(
+                        category=category,
+                        certification=certification,
+                        title=title,
+                        slug=slug,
+                        quiz_type="quiz",
+                        status=publication_status,
+                        is_active=True,
+                    )
+                    QuizExamQuestion.objects.bulk_create([
+                        QuizExamQuestion(
+                            quiz_exam=quiz,
+                            question_id=question_id,
+                            sort_order=index,
+                            points=1,
+                        )
+                        for index, question_id in enumerate(chosen_ids, start=1)
+                    ])
+
+                context["generator_success"] = (
+                    f'Quiz "{quiz.title}" generated successfully with {requested_count} question(s).'
+                )
+                context["generated_quiz"] = quiz
+
+    return render(
+        request,
+        "website/content_management/questions_answers/website_generator.html",
+        context,
+    )
 
 def home(request):
     return render(

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>Export Question Bank | TheStoreWare</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#667085;--line:#e5e9f0;--primary:#2457d6;--primary-dark:#1943ad;--soft:#eef4ff;--success:#137a4b}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+.topbar{background:#111827;color:#fff;padding:18px 24px}.topbar-inner{max-width:1180px;margin:auto;display:flex;justify-content:space-between;gap:20px;align-items:center}.brand{font-size:20px;font-weight:700}.admin{font-size:13px;opacity:.8}
+main{max-width:1180px;margin:auto;padding:34px 24px 60px}.breadcrumb{margin-bottom:18px;font-size:13px;color:var(--muted)}.breadcrumb a{color:var(--primary);text-decoration:none;font-weight:700}
+.hero,.card{background:var(--panel);border:1px solid var(--line);border-radius:18px}.hero{padding:28px;margin-bottom:22px}.hero h1{margin:0 0 8px;font-size:29px}.hero p{margin:0;color:var(--muted);line-height:1.55}.card{padding:26px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:7px}.field select{width:100%;padding:12px;border:1px solid #cfd6e3;border-radius:9px;background:#fff;color:var(--text)}
+.summary{margin-top:22px;padding:16px 18px;border-radius:12px;background:var(--soft)}.count{font-weight:700;color:var(--success)}.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+.button{display:inline-block;text-decoration:none;padding:11px 16px;border-radius:9px;font-size:13px;font-weight:700;border:1px solid var(--line);color:var(--text);background:#fff;cursor:pointer}.button.primary{color:#fff;background:var(--primary);border-color:var(--primary)}.button.primary:hover{background:var(--primary-dark)}.button:disabled{opacity:.5;cursor:not-allowed}.note{margin-top:20px;color:var(--muted);font-size:13px;line-height:1.55}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.topbar-inner{flex-direction:column;align-items:flex-start}main{padding:24px 16px 45px}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><div class="brand">TheStoreWare · Question Bank</div><div class="admin">Administrator access only · {{ request.user.username }}</div></div></header>
+<main>
+<div class="breadcrumb"><a href="{% url 'content_management' %}">Content Management</a>&nbsp;›&nbsp;<a href="{% url 'exam_quiz_management' %}">Exams &amp; Quizzes</a>&nbsp;›&nbsp; Export Question Bank</div>
+<section class="hero"><h1>Export Question Bank</h1><p>Filter the central Question Bank by certification, source and description/group, then export the matching records to Excel.</p></section>
+<section class="card">
+<form method="get">
+<div class="grid">
+<div class="field"><label for="certification">Certification</label><select id="certification" name="certification" onchange="this.form.submit()"><option value="">All Certifications</option>{% for item in certifications %}<option value="{{ item }}" {% if selected_certification == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+<div class="field"><label for="source">Source</label><select id="source" name="source" onchange="this.form.submit()"><option value="">All Sources</option>{% for item in sources %}<option value="{{ item }}" {% if selected_source == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+<div class="field"><label for="source_description">Description / Group</label><select id="source_description" name="source_description"><option value="">All Groups</option>{% for item in descriptions %}<option value="{{ item }}" {% if selected_source_description == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></div>
+</div>
+<div class="summary">Matching questions: <span class="count">{{ result_count }}</span></div>
+<div class="actions"><a class="button" href="{% url 'question_bank_export' %}">Clear Filters</a><button class="button" type="submit">Apply Filters</button><button class="button primary" type="submit" name="export" value="1" {% if result_count == 0 %}disabled{% endif %}>Export to Excel</button></div>
+</form>
+<div class="note">The Excel export includes the complete Question Bank record: classification, source traceability, question and options, correct answer, explanations, exam tip, status and timestamps.</div>
+</section>
+</main>
+</body>
+</html>

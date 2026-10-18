@@ -203,6 +203,7 @@ class QuestionBank(models.Model):
     # Source traceability
     source_type = models.CharField(max_length=30, choices=SOURCE_TYPE_CHOICES, default="manual", db_index=True)
     source_reference = models.CharField(max_length=500, blank=True)
+    source_description = models.CharField(max_length=250, blank=True, db_index=True)
     source_question_id = models.CharField(max_length=120, blank=True, db_index=True)
 
     # Publishing lifecycle
@@ -220,6 +221,39 @@ class QuestionBank(models.Model):
 
     def __str__(self):
         return f"{self.certification or self.category} Q{self.pk or ''} - {self.question_text[:70]}"
+
+
+class ExamRule(models.Model):
+    """Certification-specific rules used when generating and running exam simulations."""
+
+    certification = models.CharField(max_length=80, unique=True, db_index=True)
+    total_questions = models.PositiveIntegerField()
+    duration_minutes = models.PositiveIntegerField()
+
+    # Section sizes and break positions are stored as lists for certification-specific rules.
+    section_question_counts = models.JSONField(default=list, blank=True)
+    break_after_sections = models.JSONField(default=list, blank=True)
+    break_duration_minutes = models.PositiveIntegerField(default=0)
+    break_is_optional = models.BooleanField(default=True)
+
+    # If enabled, a confirmed/completed section cannot be revisited.
+    lock_completed_sections = models.BooleanField(default=False)
+
+    strict_timer = models.BooleanField(default=True)
+    auto_submit_on_timeout = models.BooleanField(default=True)
+    shuffle_questions = models.BooleanField(default=False)
+    shuffle_choices = models.BooleanField(default=False)
+
+    instructions = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["certification"]
+
+    def __str__(self):
+        return f"{self.certification} Exam Rules"
 
 
 class QuizExam(models.Model):

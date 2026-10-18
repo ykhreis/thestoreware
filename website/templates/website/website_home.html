@@ -240,7 +240,7 @@ html[dir="rtl"] .tsw-account-end {
         <div class="tsw-admin-controls tsw-account-end" aria-label="Account controls">
             {% if user.is_authenticated %}
                 {% if user.is_staff %}
-                    <a class="button button-small" href="/admin/">Content Management</a>
+                    <a class="button button-small" href="{% url 'content_management' %}">Content Management</a>
                     <a class="button button-small" href="/admin/">Administration</a>
                     <a class="button button-small" href="/analytics/">Analytics</a>
                     <a class="button button-small" href="{% url 'exams_quizzes' %}">Exams &amp; Quizzes</a>

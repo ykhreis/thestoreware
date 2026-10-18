@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz & Exam Generator | TheStoreWare</title>
+    <style>
+        *{box-sizing:border-box} body{margin:0;background:#f5f7fb;color:#172033;font-family:Arial,sans-serif;font-size:13px}.top{background:#111827;color:white;padding:8px 22px;display:flex;justify-content:space-between}.wrap{max-width:1400px;margin:0 auto;padding:10px 18px}.crumb{color:#64748b;margin-bottom:6px;font-size:12px}.hero,.panel{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:11px 16px;margin-bottom:9px}.hero h1{margin:0 0 2px;font-size:22px}.muted{color:#64748b}.type-row{display:flex;gap:10px;margin:4px 0 9px}.type-card{flex:1;border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;cursor:pointer}.type-card input{width:auto;margin-right:6px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}.full{grid-column:1/-1}label{font-weight:700;display:block;margin-bottom:3px}select,input[type=text],input[type=number]{width:100%;padding:6px 9px;border:1px solid #cbd5e1;border-radius:7px;background:white}.count{font-size:20px;font-weight:700;line-height:1}.check-box{border:1px solid #cbd5e1;border-radius:8px;background:#fff;max-height:92px;overflow:auto;padding:3px 9px}.check-item{display:flex;align-items:center;gap:7px;padding:3px 1px;margin:0;font-weight:400;cursor:pointer}.check-item input{width:auto;margin:0}.btn{border:0;border-radius:7px;padding:7px 12px;background:#1d4ed8;color:white;font-weight:700;cursor:pointer}.btn.secondary{background:#475569}.success-actions{display:flex;gap:8px;margin-top:6px}.btn-link{display:inline-block;text-decoration:none}.btn:disabled{opacity:.45;cursor:not-allowed}.msg{padding:7px 10px;border-radius:7px;margin-bottom:8px}.error{background:#fef2f2;color:#991b1b}.success{background:#f0fdf4;color:#166534}.exam-note{background:#fff7ed;border:1px solid #fed7aa;padding:8px;border-radius:8px;color:#9a3412}.generated{margin-top:9px}.generated-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.quiz-table{width:100%;border-collapse:collapse}.quiz-table th,.quiz-table td{padding:6px 8px;border-top:1px solid #e2e8f0;text-align:left;vertical-align:middle}.quiz-table th{font-size:12px;color:#475569;background:#f8fafc}.status{font-weight:700;text-transform:capitalize}.small-btn{padding:5px 9px;font-size:12px}.btn.danger{background:#b91c1c}.select-col{width:42px;text-align:center!important}.select-col input,.row-select{width:auto;margin:0}.generated-actions{display:flex;align-items:center;gap:8px}.delete-note{font-size:12px;color:#64748b}.count-summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:3px;font-size:12px}.selection-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.selection-card{border:1px solid #cbd5e1;border-radius:8px;padding:6px 9px;cursor:pointer;font-weight:400}.selection-card input{width:auto;margin-right:5px}.selection-card strong{font-size:12px}.selection-card .muted{font-size:11px}@media(max-width:700px){.grid{grid-template-columns:1fr}.selection-row{grid-template-columns:1fr}.type-row{display:block}.type-card{margin-bottom:6px}.quiz-table{font-size:12px}}
+    </style>
+</head>
+<body>
+<div class="top"><strong>TheStoreWare · Quiz & Exam Generator</strong><span>Administrator access only · {{ request.user.username }}</span></div>
+<div class="wrap">
+    <div class="crumb">Content Management › Questions & Answers › Generator</div>
+    <div class="hero">
+        <h1>Quiz & Exam Generator</h1>
+        <div class="muted">Generate a Quiz from the central Questions & Answers database, or select Exam to use certification-specific Exam Rules.</div>
+    </div>
+
+    {% if generator_error %}<div class="msg error">{{ generator_error }}</div>{% endif %}
+    {% if generator_success %}
+    <div class="msg success">
+        <strong>{{ generator_success }}</strong>{% if generated_quiz %}
+        <div class="success-actions">
+            <a class="btn btn-link" href="{% url 'exam_quiz_start' generated_quiz.id %}">Open Quiz</a>
+            <a class="btn secondary btn-link" href="{% url 'quiz_exam_generator' %}">Generate Another Quiz</a>
+        </div>{% endif %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="panel" id="generatorForm">
+        {% csrf_token %}
+        <div class="type-row">
+            <label class="type-card"><input type="radio" name="assessment_type" value="quiz" {% if assessment_type != 'exam' %}checked{% endif %}> <strong>Quiz</strong><br><span class="muted">Flexible number of questions selected from the chosen sources/groups.</span></label>
+            <label class="type-card"><input type="radio" name="assessment_type" value="exam" {% if assessment_type == 'exam' %}checked{% endif %}> <strong>Exam</strong><br><span class="muted">Uses the selected certification's Exam Rules.</span></label>
+        </div>
+
+        <div class="grid">
+            <div>
+                <label>Certification</label>
+                <select name="certification" id="certification">
+                    <option value="">Select certification</option>
+                    {% for item in certifications %}<option value="{{ item }}" {% if item == selected_certification %}selected{% endif %}>{{ item }}</option>{% endfor %}
+                </select>
+            </div>
+            <div>
+                <label>Question Pool</label>
+                <div class="count">{{ available_count }}</div>
+                <div class="count-summary">
+                    <span><strong>Total:</strong> {{ total_matching_count }}</span>
+                    <span><strong>New:</strong> {{ new_matching_count }}</span>
+                    <span><strong>Previously Used:</strong> {{ used_matching_count }}</span>
+                </div>
+                <div class="muted">Available number follows the Question Selection option below.</div>
+            </div>
+            <div>
+                <label>Sources</label>
+                <div class="check-box" id="sources">
+                    {% for item in sources %}
+                    <label class="check-item"><input type="checkbox" name="sources" value="{{ item }}" {% if item in selected_sources %}checked{% endif %}> <span>{{ item }}</span></label>
+                    {% empty %}<span class="muted">No sources available.</span>{% endfor %}
+                </div>
+            </div>
+            <div>
+                <label>Descriptions / Groups</label>
+                <div class="check-box" id="descriptions">
+                    {% for item in descriptions %}
+                    <label class="check-item"><input type="checkbox" name="descriptions" value="{{ item }}" {% if item in selected_descriptions %}checked{% endif %}> <span>{{ item }}</span></label>
+                    {% empty %}<span class="muted">No descriptions / groups available.</span>{% endfor %}
+                </div>
+            </div>
+            <div class="full">
+                <label>Title</label>
+                <input type="text" name="title" value="{{ title_value }}" placeholder="Example: PMI-PBA Practice Quiz 2">
+            </div>
+            <div class="full" id="questionSelection">
+                <label>Question Selection</label>
+                <div class="selection-row">
+                    <label class="selection-card"><input type="radio" name="selection_mode" value="new_only" {% if selection_mode == 'new_only' %}checked{% endif %}> <strong>New Questions Only</strong><br><span class="muted">Use questions not included in any existing quiz.</span></label>
+                    <label class="selection-card"><input type="radio" name="selection_mode" value="all_random" {% if selection_mode == 'all_random' %}checked{% endif %}> <strong>New + Previously Used</strong><br><span class="muted">Randomly select from the full matching pool.</span></label>
+                    <label class="selection-card"><input type="radio" name="selection_mode" value="used_only" {% if selection_mode == 'used_only' %}checked{% endif %}> <strong>Previously Used Only</strong><br><span class="muted">Use only questions already included in existing quizzes.</span></label>
+                </div>
+            </div>
+            <div id="quizOptions">
+                <label>Number of Questions</label>
+                <input type="number" min="1" name="question_count" value="{{ question_count_value }}" placeholder="Example: 20">
+            </div>
+            <div>
+                <label>Publication Status</label>
+                <div class="type-row" style="margin:0">
+                    <label class="type-card"><input type="radio" name="publication_status" value="draft" {% if publication_status != 'published' %}checked{% endif %}> <strong>Draft</strong><br><span class="muted">Generate for administrator review/testing.</span></label>
+                    <label class="type-card"><input type="radio" name="publication_status" value="published" {% if publication_status == 'published' %}checked{% endif %}> <strong>Published</strong><br><span class="muted">Make the generated quiz/exam available as published content.</span></label>
+                </div>
+            </div>
+            <div id="examOptions" class="exam-note" style="display:none">
+                <strong>Exam Rules required</strong><br>
+                Exam generation will use the certification's configured number of questions, duration, sections, breaks and navigation rules. Until those rules are configured, exam generation is blocked.
+            </div>
+        </div>
+        <div style="margin-top:9px;display:flex;gap:9px">
+            <button class="btn" id="generateButton" type="submit" name="action" value="generate">Generate Quiz</button>
+        </div>
+    </form>
+
+    <div class="panel generated">
+        {% if delete_error %}<div class="msg error">{{ delete_error }}</div>{% endif %}
+        {% if delete_success %}<div class="msg success">{{ delete_success }}</div>{% endif %}
+        <form method="post" id="deleteQuizForm">
+            {% csrf_token %}
+            <div class="generated-head">
+                <div><strong>Generated Quizzes</strong> <span class="muted">— select one or multiple quizzes</span></div>
+                <div class="generated-actions">
+                    <span class="delete-note">Question Bank questions will not be deleted.</span>
+                    <button class="btn danger small-btn" type="submit" name="action" value="delete_selected" id="deleteSelectedButton" disabled>Delete Selected</button>
+                </div>
+            </div>
+            <table class="quiz-table">
+                <thead><tr><th class="select-col"><input type="checkbox" id="selectAllQuizzes" title="Select all"></th><th>Title</th><th>Certification</th><th>Questions</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                {% for item in generated_quizzes %}
+                    <tr>
+                        <td class="select-col"><input class="row-select" type="checkbox" name="selected_quizzes" value="{{ item.id }}" aria-label="Select {{ item.title }}"></td>
+                        <td><strong>{{ item.title }}</strong></td>
+                        <td>{{ item.certification }}</td>
+                        <td>{{ item.questions.count }}</td>
+                        <td class="status">{{ item.status }}</td>
+                        <td style="text-align:right;white-space:nowrap">
+                            <button class="btn secondary small-btn view-questions-btn" type="submit" name="view_quiz_id" value="{{ item.id }}">View Questions</button>
+                            <a class="btn btn-link small-btn" href="{% url 'exam_quiz_start' item.id %}">Open Quiz</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="muted">No generated quizzes found.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+
+    {% if view_quiz %}
+    <div class="panel generated" id="viewQuestions">
+        <div class="generated-head">
+            <div><strong>{{ view_quiz.title }} — Selected Questions</strong> <span class="muted">({{ view_question_links|length }} questions)</span></div>
+        </div>
+        <table class="quiz-table">
+            <thead><tr><th style="width:45px">#</th><th style="width:120px">Source Question ID</th><th>Question</th><th style="width:130px">Source</th><th style="width:160px">Description / Group</th></tr></thead>
+            <tbody>
+            {% for link in view_question_links %}
+                <tr><td>{{ forloop.counter }}</td><td>{{ link.question.source_question_id|default:"—" }}</td><td>{{ link.question.question_text }}</td><td>{{ link.question.source_reference|default:"—" }}</td><td>{{ link.question.source_description|default:"—" }}</td></tr>
+            {% empty %}
+                <tr><td colspan="5" class="muted">No active questions are linked to this quiz.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+<script>
+(function(){
+ const form=document.getElementById('generatorForm'), cert=document.getElementById('certification'), sources=document.getElementById('sources'), desc=document.getElementById('descriptions');
+ const quizOptions=document.getElementById('quizOptions'), questionSelection=document.getElementById('questionSelection'), examOptions=document.getElementById('examOptions'), generate=document.getElementById('generateButton');
+ function typeChanged(){ const exam=document.querySelector('input[name="assessment_type"]:checked').value==='exam'; quizOptions.style.display=exam?'none':'block'; questionSelection.style.display=exam?'none':'block'; examOptions.style.display=exam?'block':'none'; generate.textContent=exam?'Generate Exam':'Generate Quiz'; }
+ document.querySelectorAll('input[name="assessment_type"]').forEach(x=>x.addEventListener('change',typeChanged)); typeChanged();
+ const selectAll=document.getElementById('selectAllQuizzes'), rows=[...document.querySelectorAll('.row-select')], deleteButton=document.getElementById('deleteSelectedButton'), deleteForm=document.getElementById('deleteQuizForm');
+ function updateDeleteState(){ const selected=rows.filter(x=>x.checked).length; if(deleteButton) deleteButton.disabled=selected===0; if(selectAll){selectAll.checked=rows.length>0&&selected===rows.length;selectAll.indeterminate=selected>0&&selected<rows.length;} }
+ if(selectAll) selectAll.addEventListener('change',()=>{rows.forEach(x=>x.checked=selectAll.checked);updateDeleteState();});
+ rows.forEach(x=>x.addEventListener('change',updateDeleteState));
+ if(deleteForm) deleteForm.addEventListener('submit',e=>{const selected=rows.filter(x=>x.checked).length;if(!selected||!confirm(`Delete ${selected} selected quiz${selected===1?'':'zes'}? Question Bank questions will not be deleted.`))e.preventDefault();});
+ updateDeleteState();
+})();
+</script>
+</body>
+</html>
