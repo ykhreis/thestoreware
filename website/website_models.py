@@ -198,6 +198,7 @@ class QuestionBank(models.Model):
     source_option_b = models.TextField(blank=True)
     source_option_c = models.TextField(blank=True)
     source_option_d = models.TextField(blank=True)
+    source_option_e = models.TextField(blank=True)  
     source_correct_answer = models.CharField(max_length=20, blank=True)
 
     # Independently written TheStoreWare version for quizzes/exams.
@@ -210,7 +211,9 @@ class QuestionBank(models.Model):
     option_b = models.TextField(blank=True)
     option_c = models.TextField(blank=True)
     option_d = models.TextField(blank=True)
+    option_e = models.TextField(blank=True)
     correct_answer = models.CharField(max_length=20)
+    
 
     # Verified justification for each answer choice.
     # These fields contain approved content; the voice layer only reads them.
@@ -218,7 +221,7 @@ class QuestionBank(models.Model):
     option_b_explanation = models.TextField(blank=True)
     option_c_explanation = models.TextField(blank=True)
     option_d_explanation = models.TextField(blank=True)
-
+    option_e_explanation = models.TextField(blank=True)
     # Explanation / learning metadata
     source_explanation = models.TextField(blank=True)
     thestoreware_explanation = models.TextField(blank=True)

@@ -69,7 +69,7 @@
      {% if q.option_a %}<label class="choice" data-value="A"><input type="radio" name="q{{ q.id }}" value="A"> A. {{ q.option_a }}</label>{% endif %}
      {% if q.option_b %}<label class="choice" data-value="B"><input type="radio" name="q{{ q.id }}" value="B"> B. {{ q.option_b }}</label>{% endif %}
      {% if q.option_c %}<label class="choice" data-value="C"><input type="radio" name="q{{ q.id }}" value="C"> C. {{ q.option_c }}</label>{% endif %}
-     {% if q.option_d %}<label class="choice" data-value="D"><input type="radio" name="q{{ q.id }}" value="D"> D. {{ q.option_d }}</label>{% endif %}
+     {% if q.option_d %}<label class="choice" data-value="D"><input type="radio" name="q{{ q.id }}" value="D"> D. {{ q.option_d }}</label>{% endif %}{% if q.option_e %}<label class="choice" data-value="E"><input type="radio" name="q{{ q.id }}" value="E"> E. {{ q.option_e }}</label>{% endif %}
 
      <div class="note-box">
       <div class="note-label"><span>My Remark / Note</span><span class="note-hint">Personal note for this question</span></div>
@@ -85,7 +85,8 @@
        {% if q.option_b_explanation %}<div class="rationale {% if q.correct_answer == 'B' %}correct-rationale{% else %}wrong-rationale{% endif %}"><div class="rationale-title">B. {% if q.correct_answer == 'B' %}Correct Answer{% else %}Incorrect Answer{% endif %}</div><p>{{ q.option_b_explanation }}</p></div>{% endif %}
        {% if q.option_c_explanation %}<div class="rationale {% if q.correct_answer == 'C' %}correct-rationale{% else %}wrong-rationale{% endif %}"><div class="rationale-title">C. {% if q.correct_answer == 'C' %}Correct Answer{% else %}Incorrect Answer{% endif %}</div><p>{{ q.option_c_explanation }}</p></div>{% endif %}
        {% if q.option_d_explanation %}<div class="rationale {% if q.correct_answer == 'D' %}correct-rationale{% else %}wrong-rationale{% endif %}"><div class="rationale-title">D. {% if q.correct_answer == 'D' %}Correct Answer{% else %}Incorrect Answer{% endif %}</div><p>{{ q.option_d_explanation }}</p></div>{% endif %}
-      </div>
+       {% if q.option_e_explanation %}<div class="rationale {% if q.correct_answer == 'E' %}correct-rationale{% else %}wrong-rationale{% endif %}"><div class="rationale-title">E. {% if q.correct_answer == 'E' %}Correct Answer{% else %}Incorrect Answer{% endif %}</div><p>{{ q.option_e_explanation }}</p></div>{% endif %}
+	  </div>
       {% if q.thestoreware_explanation %}<h3>Overall Explanation</h3><p>{{ q.thestoreware_explanation }}</p>{% endif %}
       {% if q.exam_tip %}<h3>Exam Tip</h3><p>{{ q.exam_tip }}</p>{% endif %}
      </div>

@@ -261,7 +261,7 @@ AREAS = [
 
 
 PROJECT_MANAGEMENT_EXAMS = [
-    {"code": "PMP", "name": "Project Management Professional", "status": "COMING SOON", "badge": "PMP"},
+    {"code": "PMP", "name": "Project Management Professional", "status": "UNDER DEVELOPMENT", "badge": "PMP", "active": True},
     {"code": "PMI-ACP", "name": "Agile Certified Practitioner", "status": "COMING SOON", "badge": "ACP"},
     {"code": "PMI-RMP", "name": "Risk Management Professional", "status": "COMING SOON", "badge": "RMP"},
     {"code": "PMI-SP", "name": "Scheduling Professional", "status": "COMING SOON", "badge": "SP"},
@@ -498,16 +498,18 @@ def quiz_question_import(request):
                 seen_numbers.add(question_no)
 
             question = cell("Question")
-            options = {letter: cell(f"Option {letter}") for letter in "ABCD"}
+            options = {letter: cell(f"Option {letter}") for letter in "ABCDE"}
             correct = cell("Correct Option").upper()
 
             if not question:
                 errors.append("Question is required.")
-            for letter, text in options.items():
-                if not text:
+            for letter in "ABCD":
+                if not options[letter]:
                     errors.append(f"Option {letter} is required.")
-            if correct not in {"A", "B", "C", "D"}:
-                errors.append("Correct Option must be A, B, C or D.")
+            if correct not in {"A", "B", "C", "D", "E"}:
+                errors.append("Correct Option must be A, B, C, D or E.")
+            elif correct == "E" and not options["E"]:
+                errors.append("Option E is required when Correct Option is E.")
 
             correct_answer_text = cell("Correct Answer")
             if correct in options and correct_answer_text:
@@ -523,6 +525,7 @@ def quiz_question_import(request):
                 "source_option_b": cell("Source Option B"),
                 "source_option_c": cell("Source Option C"),
                 "source_option_d": cell("Source Option D"),
+                "source_option_e": cell("Source Option E"),
                 "source_correct_answer": (
                     cell("Source Correct Answer").upper() or correct
                 ),
@@ -536,6 +539,7 @@ def quiz_question_import(request):
                 "option_b": options["B"],
                 "option_c": options["C"],
                 "option_d": options["D"],
+                "option_e": options["E"],
                 "correct_option": correct,
                 "correct_answer_text": correct_answer_text,
 
@@ -547,6 +551,7 @@ def quiz_question_import(request):
                 "option_b_explanation": cell("Option B Explanation"),
                 "option_c_explanation": cell("Option C Explanation"),
                 "option_d_explanation": cell("Option D Explanation"),
+                "option_e_explanation": cell("Option E Explanation"),
 
                 "source_explanation": (
                     cell("Source Explanation") or cell("Explanation")
@@ -668,6 +673,7 @@ def quiz_question_import(request):
                             source_option_b=row["source_option_b"],
                             source_option_c=row["source_option_c"],
                             source_option_d=row["source_option_d"],
+                            source_option_e=row["source_option_e"],
                             source_correct_answer=row["source_correct_answer"],
                             thestoreware_question_text=row["thestoreware_question_text"],
                             question_text=row["question"],
@@ -676,12 +682,14 @@ def quiz_question_import(request):
                             option_b=row["option_b"],
                             option_c=row["option_c"],
                             option_d=row["option_d"],
+                            option_e=row["option_e"],
                             correct_answer=row["correct_option"],
 
                             option_a_explanation=row["option_a_explanation"],
                             option_b_explanation=row["option_b_explanation"],
                             option_c_explanation=row["option_c_explanation"],
                             option_d_explanation=row["option_d_explanation"],
+                            option_e_explanation=row["option_e_explanation"],
 
                             source_explanation=row["source_explanation"],
                             thestoreware_explanation=row["thestoreware_explanation"],
@@ -836,10 +844,10 @@ def question_bank_export(request):
     sheet.auto_filter.ref = sheet.dimensions
     long_text_fields = {
         "source_question_text", "thestoreware_question_text", "question_text",
-        "option_a", "option_b", "option_c", "option_d",
-        "source_option_a", "source_option_b", "source_option_c", "source_option_d",
+        "option_a", "option_b", "option_c", "option_d", "option_e",
+        "source_option_a", "source_option_b", "source_option_c", "source_option_d", "source_option_e",
         "option_a_explanation", "option_b_explanation", "option_c_explanation",
-        "option_d_explanation", "source_explanation", "thestoreware_explanation",
+        "option_d_explanation", "option_e_explanation", "source_explanation", "thestoreware_explanation",
         "exam_tip", "source_description", "source_reference",
     }
     for index, field in enumerate(model_fields, start=1):
@@ -1015,6 +1023,10 @@ def quiz_exam_generator(request):
                         "option_d", ""
                     ).strip(),
 
+                    "option_e": request.POST.get(
+                        "option_e", ""
+                    ).strip(),
+
                     "correct_answer": request.POST.get(
                         "correct_answer", ""
                     ).strip().upper(),
@@ -1033,6 +1045,10 @@ def quiz_exam_generator(request):
 
                     "option_d_explanation": request.POST.get(
                         "option_d_explanation", ""
+                    ).strip(),
+
+                    "option_e_explanation": request.POST.get(
+                        "option_e_explanation", ""
                     ).strip(),
 
                     "source_explanation": request.POST.get(
@@ -1077,9 +1093,15 @@ def quiz_exam_generator(request):
                     "B",
                     "C",
                     "D",
+                    "E",
                 }:
                     context_edit_error = (
-                        "Correct Answer must be A, B, C or D."
+                        "Correct Answer must be A, B, C, D or E."
+                    )
+
+                elif values["correct_answer"] == "E" and not values["option_e"]:
+                    context_edit_error = (
+                        "Option E is required when Correct Answer is E."
                     )
 
                 else:

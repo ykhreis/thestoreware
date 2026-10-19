@@ -177,7 +177,8 @@
                             <div class="preview-option"><strong>B.</strong> {{ question.source_option_b|default:"—" }}</div>
                             <div class="preview-option"><strong>C.</strong> {{ question.source_option_c|default:"—" }}</div>
                             <div class="preview-option"><strong>D.</strong> {{ question.source_option_d|default:"—" }}</div>
-                        </div>
+							{% if question.source_option_e %}<div class="preview-option"><strong>E.</strong> {{ question.source_option_e }}</div>{% endif %}
+						</div>
                         <div style="margin-top:7px"><strong>Source Correct Answer:</strong> <span class="answer-pill">{{ question.source_correct_answer|default:"—" }}</span></div>
                         <div style="margin-top:7px"><strong>Source Explanation:</strong> {{ question.source_explanation|default:"—"|linebreaksbr }}</div>
                     </div>
@@ -189,7 +190,8 @@
                             <div class="preview-option"><strong>B.</strong> {{ question.option_b|default:"—" }}</div>
                             <div class="preview-option"><strong>C.</strong> {{ question.option_c|default:"—" }}</div>
                             <div class="preview-option"><strong>D.</strong> {{ question.option_d|default:"—" }}</div>
-                        </div>
+							{% if question.option_e %}<div class="preview-option"><strong>E.</strong> {{ question.option_e }}</div>{% endif %}
+						</div>
                         <div style="margin-top:7px"><strong>Correct Answer:</strong> <span class="answer-pill">{{ question.correct_answer|default:"—" }}</span></div>
                     </div>
                     <div class="preview-section">
@@ -199,7 +201,8 @@
                             <div class="preview-option"><strong>B:</strong> {{ question.option_b_explanation|default:"—"|linebreaksbr }}</div>
                             <div class="preview-option"><strong>C:</strong> {{ question.option_c_explanation|default:"—"|linebreaksbr }}</div>
                             <div class="preview-option"><strong>D:</strong> {{ question.option_d_explanation|default:"—"|linebreaksbr }}</div>
-                        </div>
+                        {% if question.option_e %}<div class="preview-option"><strong>E:</strong> {{ question.option_e_explanation|default:"—"|linebreaksbr }}</div>{% endif %}
+						</div>
                         <div style="margin-top:7px"><strong>TheStoreWare Explanation:</strong> {{ question.thestoreware_explanation|default:"—"|linebreaksbr }}</div>
                         <div style="margin-top:7px"><strong>Exam Tip:</strong> {{ question.exam_tip|default:"—"|linebreaksbr }}</div>
                     </div>
@@ -272,16 +275,19 @@
                 <tr class="question-detail-row" id="question-detail-{{ link.id }}"><td colspan="6"><div class="question-detail-box"><div class="detail-grid read-only-detail">
                     <div class="detail-full"><div class="detail-label">Question</div>{{ link.question.question_text }}</div>
                     <div><div class="detail-label">Option A</div>{{ link.question.option_a|default:"—" }}</div><div><div class="detail-label">Option B</div>{{ link.question.option_b|default:"—" }}</div><div><div class="detail-label">Option C</div>{{ link.question.option_c|default:"—" }}</div><div><div class="detail-label">Option D</div>{{ link.question.option_d|default:"—" }}</div>
-                    <div class="detail-full correct-answer"><div class="detail-label">Correct Answer</div>{{ link.question.correct_answer|default:"—" }}</div>
+                    {% if link.question.option_e %}<div><div class="detail-label">Option E</div>{{ link.question.option_e }}</div>{% endif %}
+					<div class="detail-full correct-answer"><div class="detail-label">Correct Answer</div>{{ link.question.correct_answer|default:"—" }}</div>
                     <div><div class="detail-label">Option A Explanation</div>{{ link.question.option_a_explanation|default:"—"|linebreaksbr }}</div><div><div class="detail-label">Option B Explanation</div>{{ link.question.option_b_explanation|default:"—"|linebreaksbr }}</div><div><div class="detail-label">Option C Explanation</div>{{ link.question.option_c_explanation|default:"—"|linebreaksbr }}</div><div><div class="detail-label">Option D Explanation</div>{{ link.question.option_d_explanation|default:"—"|linebreaksbr }}</div>
-                    <div class="detail-full"><div class="detail-label">Source Explanation</div>{{ link.question.source_explanation|default:"—"|linebreaksbr }}</div><div class="detail-full"><div class="detail-label">TheStoreWare Explanation</div>{{ link.question.thestoreware_explanation|default:"—"|linebreaksbr }}</div><div class="detail-full"><div class="detail-label">Exam Tip</div>{{ link.question.exam_tip|default:"—"|linebreaksbr }}</div>
+                    {% if link.question.option_e %}<div><div class="detail-label">Option E Explanation</div>{{ link.question.option_e_explanation|default:"—"|linebreaksbr }}</div>{% endif %}
+					<div class="detail-full"><div class="detail-label">Source Explanation</div>{{ link.question.source_explanation|default:"—"|linebreaksbr }}</div><div class="detail-full"><div class="detail-label">TheStoreWare Explanation</div>{{ link.question.thestoreware_explanation|default:"—"|linebreaksbr }}</div><div class="detail-full"><div class="detail-label">Exam Tip</div>{{ link.question.exam_tip|default:"—"|linebreaksbr }}</div>
                     <div><div class="detail-label">Source</div>{{ link.question.source_reference|default:"—" }}</div><div><div class="detail-label">Description / Group</div>{{ link.question.source_description|default:"—" }}</div>
                 </div>
                 <form method="post" class="edit-form" id="edit-form-{{ link.id }}">{% csrf_token %}<input type="hidden" name="view_quiz_id" value="{{ view_quiz.id }}"><input type="hidden" name="question_link_id" value="{{ link.id }}"><div class="detail-grid">
                 <div class="detail-full"><label>Question</label><textarea name="question_text" required>{{ link.question.question_text }}</textarea></div>
                 <div><label>Option A</label><textarea name="option_a" required>{{ link.question.option_a }}</textarea></div><div><label>Option B</label><textarea name="option_b" required>{{ link.question.option_b }}</textarea></div><div><label>Option C</label><textarea name="option_c" required>{{ link.question.option_c }}</textarea></div><div><label>Option D</label><textarea name="option_d" required>{{ link.question.option_d }}</textarea></div>
-                <div><label>Correct Answer</label><select name="correct_answer" required><option value="A" {% if link.question.correct_answer == "A" %}selected{% endif %}>A</option><option value="B" {% if link.question.correct_answer == "B" %}selected{% endif %}>B</option><option value="C" {% if link.question.correct_answer == "C" %}selected{% endif %}>C</option><option value="D" {% if link.question.correct_answer == "D" %}selected{% endif %}>D</option></select></div><div></div>
-                <div><label>Option A Explanation</label><textarea name="option_a_explanation">{{ link.question.option_a_explanation }}</textarea></div><div><label>Option B Explanation</label><textarea name="option_b_explanation">{{ link.question.option_b_explanation }}</textarea></div><div><label>Option C Explanation</label><textarea name="option_c_explanation">{{ link.question.option_c_explanation }}</textarea></div><div><label>Option D Explanation</label><textarea name="option_d_explanation">{{ link.question.option_d_explanation }}</textarea></div>
+				<div><label>Option E <span class="muted">(optional)</span></label><textarea name="option_e">{{ link.question.option_e }}</textarea></div>               
+			   <div><label>Correct Answer</label><select name="correct_answer" required><option value="A" {% if link.question.correct_answer == "A" %}selected{% endif %}>A</option><option value="B" {% if link.question.correct_answer == "B" %}selected{% endif %}>B</option><option value="C" {% if link.question.correct_answer == "C" %}selected{% endif %}>C</option><option value="D" {% if link.question.correct_answer == "D" %}selected{% endif %}>D</option><option value="E" {% if link.question.correct_answer == "E" %}selected{% endif %}>E</option></select>
+                <div><label>Option A Explanation</label><textarea name="option_a_explanation">{{ link.question.option_a_explanation }}</textarea></div><div><label>Option B Explanation</label><textarea name="option_b_explanation">{{ link.question.option_b_explanation }}</textarea></div><div><label>Option C Explanation</label><textarea name="option_c_explanation">{{ link.question.option_c_explanation }}</textarea></div><div><label>Option D Explanation</label><textarea name="option_d_explanation">{{ link.question.option_d_explanation }}</textarea></div><div><label>Option E Explanation</label><textarea name="option_e_explanation">{{ link.question.option_e_explanation }}</textarea></div>
                 <div class="detail-full"><label>Source Explanation</label><textarea name="source_explanation">{{ link.question.source_explanation }}</textarea></div><div class="detail-full"><label>TheStoreWare Explanation</label><textarea name="thestoreware_explanation">{{ link.question.thestoreware_explanation }}</textarea></div><div class="detail-full"><label>Exam Tip</label><textarea name="exam_tip">{{ link.question.exam_tip }}</textarea></div><div><label>Source</label><input type="text" name="source_reference" value="{{ link.question.source_reference }}"></div><div><label>Description / Group</label><input type="text" name="source_description" value="{{ link.question.source_description }}"></div></div>
                 <div class="edit-actions"><button class="btn small-btn" type="submit" name="action" value="save_question">Save Changes</button><button class="btn cancel small-btn cancel-edit-btn" type="button" data-target="edit-form-{{ link.id }}">Cancel</button></div></form>
                 </div></td></tr>
