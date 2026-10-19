@@ -18,7 +18,8 @@
   </div>
   <div class="topright">
    <div id="timer" class="timer">--:--</div>
-   <button id="finishTop" class="finish-top" type="button">Finish Test</button>
+   <button id="resetQuiz" class="finish-top" type="button">Reset Quiz</button>
+    <button id="finishTop" class="finish-top" type="button">Finish Test</button>
   </div>
  </div>
 </div>
@@ -127,7 +128,7 @@
 <script>
 (function(){
  const total={{ total_seconds|default:0 }};
- const started=Date.now();
+ let started=Date.now();
  const timer=document.getElementById('timer');
  const steps=[...document.querySelectorAll('.qstep')];
  const navs=[...document.querySelectorAll('.qnav')];
@@ -247,6 +248,27 @@
   });
  });
 
+ function resetQuiz(){
+  if(!confirm('Reset this quiz? All selected answers, marked questions and personal remarks will be cleared.'))return;
+  started=Date.now(); current=0;
+  steps.forEach((step,i)=>{
+   state[i]={answer:null,marked:false,note:"",revealed:false};
+   step.querySelectorAll('input[type=radio]').forEach(input=>input.checked=false);
+   step.querySelectorAll('.choice').forEach(choice=>choice.classList.remove('selected','correct','wrong'));
+   const remark=step.querySelector('.remark'); if(remark)remark.value='';
+   const markbtn=step.querySelector('.markbtn'); if(markbtn){markbtn.classList.remove('active');markbtn.textContent='☆ Mark for Review';}
+   const feedback=step.querySelector('.feedback'); if(feedback)feedback.classList.add('hidden');
+   const answerbtn=step.querySelector('.see-answer'); if(answerbtn){answerbtn.disabled=false;answerbtn.textContent='See Answer';}
+  });
+  document.getElementById('finishPanel')?.classList.add('hidden');
+  document.querySelector('.sidebar')?.classList.remove('hidden');
+  document.getElementById('finishTop')?.classList.remove('hidden');
+  document.getElementById('resetQuiz')?.classList.remove('hidden');
+  document.getElementById('quizLayout').style.gridTemplateColumns='';
+  timer?.classList.remove('expired');
+  setMode('practice'); show(0); updateNavigator(); tick();
+ }
+
  function finishTest(){
   const unanswered=Object.values(state).filter(s=>!s.answer).length;
   if(unanswered){
@@ -264,6 +286,7 @@
   });
   document.querySelector('.sidebar')?.classList.add('hidden');
   document.getElementById('finishTop')?.classList.add('hidden');
+  document.getElementById('resetQuiz')?.classList.add('hidden');
   const panel=document.getElementById('finishPanel');
   panel.classList.remove('hidden');
   document.getElementById('scoreCorrect').textContent=correct;
@@ -278,6 +301,7 @@
   window.scrollTo({top:0,behavior:'smooth'});
  }
  document.getElementById('finishTop')?.addEventListener('click',finishTest);
+ document.getElementById('resetQuiz')?.addEventListener('click',resetQuiz);
 
  show(0);
  updateNavigator();

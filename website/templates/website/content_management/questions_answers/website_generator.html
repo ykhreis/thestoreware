@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz & Exam Generator | TheStoreWare</title>
     <style>
-        *{box-sizing:border-box} body{margin:0;background:#f5f7fb;color:#172033;font-family:Arial,sans-serif;font-size:13px}.top{background:#111827;color:white;padding:8px 22px;display:flex;justify-content:space-between}.wrap{max-width:1400px;margin:0 auto;padding:10px 18px}.crumb{color:#64748b;margin-bottom:6px;font-size:12px}.hero,.panel{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:11px 16px;margin-bottom:9px}.hero h1{margin:0 0 2px;font-size:22px}.muted{color:#64748b}.type-row{display:flex;gap:10px;margin:4px 0 9px}.type-card{flex:1;border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;cursor:pointer}.type-card input{width:auto;margin-right:6px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}.full{grid-column:1/-1}label{font-weight:700;display:block;margin-bottom:3px}select,input[type=text],input[type=number]{width:100%;padding:6px 9px;border:1px solid #cbd5e1;border-radius:7px;background:white}.count{font-size:20px;font-weight:700;line-height:1}.check-box{border:1px solid #cbd5e1;border-radius:8px;background:#fff;max-height:92px;overflow:auto;padding:3px 9px}.check-item{display:flex;align-items:center;gap:7px;padding:3px 1px;margin:0;font-weight:400;cursor:pointer}.check-item input{width:auto;margin:0}.btn{border:0;border-radius:7px;padding:7px 12px;background:#1d4ed8;color:white;font-weight:700;cursor:pointer}.btn.secondary{background:#475569}.success-actions{display:flex;gap:8px;margin-top:6px}.btn-link{display:inline-block;text-decoration:none}.btn:disabled{opacity:.45;cursor:not-allowed}.msg{padding:7px 10px;border-radius:7px;margin-bottom:8px}.error{background:#fef2f2;color:#991b1b}.success{background:#f0fdf4;color:#166534}.exam-note{background:#fff7ed;border:1px solid #fed7aa;padding:8px;border-radius:8px;color:#9a3412}.generated{margin-top:9px}.generated-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.quiz-table{width:100%;border-collapse:collapse}.quiz-table th,.quiz-table td{padding:6px 8px;border-top:1px solid #e2e8f0;text-align:left;vertical-align:middle}.quiz-table th{font-size:12px;color:#475569;background:#f8fafc}.status{font-weight:700;text-transform:capitalize}.small-btn{padding:5px 9px;font-size:12px}.btn.danger{background:#b91c1c}.select-col{width:42px;text-align:center!important}.select-col input,.row-select{width:auto;margin:0}.generated-actions{display:flex;align-items:center;gap:8px}.delete-note{font-size:12px;color:#64748b}.count-summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:3px;font-size:12px}.selection-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.selection-card{border:1px solid #cbd5e1;border-radius:8px;padding:6px 9px;cursor:pointer;font-weight:400}.selection-card input{width:auto;margin-right:5px}.selection-card strong{font-size:12px}.selection-card .muted{font-size:11px}@media(max-width:700px){.grid{grid-template-columns:1fr}.selection-row{grid-template-columns:1fr}.type-row{display:block}.type-card{margin-bottom:6px}.quiz-table{font-size:12px}}
+        *{box-sizing:border-box} body{margin:0;background:#f5f7fb;color:#172033;font-family:Arial,sans-serif;font-size:13px}.top{background:#111827;color:white;padding:8px 22px;display:flex;justify-content:space-between}.wrap{max-width:1400px;margin:0 auto;padding:10px 18px}.crumb{color:#64748b;margin-bottom:6px;font-size:12px}.hero,.panel{background:white;border:1px solid #e2e8f0;border-radius:10px;padding:11px 16px;margin-bottom:9px}.hero h1{margin:0 0 2px;font-size:22px}.muted{color:#64748b}.type-row{display:flex;gap:10px;margin:4px 0 9px}.type-card{flex:1;border:1px solid #cbd5e1;border-radius:8px;padding:7px 10px;cursor:pointer}.type-card input{width:auto;margin-right:6px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}.full{grid-column:1/-1}label{font-weight:700;display:block;margin-bottom:3px}select,input[type=text],input[type=number]{width:100%;padding:6px 9px;border:1px solid #cbd5e1;border-radius:7px;background:white}.count{font-size:20px;font-weight:700;line-height:1}.check-box{border:1px solid #cbd5e1;border-radius:8px;background:#fff;max-height:92px;overflow:auto;padding:3px 9px}.check-item{display:flex;align-items:center;gap:7px;padding:3px 1px;margin:0;font-weight:400;cursor:pointer}.check-item input{width:auto;margin:0}.btn{border:0;border-radius:7px;padding:7px 12px;background:#1d4ed8;color:white;font-weight:700;cursor:pointer}.btn.secondary{background:#475569}.success-actions{display:flex;gap:8px;margin-top:6px}.btn-link{display:inline-block;text-decoration:none}.btn:disabled{opacity:.45;cursor:not-allowed}.msg{padding:7px 10px;border-radius:7px;margin-bottom:8px}.error{background:#fef2f2;color:#991b1b}.success{background:#f0fdf4;color:#166534}.exam-note{background:#fff7ed;border:1px solid #fed7aa;padding:8px;border-radius:8px;color:#9a3412}.generated{margin-top:9px}.generated-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.quiz-table{width:100%;border-collapse:collapse}.quiz-table th,.quiz-table td{padding:6px 8px;border-top:1px solid #e2e8f0;text-align:left;vertical-align:middle}.quiz-table th{font-size:12px;color:#475569;background:#f8fafc}.status{font-weight:700;text-transform:capitalize}.small-btn{padding:5px 9px;font-size:12px}.btn.danger{background:#b91c1c}.btn.publish{background:#15803d}.select-col{width:42px;text-align:center!important}.select-col input,.row-select{width:auto;margin:0}.generated-actions{display:flex;align-items:center;gap:8px}.delete-note{font-size:12px;color:#64748b}.count-summary{display:flex;gap:12px;flex-wrap:wrap;margin-top:3px;font-size:12px}.selection-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.selection-card{border:1px solid #cbd5e1;border-radius:8px;padding:6px 9px;cursor:pointer;font-weight:400}.selection-card input{width:auto;margin-right:5px}.selection-card strong{font-size:12px}.selection-card .muted{font-size:11px}.review-status{font-weight:700;white-space:nowrap}.review-status.pending{color:#9a3412}.review-status.confirmed{color:#166534}.question-actions{white-space:nowrap}.confirmed-meta{display:block;font-size:10px;color:#64748b;margin-top:2px}.question-toggle{background:none;border:0;padding:0;color:#1d4ed8;text-align:left;font:inherit;font-weight:700;cursor:pointer}.question-toggle:hover{text-decoration:underline}.question-detail-row{display:none}.question-detail-row.open{display:table-row}.question-detail-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}.detail-full{grid-column:1/-1}.detail-label{font-weight:700;color:#475569;margin-bottom:2px}.correct-answer{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;padding:7px 9px}.question-actions-inner{display:flex;gap:5px;align-items:center}.edit-form{display:none;margin-top:10px;padding-top:10px;border-top:1px solid #cbd5e1}.edit-form.open{display:block}.edit-form textarea,.edit-form input[type=text],.edit-form select{width:100%;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;background:white;font:inherit}.edit-form textarea{min-height:62px;resize:vertical}.edit-actions{display:flex;gap:7px;margin-top:10px}.btn.cancel{background:#64748b}.btn.edit-btn{background:#d97706;color:white}.btn.edit-btn:hover{background:#b45309}.preview-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.preview-card{border:1px solid #cbd5e1;border-radius:9px;margin:8px 0;overflow:hidden}.preview-summary{padding:9px 11px;background:#f8fafc;display:flex;gap:10px;align-items:flex-start}.preview-number{min-width:36px;font-weight:700;color:#1d4ed8}.preview-title{font-weight:700;line-height:1.35}.preview-meta{font-size:11px;color:#64748b;margin-top:3px}.preview-body{padding:11px}.preview-section{border-top:1px solid #e2e8f0;padding-top:9px;margin-top:9px}.preview-section:first-child{border-top:0;padding-top:0;margin-top:0}.preview-section-title{font-weight:700;color:#334155;margin-bottom:6px}.preview-options{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px}.preview-option{padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px}.source-block{background:#fff7ed;border:1px solid #fed7aa;border-radius:7px;padding:8px}.tsw-block{background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:8px}.answer-pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#dcfce7;color:#166534;font-weight:700}.preview-empty{padding:12px;border:1px dashed #cbd5e1;border-radius:8px;color:#64748b;background:#f8fafc}.bank-approval{margin-left:auto;min-width:330px;border-left:1px solid #cbd5e1;padding-left:12px}.bank-approval-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.bank-approval select{width:auto;min-width:155px;padding:5px 7px}.bank-state{font-size:11px;font-weight:700}.bank-state.pending{color:#9a3412}.bank-state.confirmed{color:#166534}.bank-visibility{font-size:11px;color:#475569}.existing-quiz-box{border:1px solid #bfdbfe;background:#eff6ff;border-radius:8px;padding:9px 11px}.existing-quiz-row{display:grid;grid-template-columns:1fr auto;gap:9px;align-items:end}.existing-quiz-row select{width:100%;padding:6px 9px;border:1px solid #cbd5e1;border-radius:7px;background:white}@media(max-width:700px){.grid{grid-template-columns:1fr}.selection-row{grid-template-columns:1fr}.type-row{display:block}.type-card{margin-bottom:6px}.quiz-table{font-size:12px}.preview-options{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
@@ -97,14 +97,130 @@
                 Exam generation will use the certification's configured number of questions, duration, sections, breaks and navigation rules. Until those rules are configured, exam generation is blocked.
             </div>
         </div>
+        <div class="existing-quiz-box" id="existingQuizBox" style="margin-top:9px">
+            <div class="existing-quiz-row">
+                <div>
+                    <label>Add Questions to Existing Quiz</label>
+                    <select name="target_quiz_id" id="targetQuizId">
+                        <option value="">Select existing quiz</option>
+                        {% for item in generated_quizzes %}
+                            {% if item.quiz_type == "quiz" %}<option value="{{ item.id }}" data-certification="{{ item.certification }}" {% if target_quiz_id == item.id|stringformat:"s" %}selected{% endif %}>{{ item.title }} — {{ item.certification }} — {{ item.questions.count }} question{{ item.questions.count|pluralize }}</option>{% endif %}
+                        {% endfor %}
+                    </select>
+                    <div class="muted" style="margin-top:4px">Uses the Number of Questions and Question Selection above. Existing questions in the selected quiz will not be duplicated.</div>
+                </div>
+                <button class="btn" id="addToExistingButton" type="submit" name="action" value="add_to_existing">Add to Quiz</button>
+            </div>
+        </div>
         <div style="margin-top:9px;display:flex;gap:9px">
+            <button class="btn secondary" type="submit" name="action" value="preview">Preview Question Bank</button>
             <button class="btn" id="generateButton" type="submit" name="action" value="generate">Generate Quiz</button>
         </div>
     </form>
 
+    {% if preview_requested %}
+    <div class="panel generated" id="questionBankPreview">
+        <div class="preview-head">
+            <div><strong>Question Bank Preview</strong> <span class="muted">— review stored questions before generating a quiz</span></div>
+            {% if preview_questions %}<div><strong>{{ preview_questions|length }}</strong> question{{ preview_questions|length|pluralize }}</div>{% endif %}
+        </div>
+        {% if bank_confirm_error %}<div class="msg error">{{ bank_confirm_error }}</div>{% endif %}
+        {% if bank_confirm_success %}<div class="msg success">{{ bank_confirm_success }}</div>{% endif %}
+        {% if preview_error %}
+            <div class="msg error">{{ preview_error }}</div>
+        {% elif preview_questions %}
+            {% for question in preview_questions %}
+            <div class="preview-card">
+                <div class="preview-summary">
+                    <div class="preview-number">#{{ question.source_question_id|default:forloop.counter }}</div>
+                    <div>
+                        <div class="preview-title">{{ question.thestoreware_question_text|default:question.question_text }}</div>
+                        <div class="preview-meta">ID {{ question.id }} · {{ question.certification }} · {{ question.domain|default:"No domain" }} · {{ question.topic|default:"No topic" }} · {{ question.difficulty|default:"No difficulty" }}</div>
+                    </div>
+                    <div class="bank-approval">
+                        <div class="bank-approval-row">
+                            {% if question.review_status == "confirmed" %}
+                                <span class="bank-state confirmed">Confirmed ✓</span>
+                            {% else %}
+                                <span class="bank-state pending">Pending Review</span>
+                            {% endif %}
+                            <span class="bank-visibility">Visibility: <strong>{% if question.visibility == "users" %}Users{% else %}Administrator Only{% endif %}</strong></span>
+                        </div>
+                        <form method="post" class="bank-approval-row" style="margin-top:6px">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="confirm_bank_question">
+                            <input type="hidden" name="question_id" value="{{ question.id }}">
+                            <input type="hidden" name="assessment_type" value="{{ assessment_type }}">
+                            <input type="hidden" name="certification" value="{{ selected_certification }}">
+                            {% for item in selected_sources %}<input type="hidden" name="sources" value="{{ item }}">{% endfor %}
+                            {% for item in selected_descriptions %}<input type="hidden" name="descriptions" value="{{ item }}">{% endfor %}
+                            <input type="hidden" name="selection_mode" value="{{ selection_mode }}">
+                            <input type="hidden" name="title" value="{{ title_value }}">
+                            <input type="hidden" name="question_count" value="{{ question_count_value }}">
+                            <input type="hidden" name="publication_status" value="{{ publication_status }}">
+                            <label style="margin:0">Visibility</label>
+                            <select name="visibility">
+                                <option value="admin" {% if question.visibility != "users" %}selected{% endif %}>Administrator Only</option>
+                                <option value="users" {% if question.visibility == "users" %}selected{% endif %}>Users</option>
+                            </select>
+                            <button class="btn small-btn" type="submit">{% if question.review_status == "confirmed" %}Update Confirmation{% else %}Confirm{% endif %}</button>
+                        </form>
+                        {% if question.review_status == "confirmed" and question.confirmed_by %}<div class="confirmed-meta">Confirmed by {{ question.confirmed_by }}{% if question.confirmed_at %} · {{ question.confirmed_at|date:"Y-m-d H:i" }}{% endif %}</div>{% endif %}
+                    </div>
+                </div>
+                <div class="preview-body">
+                    <div class="preview-section source-block">
+                        <div class="preview-section-title">Source / Original — Administrator Reference Only</div>
+                        <div><strong>Question:</strong> {{ question.source_question_text|default:"—" }}</div>
+                        <div class="preview-options" style="margin-top:7px">
+                            <div class="preview-option"><strong>A.</strong> {{ question.source_option_a|default:"—" }}</div>
+                            <div class="preview-option"><strong>B.</strong> {{ question.source_option_b|default:"—" }}</div>
+                            <div class="preview-option"><strong>C.</strong> {{ question.source_option_c|default:"—" }}</div>
+                            <div class="preview-option"><strong>D.</strong> {{ question.source_option_d|default:"—" }}</div>
+                        </div>
+                        <div style="margin-top:7px"><strong>Source Correct Answer:</strong> <span class="answer-pill">{{ question.source_correct_answer|default:"—" }}</span></div>
+                        <div style="margin-top:7px"><strong>Source Explanation:</strong> {{ question.source_explanation|default:"—"|linebreaksbr }}</div>
+                    </div>
+                    <div class="preview-section tsw-block">
+                        <div class="preview-section-title">TheStoreWare Version</div>
+                        <div><strong>Question:</strong> {{ question.thestoreware_question_text|default:question.question_text }}</div>
+                        <div class="preview-options" style="margin-top:7px">
+                            <div class="preview-option"><strong>A.</strong> {{ question.option_a|default:"—" }}</div>
+                            <div class="preview-option"><strong>B.</strong> {{ question.option_b|default:"—" }}</div>
+                            <div class="preview-option"><strong>C.</strong> {{ question.option_c|default:"—" }}</div>
+                            <div class="preview-option"><strong>D.</strong> {{ question.option_d|default:"—" }}</div>
+                        </div>
+                        <div style="margin-top:7px"><strong>Correct Answer:</strong> <span class="answer-pill">{{ question.correct_answer|default:"—" }}</span></div>
+                    </div>
+                    <div class="preview-section">
+                        <div class="preview-section-title">Answer Explanations</div>
+                        <div class="preview-options">
+                            <div class="preview-option"><strong>A:</strong> {{ question.option_a_explanation|default:"—"|linebreaksbr }}</div>
+                            <div class="preview-option"><strong>B:</strong> {{ question.option_b_explanation|default:"—"|linebreaksbr }}</div>
+                            <div class="preview-option"><strong>C:</strong> {{ question.option_c_explanation|default:"—"|linebreaksbr }}</div>
+                            <div class="preview-option"><strong>D:</strong> {{ question.option_d_explanation|default:"—"|linebreaksbr }}</div>
+                        </div>
+                        <div style="margin-top:7px"><strong>TheStoreWare Explanation:</strong> {{ question.thestoreware_explanation|default:"—"|linebreaksbr }}</div>
+                        <div style="margin-top:7px"><strong>Exam Tip:</strong> {{ question.exam_tip|default:"—"|linebreaksbr }}</div>
+                    </div>
+                    <div class="preview-section">
+                        <strong>Source:</strong> {{ question.source_reference|default:"—" }}<br>
+                        <strong>Description / Group:</strong> {{ question.source_description|default:"—" }}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="preview-empty">No active Question Bank questions match the selected Certification, Source and Description / Group.</div>
+        {% endif %}
+    </div>
+    {% endif %}
+
     <div class="panel generated">
         {% if delete_error %}<div class="msg error">{{ delete_error }}</div>{% endif %}
         {% if delete_success %}<div class="msg success">{{ delete_success }}</div>{% endif %}
+        {% if publish_error %}<div class="msg error">{{ publish_error }}</div>{% endif %}
+        {% if publish_success %}<div class="msg success">{{ publish_success }}</div>{% endif %}
         <form method="post" id="deleteQuizForm">
             {% csrf_token %}
             <div class="generated-head">
@@ -126,6 +242,8 @@
                         <td class="status">{{ item.status }}</td>
                         <td style="text-align:right;white-space:nowrap">
                             <button class="btn secondary small-btn view-questions-btn" type="submit" name="view_quiz_id" value="{{ item.id }}">View Questions</button>
+                            <button class="btn publish small-btn publish-quiz-btn" type="submit" name="action" value="publish_quiz" data-quiz-id="{{ item.id }}" data-title="{{ item.title|escape }}">Publish All Questions</button>
+                            {% if item.status == "published" %}<span class="review-status confirmed">Published ✓</span>{% endif %}
                             <a class="btn btn-link small-btn" href="{% url 'exam_quiz_start' item.id %}">Open Quiz</a>
                         </td>
                     </tr>
@@ -139,17 +257,35 @@
 
     {% if view_quiz %}
     <div class="panel generated" id="viewQuestions">
+        {% if confirm_error %}<div class="msg error">{{ confirm_error }}</div>{% endif %}
+        {% if confirm_success %}<div class="msg success">{{ confirm_success }}</div>{% endif %}
+        {% if edit_error %}<div class="msg error">{{ edit_error }}</div>{% endif %}
+        {% if edit_success %}<div class="msg success">{{ edit_success }}</div>{% endif %}
         <div class="generated-head">
             <div><strong>{{ view_quiz.title }} — Selected Questions</strong> <span class="muted">({{ view_question_links|length }} questions)</span></div>
         </div>
         <table class="quiz-table">
-            <thead><tr><th style="width:45px">#</th><th style="width:120px">Source Question ID</th><th>Question</th><th style="width:130px">Source</th><th style="width:160px">Description / Group</th></tr></thead>
+            <thead><tr><th style="width:45px">#</th><th>Question</th><th style="width:130px">Source</th><th style="width:160px">Description / Group</th><th style="width:125px">Review Status</th><th style="width:105px">Action</th></tr></thead>
             <tbody>
             {% for link in view_question_links %}
-                <tr><td>{{ forloop.counter }}</td><td>{{ link.question.source_question_id|default:"—" }}</td><td>{{ link.question.question_text }}</td><td>{{ link.question.source_reference|default:"—" }}</td><td>{{ link.question.source_description|default:"—" }}</td></tr>
-            {% empty %}
-                <tr><td colspan="5" class="muted">No active questions are linked to this quiz.</td></tr>
-            {% endfor %}
+                <tr><td>{{ forloop.counter }}</td><td><button type="button" class="question-toggle" data-target="question-detail-{{ link.id }}">{{ link.question.question_text }}</button></td><td>{{ link.question.source_reference|default:"—" }}</td><td>{{ link.question.source_description|default:"—" }}</td><td>{% if link.review_status == "confirmed" %}<span class="review-status confirmed">Confirmed ✓</span>{% if link.confirmed_by %}<span class="confirmed-meta">by {{ link.confirmed_by }}</span>{% endif %}{% else %}<span class="review-status pending">Pending Review</span>{% endif %}</td><td class="question-actions"><div class="question-actions-inner"><button class="btn edit-btn small-btn edit-question-btn" type="button" data-target="edit-form-{{ link.id }}" data-detail="question-detail-{{ link.id }}">Edit</button>{% if link.review_status != "confirmed" %}<form method="post" style="margin:0">{% csrf_token %}<input type="hidden" name="view_quiz_id" value="{{ view_quiz.id }}"><input type="hidden" name="question_link_id" value="{{ link.id }}"><button class="btn small-btn" type="submit" name="action" value="confirm_question">Confirm</button></form>{% else %}<span class="review-status confirmed">✓</span>{% endif %}</div></td></tr>
+                <tr class="question-detail-row" id="question-detail-{{ link.id }}"><td colspan="6"><div class="question-detail-box"><div class="detail-grid read-only-detail">
+                    <div class="detail-full"><div class="detail-label">Question</div>{{ link.question.question_text }}</div>
+                    <div><div class="detail-label">Option A</div>{{ link.question.option_a|default:"—" }}</div><div><div class="detail-label">Option B</div>{{ link.question.option_b|default:"—" }}</div><div><div class="detail-label">Option C</div>{{ link.question.option_c|default:"—" }}</div><div><div class="detail-label">Option D</div>{{ link.question.option_d|default:"—" }}</div>
+                    <div class="detail-full correct-answer"><div class="detail-label">Correct Answer</div>{{ link.question.correct_answer|default:"—" }}</div>
+                    <div><div class="detail-label">Option A Explanation</div>{{ link.question.option_a_explanation|default:"—"|linebreaksbr }}</div><div><div class="detail-label">Option B Explanation</div>{{ link.question.option_b_explanation|default:"—"|linebreaksbr }}</div><div><div class="detail-label">Option C Explanation</div>{{ link.question.option_c_explanation|default:"—"|linebreaksbr }}</div><div><div class="detail-label">Option D Explanation</div>{{ link.question.option_d_explanation|default:"—"|linebreaksbr }}</div>
+                    <div class="detail-full"><div class="detail-label">Source Explanation</div>{{ link.question.source_explanation|default:"—"|linebreaksbr }}</div><div class="detail-full"><div class="detail-label">TheStoreWare Explanation</div>{{ link.question.thestoreware_explanation|default:"—"|linebreaksbr }}</div><div class="detail-full"><div class="detail-label">Exam Tip</div>{{ link.question.exam_tip|default:"—"|linebreaksbr }}</div>
+                    <div><div class="detail-label">Source</div>{{ link.question.source_reference|default:"—" }}</div><div><div class="detail-label">Description / Group</div>{{ link.question.source_description|default:"—" }}</div>
+                </div>
+                <form method="post" class="edit-form" id="edit-form-{{ link.id }}">{% csrf_token %}<input type="hidden" name="view_quiz_id" value="{{ view_quiz.id }}"><input type="hidden" name="question_link_id" value="{{ link.id }}"><div class="detail-grid">
+                <div class="detail-full"><label>Question</label><textarea name="question_text" required>{{ link.question.question_text }}</textarea></div>
+                <div><label>Option A</label><textarea name="option_a" required>{{ link.question.option_a }}</textarea></div><div><label>Option B</label><textarea name="option_b" required>{{ link.question.option_b }}</textarea></div><div><label>Option C</label><textarea name="option_c" required>{{ link.question.option_c }}</textarea></div><div><label>Option D</label><textarea name="option_d" required>{{ link.question.option_d }}</textarea></div>
+                <div><label>Correct Answer</label><select name="correct_answer" required><option value="A" {% if link.question.correct_answer == "A" %}selected{% endif %}>A</option><option value="B" {% if link.question.correct_answer == "B" %}selected{% endif %}>B</option><option value="C" {% if link.question.correct_answer == "C" %}selected{% endif %}>C</option><option value="D" {% if link.question.correct_answer == "D" %}selected{% endif %}>D</option></select></div><div></div>
+                <div><label>Option A Explanation</label><textarea name="option_a_explanation">{{ link.question.option_a_explanation }}</textarea></div><div><label>Option B Explanation</label><textarea name="option_b_explanation">{{ link.question.option_b_explanation }}</textarea></div><div><label>Option C Explanation</label><textarea name="option_c_explanation">{{ link.question.option_c_explanation }}</textarea></div><div><label>Option D Explanation</label><textarea name="option_d_explanation">{{ link.question.option_d_explanation }}</textarea></div>
+                <div class="detail-full"><label>Source Explanation</label><textarea name="source_explanation">{{ link.question.source_explanation }}</textarea></div><div class="detail-full"><label>TheStoreWare Explanation</label><textarea name="thestoreware_explanation">{{ link.question.thestoreware_explanation }}</textarea></div><div class="detail-full"><label>Exam Tip</label><textarea name="exam_tip">{{ link.question.exam_tip }}</textarea></div><div><label>Source</label><input type="text" name="source_reference" value="{{ link.question.source_reference }}"></div><div><label>Description / Group</label><input type="text" name="source_description" value="{{ link.question.source_description }}"></div></div>
+                <div class="edit-actions"><button class="btn small-btn" type="submit" name="action" value="save_question">Save Changes</button><button class="btn cancel small-btn cancel-edit-btn" type="button" data-target="edit-form-{{ link.id }}">Cancel</button></div></form>
+                </div></td></tr>
+            {% empty %}<tr><td colspan="6" class="muted">No active questions are linked to this quiz.</td></tr>{% endfor %}
             </tbody>
         </table>
     </div>
@@ -158,15 +294,25 @@
 <script>
 (function(){
  const form=document.getElementById('generatorForm'), cert=document.getElementById('certification'), sources=document.getElementById('sources'), desc=document.getElementById('descriptions');
- const quizOptions=document.getElementById('quizOptions'), questionSelection=document.getElementById('questionSelection'), examOptions=document.getElementById('examOptions'), generate=document.getElementById('generateButton');
- function typeChanged(){ const exam=document.querySelector('input[name="assessment_type"]:checked').value==='exam'; quizOptions.style.display=exam?'none':'block'; questionSelection.style.display=exam?'none':'block'; examOptions.style.display=exam?'block':'none'; generate.textContent=exam?'Generate Exam':'Generate Quiz'; }
- document.querySelectorAll('input[name="assessment_type"]').forEach(x=>x.addEventListener('change',typeChanged)); typeChanged();
+ const quizOptions=document.getElementById('quizOptions'), questionSelection=document.getElementById('questionSelection'), examOptions=document.getElementById('examOptions'), generate=document.getElementById('generateButton'), existingQuizBox=document.getElementById('existingQuizBox'), targetQuiz=document.getElementById('targetQuizId');
+ function filterExistingQuizzes(){ if(!targetQuiz)return; const selectedCert=cert.value; [...targetQuiz.options].forEach((opt,index)=>{if(index===0)return; const show=!selectedCert||opt.dataset.certification===selectedCert; opt.hidden=!show; if(!show&&opt.selected)targetQuiz.value='';}); }
+ function typeChanged(){ const exam=document.querySelector('input[name="assessment_type"]:checked').value==='exam'; quizOptions.style.display=exam?'none':'block'; questionSelection.style.display=exam?'none':'block'; examOptions.style.display=exam?'block':'none'; if(existingQuizBox)existingQuizBox.style.display=exam?'none':'block'; generate.textContent=exam?'Generate Exam':'Generate Quiz'; filterExistingQuizzes(); }
+ document.querySelectorAll('input[name="assessment_type"]').forEach(x=>x.addEventListener('change',typeChanged)); if(cert)cert.addEventListener('change',filterExistingQuizzes); typeChanged();
  const selectAll=document.getElementById('selectAllQuizzes'), rows=[...document.querySelectorAll('.row-select')], deleteButton=document.getElementById('deleteSelectedButton'), deleteForm=document.getElementById('deleteQuizForm');
  function updateDeleteState(){ const selected=rows.filter(x=>x.checked).length; if(deleteButton) deleteButton.disabled=selected===0; if(selectAll){selectAll.checked=rows.length>0&&selected===rows.length;selectAll.indeterminate=selected>0&&selected<rows.length;} }
  if(selectAll) selectAll.addEventListener('change',()=>{rows.forEach(x=>x.checked=selectAll.checked);updateDeleteState();});
  rows.forEach(x=>x.addEventListener('change',updateDeleteState));
- if(deleteForm) deleteForm.addEventListener('submit',e=>{const selected=rows.filter(x=>x.checked).length;if(!selected||!confirm(`Delete ${selected} selected quiz${selected===1?'':'zes'}? Question Bank questions will not be deleted.`))e.preventDefault();});
+ if(deleteForm) deleteForm.addEventListener('submit',e=>{if(e.submitter===deleteButton){const selected=rows.filter(x=>x.checked).length;if(!selected||!confirm(`Delete ${selected} selected quiz${selected===1?'':'zes'}? Question Bank questions will not be deleted.`))e.preventDefault();}});
  updateDeleteState();
+ document.querySelectorAll('.publish-quiz-btn').forEach(button=>{button.addEventListener('click',e=>{
+   if(!confirm(`Publish all questions in "${button.dataset.title}"? All active questions linked to this quiz will be confirmed and made visible to Users.`)){e.preventDefault();return;}
+   let hidden=deleteForm.querySelector('input[name="publish_quiz_id"]');
+   if(!hidden){hidden=document.createElement('input');hidden.type='hidden';hidden.name='publish_quiz_id';deleteForm.appendChild(hidden);}
+   hidden.value=button.dataset.quizId;
+ });});
+ document.querySelectorAll('.question-toggle').forEach(button=>{button.addEventListener('click',()=>{const detail=document.getElementById(button.dataset.target);if(detail)detail.classList.toggle('open');});});
+ document.querySelectorAll('.edit-question-btn').forEach(button=>{button.addEventListener('click',()=>{const detail=document.getElementById(button.dataset.detail),editForm=document.getElementById(button.dataset.target);if(detail){detail.classList.add('open');const readOnly=detail.querySelector('.read-only-detail');if(readOnly)readOnly.style.display='none';}if(editForm){editForm.classList.add('open');editForm.scrollIntoView({behavior:'smooth',block:'nearest'});}});});
+ document.querySelectorAll('.cancel-edit-btn').forEach(button=>{button.addEventListener('click',()=>{const editForm=document.getElementById(button.dataset.target);if(editForm){editForm.classList.remove('open');const detail=editForm.closest('.question-detail-row');if(detail){const readOnly=detail.querySelector('.read-only-detail');if(readOnly)readOnly.style.display='grid';}}});});
 })();
 </script>
 </body>

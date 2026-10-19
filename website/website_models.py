@@ -171,6 +171,16 @@ class QuestionBank(models.Model):
         ("archived", "Archived"),
     ]
 
+    REVIEW_STATUS_CHOICES = [
+        ("pending", "Pending Review"),
+        ("confirmed", "Confirmed"),
+    ]
+
+    VISIBILITY_CHOICES = [
+        ("admin", "Administrator Only"),
+        ("users", "Users"),
+    ]
+
     # Classification metadata
     category = models.CharField(max_length=100, db_index=True)
     certification = models.CharField(max_length=80, blank=True, db_index=True)
@@ -181,6 +191,20 @@ class QuestionBank(models.Model):
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, default="not_set", db_index=True)
 
     # Question and choices
+    # Original wording exactly as captured from the source.
+    # Internal provenance/reference only; not for public display.
+    source_question_text = models.TextField(blank=True)
+    source_option_a = models.TextField(blank=True)
+    source_option_b = models.TextField(blank=True)
+    source_option_c = models.TextField(blank=True)
+    source_option_d = models.TextField(blank=True)
+    source_correct_answer = models.CharField(max_length=20, blank=True)
+
+    # Independently written TheStoreWare version for quizzes/exams.
+    thestoreware_question_text = models.TextField(blank=True)
+
+    # Current question text used by the existing quiz/exam engine.
+    # Retained for backward compatibility with existing content.
     question_text = models.TextField()
     option_a = models.TextField(blank=True)
     option_b = models.TextField(blank=True)
@@ -208,6 +232,24 @@ class QuestionBank(models.Model):
 
     # Publishing lifecycle
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft", db_index=True)
+
+    # Question-level administrator review and visibility.
+    # Normal users may see a question only when it is confirmed and visibility is Users.
+    review_status = models.CharField(
+        max_length=20,
+        choices=REVIEW_STATUS_CHOICES,
+        default="pending",
+        db_index=True,
+    )
+    visibility = models.CharField(
+        max_length=20,
+        choices=VISIBILITY_CHOICES,
+        default="admin",
+        db_index=True,
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    confirmed_by = models.CharField(max_length=150, blank=True)
+
     is_active = models.BooleanField(default=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -310,10 +352,26 @@ class QuizExam(models.Model):
 
 
 class QuizExamQuestion(models.Model):
+    REVIEW_STATUS_CHOICES = [
+        ("pending", "Pending Review"),
+        ("confirmed", "Confirmed"),
+    ]
+
     quiz_exam = models.ForeignKey(QuizExam, on_delete=models.CASCADE, related_name="question_links")
     question = models.ForeignKey(QuestionBank, on_delete=models.CASCADE, related_name="quiz_links")
     sort_order = models.PositiveIntegerField(default=0)
     points = models.DecimalField(max_digits=6, decimal_places=2, default=1)
+
+    # Administrator approval is specific to this question inside this quiz/exam.
+    # For flexible quizzes, only confirmed links are eligible for public display.
+    review_status = models.CharField(
+        max_length=20,
+        choices=REVIEW_STATUS_CHOICES,
+        default="pending",
+        db_index=True,
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    confirmed_by = models.CharField(max_length=150, blank=True)
 
     class Meta:
         ordering = ["quiz_exam", "sort_order", "id"]

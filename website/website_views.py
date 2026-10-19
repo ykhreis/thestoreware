@@ -314,15 +314,23 @@ def exam_area(request, area_slug):
             if not certification.get("active"):
                 continue
 
-            quiz = (
-                QuizExam.objects
-                .filter(
-                    certification__iexact=certification["code"],
-                    is_active=True,
-                )
-                .order_by("id")
-                .first()
+            quiz_qs = QuizExam.objects.filter(
+                certification__iexact=certification["code"],
+                is_active=True,
             )
+
+            # Normal users may only enter a published quiz that contains at
+            # least one centrally approved question visible to users.
+            # Administrators retain access to draft/private content for review.
+            if not (request.user.is_authenticated and request.user.is_superuser):
+                quiz_qs = quiz_qs.filter(
+                    status="published",
+                    question_links__question__is_active=True,
+                    question_links__question__review_status="confirmed",
+                    question_links__question__visibility="users",
+                ).distinct()
+
+            quiz = quiz_qs.order_by("id").first()
 
             if quiz is not None:
                 certification["quiz_id"] = quiz.id
@@ -385,22 +393,31 @@ def exam_quiz_management(request):
 
 
 
-@user_passes_test(_staff_only, login_url="/admin/login/")
 def exam_quiz_start(request, quiz_id):
-    """Run any active quiz/exam using the generic assessment player."""
-    quiz = get_object_or_404(
-        QuizExam,
-        pk=quiz_id,
-        is_active=True,
-    )
+    """Run an assessment, exposing only approved public content to normal users."""
+    is_admin = request.user.is_authenticated and request.user.is_superuser
 
-    links = list(
+    quiz_filters = {"pk": quiz_id, "is_active": True}
+    if not is_admin:
+        quiz_filters["status"] = "published"
+
+    quiz = get_object_or_404(QuizExam, **quiz_filters)
+
+    links_qs = (
         quiz.question_links
         .select_related("question")
         .filter(question__is_active=True)
-        .order_by("sort_order", "id")
     )
 
+    # Public users can only receive centrally reviewed questions explicitly
+    # approved for Users. Source/original fields remain outside the player.
+    if not is_admin:
+        links_qs = links_qs.filter(
+            question__review_status="confirmed",
+            question__visibility="users",
+        )
+
+    links = list(links_qs.order_by("sort_order", "id"))
     questions = [link.question for link in links]
     total_seconds = len(questions) * quiz.seconds_per_question
 
@@ -500,16 +517,52 @@ def quiz_question_import(request):
             parsed.append({
                 "excel_row": excel_row,
                 "question_no": question_no,
+
+                "source_question_text": cell("Source Question Text"),
+                "source_option_a": cell("Source Option A"),
+                "source_option_b": cell("Source Option B"),
+                "source_option_c": cell("Source Option C"),
+                "source_option_d": cell("Source Option D"),
+                "source_correct_answer": (
+                    cell("Source Correct Answer").upper() or correct
+                ),
+                "thestoreware_question_text": (
+                    cell("TheStoreWare Question Text") or question
+                ),
+
                 "question": question,
+
                 "option_a": options["A"],
                 "option_b": options["B"],
                 "option_c": options["C"],
                 "option_d": options["D"],
                 "correct_option": correct,
                 "correct_answer_text": correct_answer_text,
-                "explanation": cell("Explanation"),
-                "source_reference": cell("Source Video") or cell("Source Reference"),
+
+                "domain": cell("Domain"),
+                "topic": cell("Topic"),
+                "difficulty": cell("Difficulty"),
+
+                "option_a_explanation": cell("Option A Explanation"),
+                "option_b_explanation": cell("Option B Explanation"),
+                "option_c_explanation": cell("Option C Explanation"),
+                "option_d_explanation": cell("Option D Explanation"),
+
+                "source_explanation": (
+                    cell("Source Explanation") or cell("Explanation")
+                ),
+                "thestoreware_explanation": (
+                    cell("TheStoreWare Explanation") or cell("Explanation")
+                ),
+                "exam_tip": cell("Exam Tip"),
+
+                "source_reference": (
+                    cell("Source")
+                    or cell("Source Video")
+                    or cell("Source Reference")
+                ),
                 "source_question_id": cell("Source Question ID"),
+
                 "errors": errors,
             })
 
@@ -600,18 +653,48 @@ def quiz_question_import(request):
                             certification=certification,
                             question_type="practice",
                             question_format="single_choice",
+
+                            domain=row["domain"],
+                            topic=row["topic"],
+                            difficulty=(
+                                row["difficulty"].strip().lower()
+                                if row["difficulty"].strip().lower()
+                                in {"easy", "medium", "hard", "not_set"}
+                                else "not_set"
+                            ),
+
+                            source_question_text=row["source_question_text"],
+                            source_option_a=row["source_option_a"],
+                            source_option_b=row["source_option_b"],
+                            source_option_c=row["source_option_c"],
+                            source_option_d=row["source_option_d"],
+                            source_correct_answer=row["source_correct_answer"],
+                            thestoreware_question_text=row["thestoreware_question_text"],
                             question_text=row["question"],
+
                             option_a=row["option_a"],
                             option_b=row["option_b"],
                             option_c=row["option_c"],
                             option_d=row["option_d"],
                             correct_answer=row["correct_option"],
-                            source_explanation=row["explanation"],
-                            thestoreware_explanation=row["explanation"],
+
+                            option_a_explanation=row["option_a_explanation"],
+                            option_b_explanation=row["option_b_explanation"],
+                            option_c_explanation=row["option_c_explanation"],
+                            option_d_explanation=row["option_d_explanation"],
+
+                            source_explanation=row["source_explanation"],
+                            thestoreware_explanation=row["thestoreware_explanation"],
+                            exam_tip=row["exam_tip"],
+
                             source_type="other",
                             source_reference=source,
                             source_description=source_description,
-                            source_question_id=row["source_question_id"] or str(row["question_no"] or ""),
+                            source_question_id=(
+                                row["source_question_id"]
+                                or str(row["question_no"] or "")
+                            ),
+
                             status="draft",
                             is_active=True,
                         )
@@ -660,7 +743,9 @@ def question_bank_export(request):
         .order_by("certification")
     )
 
-    source_qs = QuestionBank.objects.exclude(source_reference="")
+    # Populate Source and Description / Group dropdowns from the selected
+    # certification, excluding NULL and blank values.
+    source_qs = QuestionBank.objects.exclude(source_reference__isnull=True).exclude(source_reference__exact="")
     if certification:
         source_qs = source_qs.filter(certification__iexact=certification)
     sources = list(
@@ -669,7 +754,7 @@ def question_bank_export(request):
         .order_by("source_reference")
     )
 
-    description_qs = QuestionBank.objects.exclude(source_description="")
+    description_qs = QuestionBank.objects.exclude(source_description__isnull=True).exclude(source_description__exact="")
     if certification:
         description_qs = description_qs.filter(certification__iexact=certification)
     if source:
@@ -726,15 +811,9 @@ def question_bank_export(request):
     sheet = workbook.active
     sheet.title = "Question Bank"
 
-    headers = [
-        "Question ID", "Category", "Certification", "Source", "Description / Group",
-        "Source Question ID", "Domain", "Topic", "Difficulty", "Question",
-        "Option A", "Option B", "Option C", "Option D", "Correct Option",
-        "Option A Explanation", "Option B Explanation", "Option C Explanation",
-        "Option D Explanation", "Source Explanation", "TheStoreWare Explanation",
-        "Exam Tip", "Question Type", "Question Format", "Source Type", "Status",
-        "Active", "Created At", "Updated At",
-    ]
+    # Export every concrete QuestionBank database field.
+    model_fields = list(QuestionBank._meta.concrete_fields)
+    headers = [field.name for field in model_fields]
     sheet.append(headers)
 
     header_fill = PatternFill("solid", fgColor="1F4E78")
@@ -745,54 +824,31 @@ def question_bank_export(request):
         cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
 
     for question in questions:
-        created_at = question.created_at
-        updated_at = question.updated_at
-        if created_at and getattr(created_at, "tzinfo", None):
-            created_at = created_at.replace(tzinfo=None)
-        if updated_at and getattr(updated_at, "tzinfo", None):
-            updated_at = updated_at.replace(tzinfo=None)
-
-        sheet.append([
-            question.id,
-            question.category,
-            question.certification,
-            question.source_reference,
-            question.source_description,
-            question.source_question_id,
-            question.domain,
-            question.topic,
-            question.difficulty,
-            question.question_text,
-            question.option_a,
-            question.option_b,
-            question.option_c,
-            question.option_d,
-            question.correct_answer,
-            question.option_a_explanation,
-            question.option_b_explanation,
-            question.option_c_explanation,
-            question.option_d_explanation,
-            question.source_explanation,
-            question.thestoreware_explanation,
-            question.exam_tip,
-            question.question_type,
-            question.question_format,
-            question.source_type,
-            question.status,
-            question.is_active,
-            created_at,
-            updated_at,
-        ])
+        row = []
+        for field in model_fields:
+            value = field.value_from_object(question)
+            if value is not None and hasattr(value, "tzinfo") and value.tzinfo is not None:
+                value = value.replace(tzinfo=None)
+            row.append(value)
+        sheet.append(row)
 
     sheet.freeze_panes = "A2"
     sheet.auto_filter.ref = sheet.dimensions
-    widths = {
-        1: 12, 2: 22, 3: 18, 4: 22, 5: 25, 6: 20, 7: 22, 8: 22, 9: 14,
-        10: 60, 11: 38, 12: 38, 13: 38, 14: 38, 15: 16,
-        16: 45, 17: 45, 18: 45, 19: 45, 20: 55, 21: 55, 22: 40,
-        23: 18, 24: 18, 25: 16, 26: 14, 27: 12, 28: 22, 29: 22,
+    long_text_fields = {
+        "source_question_text", "thestoreware_question_text", "question_text",
+        "option_a", "option_b", "option_c", "option_d",
+        "source_option_a", "source_option_b", "source_option_c", "source_option_d",
+        "option_a_explanation", "option_b_explanation", "option_c_explanation",
+        "option_d_explanation", "source_explanation", "thestoreware_explanation",
+        "exam_tip", "source_description", "source_reference",
     }
-    for index, width in widths.items():
+    for index, field in enumerate(model_fields, start=1):
+        if field.name in long_text_fields:
+            width = 55
+        elif field.name in {"created_at", "updated_at", "confirmed_at"}:
+            width = 22
+        else:
+            width = max(14, min(28, len(field.name) + 4))
         sheet.column_dimensions[get_column_letter(index)].width = width
     for row in sheet.iter_rows(min_row=2):
         for cell in row:
@@ -912,10 +968,276 @@ def quiz_exam_generator(request):
                 "Question Bank questions were not deleted."
             )
 
+
+    # Administrator editing of a central QuestionBank record from quiz review.
+    # Editing a shared central question invalidates previous confirmations
+    # wherever that QuestionBank record is used.
+    if request.method == "POST" and request.POST.get("action") == "save_question":
+        link_id = request.POST.get("question_link_id", "").strip()
+        edit_quiz_id = request.POST.get("view_quiz_id", "").strip()
+
+        if link_id.isdigit():
+            question_link = (
+                QuizExamQuestion.objects
+                .select_related("quiz_exam", "question")
+                .filter(
+                    id=int(link_id),
+                    quiz_exam__quiz_type="quiz",
+                    quiz_exam__is_active=True,
+                    question__is_active=True,
+                )
+                .first()
+            )
+
+            if question_link is None:
+                context_edit_error = "The selected quiz question could not be found."
+            else:
+                question = question_link.question
+
+                values = {
+                    "question_text": request.POST.get(
+                        "question_text", ""
+                    ).strip(),
+
+                    "option_a": request.POST.get(
+                        "option_a", ""
+                    ).strip(),
+
+                    "option_b": request.POST.get(
+                        "option_b", ""
+                    ).strip(),
+
+                    "option_c": request.POST.get(
+                        "option_c", ""
+                    ).strip(),
+
+                    "option_d": request.POST.get(
+                        "option_d", ""
+                    ).strip(),
+
+                    "correct_answer": request.POST.get(
+                        "correct_answer", ""
+                    ).strip().upper(),
+
+                    "option_a_explanation": request.POST.get(
+                        "option_a_explanation", ""
+                    ).strip(),
+
+                    "option_b_explanation": request.POST.get(
+                        "option_b_explanation", ""
+                    ).strip(),
+
+                    "option_c_explanation": request.POST.get(
+                        "option_c_explanation", ""
+                    ).strip(),
+
+                    "option_d_explanation": request.POST.get(
+                        "option_d_explanation", ""
+                    ).strip(),
+
+                    "source_explanation": request.POST.get(
+                        "source_explanation", ""
+                    ).strip(),
+
+                    "thestoreware_explanation": request.POST.get(
+                        "thestoreware_explanation", ""
+                    ).strip(),
+
+                    "exam_tip": request.POST.get(
+                        "exam_tip", ""
+                    ).strip(),
+
+                    "source_reference": request.POST.get(
+                        "source_reference", ""
+                    ).strip(),
+
+                    "source_description": request.POST.get(
+                        "source_description", ""
+                    ).strip(),
+                }
+
+                if not values["question_text"]:
+                    context_edit_error = "Question text cannot be empty."
+
+                elif not all(
+                    values[field]
+                    for field in (
+                        "option_a",
+                        "option_b",
+                        "option_c",
+                        "option_d",
+                    )
+                ):
+                    context_edit_error = (
+                        "Options A, B, C and D are required."
+                    )
+
+                elif values["correct_answer"] not in {
+                    "A",
+                    "B",
+                    "C",
+                    "D",
+                }:
+                    context_edit_error = (
+                        "Correct Answer must be A, B, C or D."
+                    )
+
+                else:
+                    with transaction.atomic():
+                        for field, value in values.items():
+                            setattr(question, field, value)
+
+                        # Any change to public question content requires a fresh
+                        # administrator review before it can be shown to users again.
+                        question.review_status = "pending"
+                        question.visibility = "admin"
+                        question.confirmed_at = None
+                        question.confirmed_by = ""
+
+                        question.save(
+                            update_fields=list(values.keys()) + [
+                                "review_status",
+                                "visibility",
+                                "confirmed_at",
+                                "confirmed_by",
+                                "updated_at",
+                            ]
+                        )
+
+                        # The central QuestionBank record may be reused
+                        # in several quizzes. Once edited, every previous
+                        # confirmation for this question becomes stale.
+                        QuizExamQuestion.objects.filter(
+                            question=question
+                        ).update(
+                            review_status="pending",
+                            confirmed_at=None,
+                            confirmed_by="",
+                        )
+
+                    context_edit_success = (
+                        "Question updated successfully. "
+                        "Confirmation was reset to Pending Review."
+                    )
+
+                    edit_quiz_id = str(
+                        question_link.quiz_exam_id
+                    )
+
+        else:
+            context_edit_error = (
+                "Please select a valid quiz question."
+            )
+
+        # Keep the current quiz open after saving the question.
+        view_quiz_id = edit_quiz_id
+
+    else:
+        view_quiz_id = request.POST.get(
+            "view_quiz_id", ""
+        ).strip()
+
+    # Administrator confirmation of an individual question inside a generated quiz.
+    # Confirmation belongs to the QuizExamQuestion link, not to the central QuestionBank record.
+    if request.method == "POST" and request.POST.get("action") == "confirm_question":
+        link_id = request.POST.get("question_link_id", "").strip()
+        confirm_quiz_id = request.POST.get("view_quiz_id", "").strip()
+
+        if link_id.isdigit():
+            question_link = (
+                QuizExamQuestion.objects
+                .select_related("quiz_exam", "question")
+                .filter(
+                    id=int(link_id),
+                    quiz_exam__quiz_type="quiz",
+                    quiz_exam__is_active=True,
+                    question__is_active=True,
+                )
+                .first()
+            )
+
+            if question_link is None:
+                context_confirm_error = "The selected quiz question could not be found."
+            else:
+                question_link.review_status = "confirmed"
+                question_link.confirmed_at = timezone.now()
+                question_link.confirmed_by = (
+                    request.user.get_full_name().strip()
+                    or request.user.get_username()
+                )
+                question_link.save(
+                    update_fields=[
+                        "review_status",
+                        "confirmed_at",
+                        "confirmed_by",
+                    ]
+                )
+                context_confirm_success = (
+                    f"Question {question_link.sort_order or question_link.question_id} "
+                    f'confirmed for quiz "{question_link.quiz_exam.title}".'
+                )
+                confirm_quiz_id = str(question_link.quiz_exam_id)
+        else:
+            context_confirm_error = "Please select a valid quiz question."
+
+        # Keep the same quiz open after confirmation.
+        view_quiz_id = confirm_quiz_id
+    else:
+        view_quiz_id = request.POST.get("view_quiz_id", "").strip()
+
+    # Bulk publish a generated quiz and all of its active linked questions.
+    # This updates only questions linked to the selected quiz.
+    if request.method == "POST" and request.POST.get("action") == "publish_quiz":
+        publish_quiz_id = request.POST.get("publish_quiz_id", "").strip()
+        if not publish_quiz_id.isdigit():
+            context_publish_error = "Please select a valid quiz to publish."
+        else:
+            publish_quiz = (
+                QuizExam.objects
+                .filter(id=int(publish_quiz_id), quiz_type="quiz", is_active=True)
+                .first()
+            )
+            if publish_quiz is None:
+                context_publish_error = "The selected quiz could not be found."
+            else:
+                publish_links = publish_quiz.question_links.filter(question__is_active=True)
+                publish_question_ids = list(publish_links.values_list("question_id", flat=True))
+                if not publish_question_ids:
+                    context_publish_error = "The selected quiz has no active questions to publish."
+                else:
+                    confirmed_by = (
+                        request.user.get_full_name().strip()
+                        or request.user.get_username()
+                    )
+                    confirmed_at = timezone.now()
+                    with transaction.atomic():
+                        QuestionBank.objects.filter(
+                            id__in=publish_question_ids,
+                            is_active=True,
+                        ).update(
+                            review_status="confirmed",
+                            visibility="users",
+                            confirmed_at=confirmed_at,
+                            confirmed_by=confirmed_by,
+                            updated_at=confirmed_at,
+                        )
+                        publish_links.update(
+                            review_status="confirmed",
+                            confirmed_at=confirmed_at,
+                            confirmed_by=confirmed_by,
+                        )
+                        publish_quiz.status = "published"
+                        publish_quiz.save(update_fields=["status", "updated_at"])
+
+                    context_publish_success = (
+                        f'Quiz "{publish_quiz.title}" published successfully with '
+                        f'{len(publish_question_ids)} question(s) confirmed and visible to Users.'
+                    )
+                    view_quiz_id = str(publish_quiz.id)
+
     # Administrator inspection of the exact questions selected for a quiz.
     view_quiz = None
     view_question_links = []
-    view_quiz_id = request.POST.get("view_quiz_id", "").strip()
     if request.method == "POST" and view_quiz_id:
         if view_quiz_id.isdigit():
             view_quiz = (
@@ -930,6 +1252,72 @@ def quiz_exam_generator(request):
                     .filter(question__is_active=True)
                     .order_by("sort_order", "id")
                 )
+
+    # Administrator confirmation of a central QuestionBank record before quiz generation.
+    # Visibility is explicit: Administrator Only or Users.
+    context_bank_confirm_error = ""
+    context_bank_confirm_success = ""
+    if request.method == "POST" and request.POST.get("action") == "confirm_bank_question":
+        bank_question_id = request.POST.get("question_id", "").strip()
+        bank_visibility = request.POST.get("visibility", "admin").strip().lower()
+
+        if bank_visibility not in {"admin", "users"}:
+            bank_visibility = "admin"
+
+        if not bank_question_id.isdigit():
+            context_bank_confirm_error = "Please select a valid Question Bank question."
+        else:
+            bank_question = (
+                QuestionBank.objects
+                .filter(id=int(bank_question_id), is_active=True)
+                .first()
+            )
+
+            if bank_question is None:
+                context_bank_confirm_error = "The selected Question Bank question could not be found."
+            else:
+                bank_question.review_status = "confirmed"
+                bank_question.visibility = bank_visibility
+                bank_question.confirmed_at = timezone.now()
+                bank_question.confirmed_by = (
+                    request.user.get_full_name().strip()
+                    or request.user.get_username()
+                )
+                bank_question.save(
+                    update_fields=[
+                        "review_status",
+                        "visibility",
+                        "confirmed_at",
+                        "confirmed_by",
+                        "updated_at",
+                    ]
+                )
+
+                visibility_label = (
+                    "Users" if bank_visibility == "users"
+                    else "Administrator Only"
+                )
+                context_bank_confirm_success = (
+                    f"Question {bank_question.source_question_id or bank_question.id} "
+                    f"confirmed successfully — Visibility: {visibility_label}."
+                )
+
+    # Preview matching QuestionBank records before generating any quiz.
+    # This is an administrator-only inspection step and does not create or modify a quiz.
+    preview_questions = []
+    context_preview_error = ""
+    preview_actions = {"preview", "confirm_bank_question"}
+    if request.method == "POST" and request.POST.get("action") in preview_actions:
+        if not certification:
+            context_preview_error = "Please select a certification."
+        elif not selected_sources:
+            context_preview_error = "Please select at least one Source."
+        elif not selected_descriptions:
+            context_preview_error = "Please select at least one Description / Group."
+        else:
+            preview_questions = list(
+                eligible.order_by("source_question_id", "id")
+            )
 
     # Show generated quizzes in the same workspace so the administrator can
     # select/open an existing generated quiz instead of falling back to an old ID.
@@ -959,11 +1347,71 @@ def quiz_exam_generator(request):
         "question_count_value": request.POST.get("question_count", "").strip(),
         "publication_status": request.POST.get("publication_status", "draft").strip().lower(),
         "generated_quizzes": generated_quizzes,
+        "target_quiz_id": request.POST.get("target_quiz_id", "").strip(),
         "view_quiz": view_quiz,
         "view_question_links": view_question_links,
+        "preview_questions": preview_questions,
+        "preview_requested": (
+            request.method == "POST"
+            and request.POST.get("action") in {"preview", "confirm_bank_question"}
+        ),
+        "preview_error": context_preview_error,
+        "bank_confirm_error": context_bank_confirm_error,
+        "bank_confirm_success": context_bank_confirm_success,
         "delete_error": locals().get("context_delete_error", ""),
         "delete_success": locals().get("context_delete_success", ""),
+        "confirm_error": locals().get("context_confirm_error", ""),
+        "confirm_success": locals().get("context_confirm_success", ""),
+        "publish_error": locals().get("context_publish_error", ""),
+        "publish_success": locals().get("context_publish_success", ""),
     }
+
+    # Add new QuestionBank questions to an existing quiz without recreating it.
+    if request.method == "POST" and request.POST.get("action") == "add_to_existing":
+        target_quiz_id = request.POST.get("target_quiz_id", "").strip()
+
+        if not certification:
+            context["generator_error"] = "Please select a certification."
+        elif not selected_sources:
+            context["generator_error"] = "Please select at least one Source."
+        elif not selected_descriptions:
+            context["generator_error"] = "Please select at least one Description / Group."
+        elif not target_quiz_id.isdigit():
+            context["generator_error"] = "Please select an existing quiz."
+        else:
+            target_quiz = QuizExam.objects.filter(id=int(target_quiz_id), quiz_type="quiz", certification__iexact=certification, is_active=True).first()
+            if target_quiz is None:
+                context["generator_error"] = "The selected existing quiz could not be found for this certification."
+            else:
+                try:
+                    requested_count = int(request.POST.get("question_count", "0"))
+                except (TypeError, ValueError):
+                    requested_count = 0
+
+                existing_question_ids = set(target_quiz.question_links.values_list("question_id", flat=True))
+                add_qs = selection_qs.exclude(id__in=existing_question_ids)
+                add_available_count = add_qs.count()
+
+                if requested_count <= 0:
+                    context["generator_error"] = "Number of Questions must be greater than zero."
+                elif requested_count > add_available_count:
+                    context["generator_error"] = (
+                        f"Only {add_available_count} eligible question(s) are available "
+                        f'to add to "{target_quiz.title}" for the current filters and Question Selection option.'
+                    )
+                else:
+                    question_ids = list(add_qs.values_list("id", flat=True))
+                    chosen_ids = random.sample(question_ids, requested_count)
+                    last_sort_order = (target_quiz.question_links.order_by("-sort_order", "-id").values_list("sort_order", flat=True).first() or 0)
+                    with transaction.atomic():
+                        QuizExamQuestion.objects.bulk_create([
+                            QuizExamQuestion(quiz_exam=target_quiz, question_id=question_id, sort_order=last_sort_order + index, points=1)
+                            for index, question_id in enumerate(chosen_ids, start=1)
+                        ])
+                    context["generator_success"] = f'{requested_count} question(s) added successfully to "{target_quiz.title}".'
+                    context["generated_quiz"] = target_quiz
+                    context["view_quiz"] = target_quiz
+                    context["view_question_links"] = list(target_quiz.question_links.select_related("question").filter(question__is_active=True).order_by("sort_order", "id"))
 
     if request.method == "POST" and request.POST.get("action") == "generate":
         title = request.POST.get("title", "").strip()
