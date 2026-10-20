@@ -262,7 +262,7 @@ AREAS = [
 
 PROJECT_MANAGEMENT_EXAMS = [
     {"code": "PMP", "name": "Project Management Professional", "status": "UNDER DEVELOPMENT", "badge": "PMP", "active": True},
-    {"code": "PMI-ACP", "name": "Agile Certified Practitioner", "status": "COMING SOON", "badge": "ACP"},
+    {"code": "PMI-ACP", "name": "Agile Certified Practitioner", "status": "UNDER DEVELOPMENT", "badge": "ACP", "active": True},
     {"code": "PMI-RMP", "name": "Risk Management Professional", "status": "COMING SOON", "badge": "RMP"},
     {"code": "PMI-SP", "name": "Scheduling Professional", "status": "COMING SOON", "badge": "SP"},
     {"code": "PMI-PBA", "name": "Professional in Business Analysis", "status": "UNDER DEVELOPMENT", "badge": "PBA", "active": True},
