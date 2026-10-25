@@ -2032,7 +2032,7 @@ For DIRECT questions, it may be empty when separate guidance would be redundant.
 
 def sitemap_xml(request):
     """Public XML sitemap for Google and other search engines."""
-    base_url = "https://thestoreware.com"
+    base_url = "https://www.thestoreware.com"
 
     public_urls = [
         f"{base_url}/",
@@ -2084,7 +2084,7 @@ def sitemap_xml(request):
 
 def robots_txt(request):
     """Public robots.txt allowing indexing and advertising the sitemap."""
-    sitemap_url = "https://thestoreware.com/sitemap.xml"
+    sitemap_url = "https://www.thestoreware.com/sitemap.xml"
     content = (
         "User-agent: *\n"
         "Allow: /\n"
