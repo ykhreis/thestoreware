@@ -433,10 +433,13 @@ def seo_monitoring(request):
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
 
-        credential_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON", "").strip()
-        if not credential_json:
+        import base64
+
+        credential_b64 = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_B64", "").strip()
+        if not credential_b64:
             raise RuntimeError("Google Search Console credential is not configured.")
 
+        credential_json = base64.b64decode(credential_b64).decode("utf-8")
         credential_info = json.loads(credential_json)
         credentials = service_account.Credentials.from_service_account_info(
             credential_info,
