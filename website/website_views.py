@@ -427,12 +427,55 @@ def seo_monitoring(request):
     monitoring_error = ""
     last_checked = timezone.localtime().strftime("%d %b %Y %H:%M")
     date_range_label = ""
+    date_warning = ""
+
+    from datetime import datetime, timedelta
+
+    today = timezone.localdate()
+    selected_range = request.GET.get("range", "28d").strip().lower()
+    allowed_ranges = {"today", "yesterday", "7d", "28d", "custom"}
+    if selected_range not in allowed_ranges:
+        selected_range = "28d"
+
+    custom_start = request.GET.get("start_date", "").strip()
+    custom_end = request.GET.get("end_date", "").strip()
+
+    if selected_range == "today":
+        start_date = today
+        end_date = today
+        date_warning = "Today's Search Console data may be incomplete because Google reporting is delayed."
+    elif selected_range == "yesterday":
+        start_date = today - timedelta(days=1)
+        end_date = start_date
+        date_warning = "Yesterday's Search Console data may still be incomplete because Google reporting is delayed."
+    elif selected_range == "7d":
+        end_date = today - timedelta(days=3)
+        start_date = end_date - timedelta(days=6)
+    elif selected_range == "custom":
+        try:
+            start_date = datetime.strptime(custom_start, "%Y-%m-%d").date()
+            end_date = datetime.strptime(custom_end, "%Y-%m-%d").date()
+            if start_date > end_date:
+                raise ValueError("Start date must not be after end date.")
+            if end_date > today:
+                raise ValueError("End date cannot be in the future.")
+            if end_date >= today - timedelta(days=2):
+                date_warning = "Recent Search Console dates may be incomplete because Google reporting is delayed."
+        except ValueError as exc:
+            selected_range = "28d"
+            end_date = today - timedelta(days=3)
+            start_date = end_date - timedelta(days=27)
+            monitoring_error = f"Invalid custom date range ({exc}). Showing Last 28 Days instead."
+    else:
+        selected_range = "28d"
+        end_date = today - timedelta(days=3)
+        start_date = end_date - timedelta(days=27)
+
+    date_range_label = f"{start_date:%d %b %Y} - {end_date:%d %b %Y}"
 
     try:
-        from datetime import timedelta
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
-
         import base64
 
         credential_b64 = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_B64", "").strip()
@@ -446,12 +489,6 @@ def seo_monitoring(request):
             scopes=["https://www.googleapis.com/auth/webmasters.readonly"],
         )
         service = build("searchconsole", "v1", credentials=credentials, cache_discovery=False)
-
-        # Search Console performance data is delayed, so use a stable 28-day
-        # reporting window ending three days before today.
-        end_date = timezone.localdate() - timedelta(days=3)
-        start_date = end_date - timedelta(days=27)
-        date_range_label = f"{start_date:%d %b %Y} - {end_date:%d %b %Y}"
 
         response = service.searchanalytics().query(
             siteUrl="sc-domain:thestoreware.com",
@@ -516,7 +553,8 @@ def seo_monitoring(request):
 
     except Exception as exc:
         monitoring_status = "API Error"
-        monitoring_error = str(exc)[:300]
+        if not monitoring_error:
+            monitoring_error = str(exc)[:300]
 
     context = {
         "keywords": keywords,
@@ -527,6 +565,10 @@ def seo_monitoring(request):
         "monitoring_status": monitoring_status,
         "monitoring_error": monitoring_error,
         "date_range_label": date_range_label,
+        "date_warning": date_warning,
+        "selected_range": selected_range,
+        "custom_start": custom_start,
+        "custom_end": custom_end,
         "total_clicks": total_clicks,
         "total_impressions": total_impressions,
         "actual_queries": actual_queries,
@@ -536,6 +578,7 @@ def seo_monitoring(request):
         "website/content_management/seo_monitoring/website_seo_monitoring.html",
         context,
     )
+
 
 @user_passes_test(_admin_only, login_url="/admin/login/")
 def exam_quiz_management(request):
