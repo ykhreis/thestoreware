@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>{{ certification.code }} Mock Exams &amp; Practice Questions | TheStoreWare</title>
+<meta name="description" content="Practice {{ certification.code }} with mock exams, practice questions, answers and explanations on TheStoreWare.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="googlebot" content="index, follow">
+<link rel="canonical" href="https://thestoreware.com/exams-quizzes/{{ area_slug }}/{{ certification.slug }}/">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="TheStoreWare">
+<meta property="og:title" content="{{ certification.code }} Mock Exams &amp; Practice Questions | TheStoreWare">
+<meta property="og:description" content="Practice {{ certification.code }} with mock exams, practice questions, answers and explanations on TheStoreWare.">
+<meta property="og:url" content="https://thestoreware.com/exams-quizzes/{{ area_slug }}/{{ certification.slug }}/">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "{{ certification.code|escapejs }} Mock Exams & Practice Questions",
+  "description": "Practice {{ certification.code|escapejs }} with mock exams, practice questions, answers and explanations on TheStoreWare.",
+  "url": "https://thestoreware.com/exams-quizzes/{{ area_slug }}/{{ certification.slug }}/",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "TheStoreWare",
+    "url": "https://thestoreware.com/"
+  }
+}
+</script>
+
+<link rel="stylesheet" href="{% static 'website/css/website_style.css' %}">
+</head>
+
+<body>
+
+<section class="exam-area-hero">
+    <div class="exam-area-eyebrow">EXAMS &amp; QUIZZES</div>
+    <h1>{{ certification.code }} Mock Exams &amp; Practice Questions</h1>
+    <p>{{ certification.name }} — practice with available mock exams, questions, answers and explanations.</p>
+</section>
+
+<main class="exam-area-wrap">
+
+<p class="exam-area-back">
+    <a href="{% url 'exam_area' area_slug %}">← Back to {{ area.name }}</a>
+</p>
+
+<div class="exam-area-section-head">
+    <span class="exam-area-kicker">{{ certification.code }}</span>
+    <h2>Available mock exams &amp; practice quizzes</h2>
+    <p>Select an available assessment to start practicing.</p>
+</div>
+
+<div class="exam-area-grid">
+{% for quiz in quizzes %}
+    <a class="exam-area-card active" href="{% url 'exam_quiz_start' quiz.id %}">
+        <div class="exam-area-badge">{{ certification.badge }}</div>
+        <h2>{{ quiz.title }}</h2>
+        <p>{{ certification.code }} practice assessment</p>
+        <div class="exam-area-card-footer">
+            <span class="exam-area-status">AVAILABLE</span>
+            <span class="exam-area-open" aria-hidden="true">→</span>
+        </div>
+    </a>
+{% empty %}
+    <div class="exam-area-card">
+        <div class="exam-area-badge">{{ certification.badge }}</div>
+        <h2>Exams &amp; Quizzes Coming Soon</h2>
+        <p>New {{ certification.code }} mock exams, quizzes and practice questions are being prepared and will be available soon.</p>
+        <div class="exam-area-card-footer">
+            <span class="exam-area-status">COMING SOON</span>
+        </div>
+    </div>
+{% endfor %}
+</div>
+
+</main>
+</body>
+</html>

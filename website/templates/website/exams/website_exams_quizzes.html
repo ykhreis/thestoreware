@@ -15,15 +15,15 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TheStoreWare">
 <meta property="og:title" content="TheStoreWare Exams & Quizzes | Practice, Test & Learn">
-<meta property="og:description" content="Practice, test your knowledge, review results and explore professional certification assessment areas with TheStoreWare.">
+<meta property="og:description" content="Practice with mock exams, quizzes and practice questions for professional certifications with TheStoreWare.">
 <meta property="og:url" content="https://thestoreware.com/exams-quizzes/">
 
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  "name": "TheStoreWare Exams & Quizzes",
-  "description": "Practice, test your knowledge, review results and explore professional certification assessment areas with TheStoreWare.",
+  "name": "Mock Exams & Practice Questions | TheStoreWare",
+  "description": "Practice with mock exams, quizzes and practice questions for professional certifications with TheStoreWare.",
   "url": "https://thestoreware.com/exams-quizzes/",
   "isPartOf": {
     "@type": "WebSite",
@@ -41,17 +41,17 @@
 <nav><a href="{% url 'home' %}">Home</a></nav>
 </div></header>
 <main>
-<section class="exams-landing-hero"><span class="exams-landing-eyebrow">THESTOREWARE ASSESSMENT</span><h1>Exams &amp; Quizzes</h1>
-<p>Choose an area to practice, test your knowledge and review your results.</p></section>
+<section class="exams-landing-hero"><span class="exams-landing-eyebrow">THESTOREWARE ASSESSMENT</span><h1>Mock Exams &amp; Practice Questions</h1>
+<p>Choose an area to access mock exams, quizzes and practice questions, test your knowledge and review your results.</p></section>
 <div class="exams-landing-back"><a href="{% url 'home' %}">← Back to TheStoreWare</a></div>
 <section class="exams-landing-wrap">
 <div class="exams-landing-head"><span class="kicker">EXAM AREAS</span><h2>Choose your assessment area</h2>
 <p>Select an area to continue to its certifications and quizzes.</p></div>
 <div class="exams-landing-grid">
 {% for category in categories %}
-{% if category.active %}<a class="exams-landing-card active" href="{% url 'exam_area' category.slug %}">{% else %}<div class="exams-landing-card">{% endif %}
+<a class="exams-landing-card active" href="{% url 'exam_area' category.slug %}">
 <div class="exams-landing-icon">{{ category.short }}</div><h3>{{ category.name }}</h3><p>{{ category.description }}</p><span class="exams-landing-status">{{ category.status }}</span>
-{% if category.active %}</a>{% else %}</div>{% endif %}
+</a>
 {% endfor %}
 </div>
 </section></main>

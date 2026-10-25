@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <!-- TheStoreWare generic assessment-area SEO -->
-<title>{{ area.name }} Exams & Practice Quizzes | TheStoreWare</title>
 
-<meta name="description" content="Explore {{ area.name }} exams, practice quizzes and assessment resources on TheStoreWare.">
+<title>{{ area.name }} Mock Exams &amp; Practice Questions | TheStoreWare</title>
+<meta name="description" content="Practice {{ area.name }} mock exams, quizzes and practice questions. Test your knowledge and prepare for professional assessments with TheStoreWare.">
 
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="googlebot" content="index, follow">
@@ -18,8 +18,8 @@
 <!-- Social / Open Graph SEO -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="TheStoreWare">
-<meta property="og:title" content="{{ area.name }} Exams & Practice Quizzes | TheStoreWare">
-<meta property="og:description" content="Explore {{ area.name }} exams, practice quizzes and assessment resources with TheStoreWare.">
+<meta property="og:title" content="{{ area.name }} Mock Exams &amp; Practice Questions | TheStoreWare">
+<meta property="og:description" content="Practice {{ area.name }} mock exams, quizzes and practice questions with TheStoreWare.">
 <meta property="og:url" content="https://thestoreware.com/exams-quizzes/{{ area.slug }}/">
 
 <!-- Structured Data -->
@@ -27,8 +27,8 @@
 {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  "name": "{{ area.name|escapejs }} Exams & Practice Quizzes",
-  "description": "Explore {{ area.name|escapejs }} exams and practice quizzes with TheStoreWare.",
+  "name": "{{ area.name|escapejs }} Mock Exams & Practice Questions",
+  "description": "Practice {{ area.name|escapejs }} mock exams, quizzes and practice questions with TheStoreWare.",
   "url": "https://thestoreware.com/exams-quizzes/{{ area.slug }}/",
   "isPartOf": {
     "@type": "WebSite",
@@ -48,7 +48,7 @@
 
 <section class="exam-area-hero">
     <div class="exam-area-eyebrow">EXAMS &amp; QUIZZES</div>
-    <h1>{{ area.name }}</h1>
+    <h1>{{ area.name }} Mock Exams &amp; Practice Questions</h1>
     <p>{{ area.description|default:'Choose a certification to access its quizzes and exam practice.' }}</p>
 </section>
 
@@ -65,35 +65,26 @@
 </div>
 
 <div class="exam-area-grid">
-
 {% for certification in certifications %}
-
-    {% if certification.active %}
-        {% if certification.quiz_id %}
-        <a class="exam-area-card active" href="{% url 'exam_quiz_start' certification.quiz_id %}">
-        {% else %}
-        <div class="exam-area-card active">
-        {% endif %}
-    {% else %}
-        <div class="exam-area-card">
-    {% endif %}
-
+    <a class="exam-area-card active" href="{% url 'exam_certification' area.slug certification.slug %}">
         <div class="exam-area-badge">{{ certification.badge }}</div>
-        <h2>{{ certification.code }}</h2>
+        <h3>{{ certification.code }}</h3>
         <p>{{ certification.name }}</p>
         <div class="exam-area-card-footer">
             <span class="exam-area-status">{{ certification.status }}</span>
-            {% if certification.active and certification.quiz_id %}<span class="exam-area-open" aria-hidden="true">→</span>{% endif %}
+            <span class="exam-area-open" aria-hidden="true">→</span>
         </div>
-
-    {% if certification.active and certification.quiz_id %}
-        </a>
-    {% else %}
+    </a>
+{% empty %}
+    <div class="exam-area-card">
+        <div class="exam-area-badge">{{ area.short }}</div>
+        <h3>Exams &amp; Quizzes Coming Soon</h3>
+        <p>New {{ area.name }} mock exams, quizzes and practice questions are being prepared and will be available soon.</p>
+        <div class="exam-area-card-footer">
+            <span class="exam-area-status">COMING SOON</span>
         </div>
-    {% endif %}
-
+    </div>
 {% endfor %}
-
 </div>
 
 </main>

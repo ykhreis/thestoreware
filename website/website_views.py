@@ -260,29 +260,35 @@ AREAS = [
 
 
 
-PROJECT_MANAGEMENT_EXAMS = [
-    {"code": "PMP", "name": "Project Management Professional", "status": "UNDER DEVELOPMENT", "badge": "PMP", "active": True},
-    {"code": "PMI-ACP", "name": "Agile Certified Practitioner", "status": "UNDER DEVELOPMENT", "badge": "ACP", "active": True},
-    {"code": "PMI-RMP", "name": "Risk Management Professional", "status": "COMING SOON", "badge": "RMP"},
-    {"code": "PMI-SP", "name": "Scheduling Professional", "status": "COMING SOON", "badge": "SP"},
-    {"code": "PMI-PBA", "name": "Professional in Business Analysis", "status": "UNDER DEVELOPMENT", "badge": "PBA", "active": True},
-    {"code": "PMI-PMOCP", "name": "PMO Certified Professional", "status": "COMING SOON", "badge": "PMO"},
-    {"code": "PgMP", "name": "Program Management Professional", "status": "COMING SOON", "badge": "PgMP"},
-    {"code": "PfMP", "name": "Portfolio Management Professional", "status": "COMING SOON", "badge": "PfMP"},
-]
+EXAM_MODULES = {
+    "project-management": [
+        {"code": "PMP", "slug": "pmp", "name": "Project Management Professional", "status": "UNDER DEVELOPMENT", "badge": "PMP"},
+        {"code": "PMI-ACP", "slug": "pmi-acp", "name": "Agile Certified Practitioner", "status": "UNDER DEVELOPMENT", "badge": "ACP"},
+        {"code": "PMI-RMP", "slug": "pmi-rmp", "name": "Risk Management Professional", "status": "COMING SOON", "badge": "RMP"},
+        {"code": "PMI-SP", "slug": "pmi-sp", "name": "Scheduling Professional", "status": "COMING SOON", "badge": "SP"},
+        {"code": "PMI-PBA", "slug": "pmi-pba", "name": "Professional in Business Analysis", "status": "UNDER DEVELOPMENT", "badge": "PBA"},
+        {"code": "PMI-PMOCP", "slug": "pmi-pmocp", "name": "PMO Certified Professional", "status": "COMING SOON", "badge": "PMO"},
+        {"code": "PgMP", "slug": "pgmp", "name": "Program Management Professional", "status": "COMING SOON", "badge": "PgMP"},
+        {"code": "PfMP", "slug": "pfmp", "name": "Portfolio Management Professional", "status": "COMING SOON", "badge": "PfMP"},
+    ],
+    # Add future modules/certifications here without creating another HTML template.
+    "oracle": [],
+    "artificial-intelligence": [],
+    "cybersecurity": [],
+}
 
 EXAM_CATEGORIES = [
     {"slug": "project-management", "name": "Project Management", "short": "PM",
-     "description": "Professional certification practice quizzes and exam preparation.",
-     "status": "AVAILABLE", "active": True},
+     "description": "Professional certification mock exams, practice questions and exam preparation.",
+     "status": "AVAILABLE"},
     {"slug": "oracle", "name": "Oracle", "short": "ORACLE",
-     "description": "Oracle knowledge checks, quizzes and certification practice.",
+     "description": "Oracle mock exams, practice questions and certification preparation.",
      "status": "COMING SOON"},
     {"slug": "artificial-intelligence", "name": "Artificial Intelligence", "short": "AI",
-     "description": "AI knowledge checks, quizzes and practical assessments.",
+     "description": "AI mock exams, practice questions and practical assessments.",
      "status": "COMING SOON"},
     {"slug": "cybersecurity", "name": "Cybersecurity", "short": "CYBER",
-     "description": "Cybersecurity quizzes, knowledge checks and exam practice.",
+     "description": "Cybersecurity mock exams, practice questions and certification preparation.",
      "status": "COMING SOON"},
 ]
 
@@ -297,50 +303,66 @@ def exams_quizzes(request):
 
 
 def exam_area(request, area_slug):
-    """Generic exam-area page. The area slug determines the content, not the template."""
-    area = next((item for item in EXAM_CATEGORIES if item["slug"] == area_slug), None)
+    """One master area page used by Project Management, Cybersecurity, Oracle, AI, etc."""
+    area = next((dict(item) for item in EXAM_CATEGORIES if item["slug"] == area_slug), None)
     if area is None:
         from django.http import Http404
         raise Http404("Exam area not found")
 
-    certifications = PROJECT_MANAGEMENT_EXAMS if area_slug == "project-management" else []
-
-    # Connect active certification cards to their existing active quiz in PostgreSQL.
-    # Resolve the quiz dynamically so no database ID is hard-coded.
-    if area_slug == "project-management":
-        certifications = [dict(certification) for certification in certifications]
-
-        for certification in certifications:
-            if not certification.get("active"):
-                continue
-
-            quiz_qs = QuizExam.objects.filter(
-                certification__iexact=certification["code"],
-                is_active=True,
-            )
-
-            # Normal users may only enter a published quiz that contains at
-            # least one centrally approved question visible to users.
-            # Administrators retain access to draft/private content for review.
-            if not (request.user.is_authenticated and request.user.is_superuser):
-                quiz_qs = quiz_qs.filter(
-                    status="published",
-                    question_links__question__is_active=True,
-                    question_links__question__review_status="confirmed",
-                    question_links__question__visibility="users",
-                ).distinct()
-
-            quiz = quiz_qs.order_by("id").first()
-
-            if quiz is not None:
-                certification["quiz_id"] = quiz.id
+    modules = [dict(item) for item in EXAM_MODULES.get(area_slug, [])]
 
     return render(
         request,
         "website/exams/website_exam_area.html",
         {
             "area": area,
-            "certifications": certifications,
+            "certifications": modules,
+        },
+    )
+
+
+def exam_certification(request, area_slug, certification_slug):
+    """One master assessment-selection page used by every configured module/certification."""
+    area = next((dict(item) for item in EXAM_CATEGORIES if item["slug"] == area_slug), None)
+    if area is None:
+        from django.http import Http404
+        raise Http404("Exam area not found")
+
+    certification = next(
+        (
+            dict(item)
+            for item in EXAM_MODULES.get(area_slug, [])
+            if item.get("slug") == certification_slug
+        ),
+        None,
+    )
+    if certification is None:
+        from django.http import Http404
+        raise Http404("Exam module/certification not found")
+
+    quizzes = QuizExam.objects.filter(
+        certification__iexact=certification["code"],
+        is_active=True,
+    )
+
+    if not (request.user.is_authenticated and request.user.is_superuser):
+        quizzes = quizzes.filter(
+            status="published",
+            question_links__question__is_active=True,
+            question_links__question__review_status="confirmed",
+            question_links__question__visibility="users",
+        ).distinct()
+
+    quizzes = quizzes.order_by("id")
+
+    return render(
+        request,
+        "website/exams/website_certification_exams.html",
+        {
+            "area": area,
+            "area_slug": area_slug,
+            "certification": certification,
+            "quizzes": quizzes,
         },
     )
 
@@ -581,7 +603,7 @@ def quiz_question_import(request):
         .values_list("certification", flat=True)
         if value and value.strip()
     })
-    for item in PROJECT_MANAGEMENT_EXAMS:
+    for item in EXAM_MODULES.get("project-management", []):
         code = str(item.get("code") or "").strip()
         if code and code not in certifications:
             certifications.append(code)
@@ -2021,10 +2043,31 @@ def sitemap_xml(request):
             for area in AREAS
         ],
 
-        # Exams & Quizzes SEO pages
+        # Exams & Quizzes master SEO page
         f"{base_url}{reverse('exams_quizzes')}",
-        f"{base_url}{reverse('exam_area', kwargs={'area_slug': 'project-management'})}",
+
+        # Every configured Exams & Quizzes area
+        *[
+            f"{base_url}{reverse('exam_area', kwargs={'area_slug': area['slug']})}"
+            for area in EXAM_CATEGORIES
+        ],
+
+        # Every configured module/certification landing page
+        *[
+            base_url + reverse(
+                'exam_certification',
+                kwargs={
+                    'area_slug': area_slug,
+                    'certification_slug': module['slug'],
+                },
+            )
+            for area_slug, modules in EXAM_MODULES.items()
+            for module in modules
+        ],
     ]
+
+    # Remove duplicates while preserving URL order.
+    public_urls = list(dict.fromkeys(public_urls))
 
     xml_urls = "\n".join(
         f"  <url><loc>{url}</loc></url>"
@@ -2038,7 +2081,6 @@ def sitemap_xml(request):
         "</urlset>\n"
     )
     return HttpResponse(content, content_type="application/xml")
-
 
 def robots_txt(request):
     """Public robots.txt allowing indexing and advertising the sitemap."""

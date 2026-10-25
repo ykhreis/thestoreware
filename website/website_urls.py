@@ -16,6 +16,11 @@ urlpatterns = [
         name="exam_quiz_start",
     ),
     path(
+        "exams-quizzes/<slug:area_slug>/<slug:certification_slug>/",
+        website_views.exam_certification,
+        name="exam_certification",
+    ),
+    path(
         "exams-quizzes/<slug:area_slug>/",
         website_views.exam_area,
         name="exam_area",
