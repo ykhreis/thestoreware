@@ -32,6 +32,11 @@ urlpatterns = [
         name="content_management",
     ),
     path(
+        "content-management/seo-monitoring/",
+        website_views.seo_monitoring,
+        name="seo_monitoring",
+    ),
+    path(
         "content-management/courses/",
         website_views.courses_management,
         name="courses_management",

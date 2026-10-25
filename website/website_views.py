@@ -395,6 +395,78 @@ def content_management(request):
     )
 
 
+@user_passes_test(_admin_only, login_url="/login/")
+def seo_monitoring(request):
+    """Administrator-only SEO Monitoring workspace for TheStoreWare."""
+    keywords = [
+        {
+            "keyword": "TheStoreWare",
+            "target_url": "https://www.thestoreware.com/",
+            "category": "Brand",
+        },
+        {
+            "keyword": "mock exams",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/",
+            "category": "General",
+        },
+        {
+            "keyword": "practice exams",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/",
+            "category": "General",
+        },
+        {
+            "keyword": "practice questions",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/",
+            "category": "General",
+        },
+        {
+            "keyword": "online mock exams",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/",
+            "category": "General",
+        },
+        {
+            "keyword": "project management mock exams",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/",
+            "category": "Project Management",
+        },
+        {
+            "keyword": "PMP mock exam",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmp/",
+            "category": "PMP",
+        },
+        {
+            "keyword": "PMP practice questions",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmp/",
+            "category": "PMP",
+        },
+        {
+            "keyword": "PMI-ACP mock exam",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmi-acp/",
+            "category": "PMI-ACP",
+        },
+        {
+            "keyword": "PMI-PBA mock exam",
+            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmi-pba/",
+            "category": "PMI-PBA",
+        },
+    ]
+
+    context = {
+        "keywords": keywords,
+        "keyword_count": len(keywords),
+        "found_count": 0,
+        "best_position": None,
+        "last_checked": None,
+        "monitoring_status": "Ready",
+    }
+
+    return render(
+        request,
+        "website/content_management/seo_monitoring/website_seo_monitoring.html",
+        context,
+    )
+
+
 @user_passes_test(_admin_only, login_url="/admin/login/")
 def exam_quiz_management(request):
     """Administrator-only generic management page for all exams and quizzes."""

@@ -1,0 +1,306 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO Monitoring | TheStoreWare</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f7fb;
+            color: #1f2937;
+        }
+
+        .page {
+            max-width: 1250px;
+            margin: 0 auto;
+            padding: 32px 22px 50px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .title-wrap h1 {
+            margin: 0 0 6px;
+            font-size: 30px;
+        }
+
+        .title-wrap p {
+            margin: 0;
+            color: #667085;
+        }
+
+        .back-link {
+            display: inline-block;
+            padding: 10px 16px;
+            border: 1px solid #d0d5dd;
+            border-radius: 8px;
+            background: #fff;
+            color: #344054;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: #fff;
+            border: 1px solid #e4e7ec;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
+        }
+
+        .card-label {
+            color: #667085;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            margin-bottom: 10px;
+        }
+
+        .card-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .card-note {
+            margin-top: 6px;
+            color: #98a2b3;
+            font-size: 13px;
+        }
+
+        .panel {
+            background: #fff;
+            border: 1px solid #e4e7ec;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(16, 24, 40, 0.04);
+        }
+
+        .panel-head {
+            padding: 18px 20px;
+            border-bottom: 1px solid #e4e7ec;
+        }
+
+        .panel-head h2 {
+            margin: 0 0 5px;
+            font-size: 20px;
+        }
+
+        .panel-head p {
+            margin: 0;
+            color: #667085;
+            font-size: 14px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 900px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 14px 16px;
+            border-bottom: 1px solid #eaecf0;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f9fafb;
+            color: #475467;
+            font-size: 13px;
+        }
+
+        td {
+            font-size: 14px;
+        }
+
+        tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .keyword {
+            font-weight: 700;
+        }
+
+        .url {
+            color: #475467;
+            word-break: break-word;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: #f2f4f7;
+            color: #475467;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .status-ready {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: #ecfdf3;
+            color: #027a48;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .pending {
+            color: #98a2b3;
+        }
+
+        .notice {
+            margin-top: 18px;
+            padding: 14px 16px;
+            border: 1px solid #d0d5dd;
+            border-radius: 10px;
+            background: #f9fafb;
+            color: #475467;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 850px) {
+            .summary-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .topbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 520px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page">
+
+    <div class="topbar">
+        <div class="title-wrap">
+            <h1>SEO Monitoring</h1>
+            <p>Monitor TheStoreWare search visibility and priority SEO keywords.</p>
+        </div>
+
+        <a class="back-link" href="{% url 'content_management' %}">
+            Back to Content Management
+        </a>
+    </div>
+
+    <div class="summary-grid">
+        <div class="card">
+            <div class="card-label">Monitoring Status</div>
+            <div class="card-value">{{ monitoring_status }}</div>
+            <div class="card-note">SEO workspace is configured.</div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Keywords Monitored</div>
+            <div class="card-value">{{ keyword_count }}</div>
+            <div class="card-note">Priority TheStoreWare search terms.</div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Keywords Found</div>
+            <div class="card-value">{{ found_count }}</div>
+            <div class="card-note">Google data connection pending.</div>
+        </div>
+
+        <div class="card">
+            <div class="card-label">Best Position</div>
+            <div class="card-value">
+                {% if best_position %}
+                    #{{ best_position }}
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+            <div class="card-note">
+                {% if last_checked %}
+                    Last checked: {{ last_checked }}
+                {% else %}
+                    Not checked yet.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <h2>Priority Keywords</h2>
+            <p>The first SEO terms we will monitor for TheStoreWare.</p>
+        </div>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Keyword</th>
+                        <th>Category</th>
+                        <th>Google Status</th>
+                        <th>Position</th>
+                        <th>Landing Page</th>
+                        <th>Last Checked</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in keywords %}
+                    <tr>
+                        <td class="keyword">{{ item.keyword }}</td>
+                        <td><span class="badge">{{ item.category }}</span></td>
+                        <td><span class="status-ready">Ready</span></td>
+                        <td class="pending">—</td>
+                        <td class="url">{{ item.target_url }}</td>
+                        <td class="pending">Not checked</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No SEO keywords configured.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="notice">
+        This first version establishes the SEO Monitoring workspace.
+        Google Search Console data will be connected after the page is tested successfully.
+    </div>
+
+</div>
+</body>
+</html>
