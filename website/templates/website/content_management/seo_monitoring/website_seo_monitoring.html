@@ -217,7 +217,6 @@
             line-height: 1.5;
         }
 
-
         .date-filter {
             margin-bottom: 24px;
             padding: 18px 20px;
@@ -269,6 +268,23 @@
             font-size: 13px;
         }
 
+        .auto-refresh {
+            margin-top: 12px;
+            color: #667085;
+            font-size: 13px;
+        }
+
+        .refresh-now {
+            margin-left: 10px;
+            border: 0;
+            padding: 0;
+            background: none;
+            color: #344054;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
         @media (max-width: 850px) {
             .summary-grid {
                 grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -302,7 +318,6 @@
         </a>
     </div>
 
-
     <div class="date-filter">
         <form method="get">
             <div>
@@ -328,6 +343,14 @@
 
             <button class="filter-button" type="submit">Apply</button>
         </form>
+
+        <div class="auto-refresh">
+            Auto-refresh enabled — next refresh in
+            <strong><span id="refresh-countdown">60</span> seconds</strong>.
+            <button class="refresh-now" type="button" onclick="window.location.reload();">
+                Refresh Now
+            </button>
+        </div>
 
         {% if date_warning %}
             <div class="date-warning">{{ date_warning }}</div>
@@ -480,7 +503,26 @@
             field.style.display = isCustom ? "block" : "none";
         });
     }
+
     toggleCustomDates();
+
+    // Auto-refresh SEO Monitoring every 60 seconds.
+    let refreshSeconds = 60;
+
+    function updateRefreshCountdown() {
+        refreshSeconds--;
+
+        const counter = document.getElementById("refresh-countdown");
+        if (counter) {
+            counter.textContent = refreshSeconds;
+        }
+
+        if (refreshSeconds <= 0) {
+            window.location.reload();
+        }
+    }
+
+    setInterval(updateRefreshCountdown, 1000);
 </script>
 
 </body>
