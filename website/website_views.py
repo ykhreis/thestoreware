@@ -1,4 +1,5 @@
 from django.conf import settings
+import os
 import json
 import urllib.error
 import urllib.parse
@@ -397,75 +398,141 @@ def content_management(request):
 
 @user_passes_test(_admin_only, login_url="/login/")
 def seo_monitoring(request):
-    """Administrator-only SEO Monitoring workspace for TheStoreWare."""
+    """Administrator-only SEO Monitoring workspace backed by Google Search Console."""
     keywords = [
-        {
-            "keyword": "TheStoreWare",
-            "target_url": "https://www.thestoreware.com/",
-            "category": "Brand",
-        },
-        {
-            "keyword": "mock exams",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/",
-            "category": "General",
-        },
-        {
-            "keyword": "practice exams",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/",
-            "category": "General",
-        },
-        {
-            "keyword": "practice questions",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/",
-            "category": "General",
-        },
-        {
-            "keyword": "online mock exams",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/",
-            "category": "General",
-        },
-        {
-            "keyword": "project management mock exams",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/",
-            "category": "Project Management",
-        },
-        {
-            "keyword": "PMP mock exam",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmp/",
-            "category": "PMP",
-        },
-        {
-            "keyword": "PMP practice questions",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmp/",
-            "category": "PMP",
-        },
-        {
-            "keyword": "PMI-ACP mock exam",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmi-acp/",
-            "category": "PMI-ACP",
-        },
-        {
-            "keyword": "PMI-PBA mock exam",
-            "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmi-pba/",
-            "category": "PMI-PBA",
-        },
+        {"keyword": "TheStoreWare", "target_url": "https://www.thestoreware.com/", "category": "Brand"},
+        {"keyword": "mock exams", "target_url": "https://www.thestoreware.com/exams-quizzes/", "category": "General"},
+        {"keyword": "practice exams", "target_url": "https://www.thestoreware.com/exams-quizzes/", "category": "General"},
+        {"keyword": "practice questions", "target_url": "https://www.thestoreware.com/exams-quizzes/", "category": "General"},
+        {"keyword": "online mock exams", "target_url": "https://www.thestoreware.com/exams-quizzes/", "category": "General"},
+        {"keyword": "project management mock exams", "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/", "category": "Project Management"},
+        {"keyword": "PMP mock exam", "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmp/", "category": "PMP"},
+        {"keyword": "PMP practice questions", "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmp/", "category": "PMP"},
+        {"keyword": "PMI-ACP mock exam", "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmi-acp/", "category": "PMI-ACP"},
+        {"keyword": "PMI-PBA mock exam", "target_url": "https://www.thestoreware.com/exams-quizzes/project-management/pmi-pba/", "category": "PMI-PBA"},
     ]
+
+    for item in keywords:
+        item.update({
+            "status": "No data", "clicks": 0, "impressions": 0,
+            "ctr": 0.0, "position": None, "landing_page": item["target_url"],
+        })
+
+    actual_queries = []
+    found_count = 0
+    best_position = None
+    total_clicks = 0
+    total_impressions = 0
+    monitoring_status = "Configuration Required"
+    monitoring_error = ""
+    last_checked = timezone.localtime().strftime("%d %b %Y %H:%M")
+    date_range_label = ""
+
+    try:
+        from datetime import timedelta
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+
+        credential_json = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_JSON", "").strip()
+        if not credential_json:
+            raise RuntimeError("Google Search Console credential is not configured.")
+
+        credential_info = json.loads(credential_json)
+        credentials = service_account.Credentials.from_service_account_info(
+            credential_info,
+            scopes=["https://www.googleapis.com/auth/webmasters.readonly"],
+        )
+        service = build("searchconsole", "v1", credentials=credentials, cache_discovery=False)
+
+        # Search Console performance data is delayed, so use a stable 28-day
+        # reporting window ending three days before today.
+        end_date = timezone.localdate() - timedelta(days=3)
+        start_date = end_date - timedelta(days=27)
+        date_range_label = f"{start_date:%d %b %Y} - {end_date:%d %b %Y}"
+
+        response = service.searchanalytics().query(
+            siteUrl="sc-domain:thestoreware.com",
+            body={
+                "startDate": start_date.isoformat(),
+                "endDate": end_date.isoformat(),
+                "dimensions": ["query", "page"],
+                "rowLimit": 1000,
+            },
+        ).execute()
+
+        rows = response.get("rows", [])
+        total_clicks = sum(int(row.get("clicks", 0)) for row in rows)
+        total_impressions = sum(int(row.get("impressions", 0)) for row in rows)
+
+        actual_queries = sorted(
+            [{
+                "query": row.get("keys", ["", ""])[0],
+                "page": row.get("keys", ["", ""])[1] if len(row.get("keys", [])) > 1 else "",
+                "clicks": int(row.get("clicks", 0)),
+                "impressions": int(row.get("impressions", 0)),
+                "ctr": float(row.get("ctr", 0)) * 100,
+                "position": float(row.get("position", 0)),
+            } for row in rows if row.get("keys")],
+            key=lambda item: (-item["impressions"], -item["clicks"], item["position"]),
+        )[:25]
+
+        row_map = {}
+        for row in rows:
+            keys = row.get("keys", [])
+            if keys:
+                row_map.setdefault(str(keys[0]).strip().casefold(), []).append(
+                    (row, str(keys[1]).strip() if len(keys) > 1 else "")
+                )
+
+        for item in keywords:
+            matches = row_map.get(item["keyword"].casefold(), [])
+            if not matches:
+                continue
+
+            clicks = sum(int(row.get("clicks", 0)) for row, _ in matches)
+            impressions = sum(int(row.get("impressions", 0)) for row, _ in matches)
+            position = (
+                sum(float(row.get("position", 0)) * int(row.get("impressions", 0)) for row, _ in matches)
+                / impressions if impressions else None
+            )
+            landing_page = max(matches, key=lambda m: int(m[0].get("impressions", 0)))[1]
+
+            item.update({
+                "status": "Found",
+                "clicks": clicks,
+                "impressions": impressions,
+                "ctr": (clicks / impressions * 100) if impressions else 0.0,
+                "position": position,
+                "landing_page": landing_page or item["target_url"],
+            })
+            found_count += 1
+            if position is not None and (best_position is None or position < best_position):
+                best_position = position
+
+        monitoring_status = "Connected"
+
+    except Exception as exc:
+        monitoring_status = "API Error"
+        monitoring_error = str(exc)[:300]
 
     context = {
         "keywords": keywords,
         "keyword_count": len(keywords),
-        "found_count": 0,
-        "best_position": None,
-        "last_checked": None,
-        "monitoring_status": "Ready",
+        "found_count": found_count,
+        "best_position": best_position,
+        "last_checked": last_checked,
+        "monitoring_status": monitoring_status,
+        "monitoring_error": monitoring_error,
+        "date_range_label": date_range_label,
+        "total_clicks": total_clicks,
+        "total_impressions": total_impressions,
+        "actual_queries": actual_queries,
     }
-
     return render(
         request,
         "website/content_management/seo_monitoring/website_seo_monitoring.html",
         context,
     )
-
 
 @user_passes_test(_admin_only, login_url="/admin/login/")
 def exam_quiz_management(request):
