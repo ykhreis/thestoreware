@@ -1,0 +1,54 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask AI-Agent</title>
+    <link rel="stylesheet" href="{% static 'mentor/ai_agent_demo.css' %}">
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-title">AI-Agent Demo</div>
+        <div class="topbar-user">
+            {{ request.user.username }} |
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
+    </div>
+
+    <main class="page">
+        <section class="ask-card">
+            <div class="ask-heading">
+                <div class="label">PRESALES KNOWLEDGE ASSISTANT</div>
+                <h1>Ask AI-Agent</h1>
+                <p>Ask a question using the Company ABC Presales Knowledge Bank.</p>
+            </div>
+
+            {% if error %}
+                <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <label class="question-label" for="question">Your Question</label>
+                <textarea id="question" name="question" class="question-box"
+                          placeholder="What would you like to know?" required>{{ question }}</textarea>
+
+                <div class="ask-actions">
+                    <button type="submit" class="primary-button">Ask AI-Agent</button>
+                    <a class="secondary-link" href="{% url 'demo_upload' %}">+ Upload Files</a>
+                </div>
+            </form>
+
+            {% if answer %}
+                <div class="answer-panel">
+                    <h3>AI-Agent Answer</h3>
+                    <div class="answer-text">{{ answer }}</div>
+                </div>
+            {% endif %}
+
+            <a class="back-link" href="{% url 'demo' %}">← Back to AI-Agent Demo</a>
+        </section>
+    </main>
+</body>
+</html>

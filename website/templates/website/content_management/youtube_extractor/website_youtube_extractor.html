@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>YouTube Question Extractor | TheStoreWare</title>
+<style>
+:root{--bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#667085;--line:#e5e9f0;--primary:#2457d6;--soft:#eef4ff;--success:#137a4b;--danger:#b42318;--warning:#9a6700}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+.topbar{background:#111827;color:#fff;padding:18px 24px}.topbar-inner{max-width:1180px;margin:auto;display:flex;justify-content:space-between;gap:20px}
+main{max-width:1180px;margin:auto;padding:38px 24px 60px}.hero,.panel{background:#fff;border:1px solid var(--line);border-radius:18px}.hero{padding:28px 30px;margin-bottom:22px}.hero h1{margin:0 0 8px;font-size:30px}.hero p,.help{color:var(--muted);line-height:1.55}
+.back{display:inline-block;margin-bottom:18px;color:var(--primary);text-decoration:none;font-weight:700}.panel{padding:26px;margin-bottom:22px}
+label{display:block;font-size:14px;font-weight:700;margin-bottom:8px}input,select{width:100%;padding:12px 13px;border:1px solid #cfd6e4;border-radius:9px;font-size:14px;background:#fff}
+.controls{display:grid;grid-template-columns:1fr 190px;gap:14px}.buttons{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.button{padding:11px 16px;border:1px solid var(--primary);border-radius:9px;background:var(--primary);color:#fff;font-size:14px;font-weight:700;cursor:pointer}.button.secondary{background:#fff;color:var(--primary)}.button.disabled{background:#eef1f6;color:#98a2b3;border-color:#d8dee8;cursor:not-allowed}.button.stop{background:#b42318;border-color:#b42318}.progress-wrap{margin-top:12px}.progress-track{height:12px;background:#e9edf4;border-radius:999px;overflow:hidden}.progress-bar{height:100%;width:0%;background:#2457d6;transition:width .35s ease}.progress-text{display:flex;justify-content:space-between;gap:12px;margin-top:7px;font-size:12px;color:#667085}.results{margin-top:14px;padding:12px;background:#f8fafc;border-radius:10px;font-size:13px}
+.error,.warning{margin-bottom:20px;padding:14px 16px;border-radius:10px;line-height:1.5;font-size:13px}.error{background:#fef3f2;color:var(--danger);border:1px solid #fecdca}.warning{background:#fffaeb;color:var(--warning);border:1px solid #fedf89}
+.success{display:inline-block;padding:5px 9px;border-radius:999px;background:#eaf8f1;color:var(--success);font-size:11px;font-weight:700;margin-bottom:14px}
+.metadata{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0 20px}.meta{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:12px}.meta strong{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}.meta span{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.parts{display:flex;flex-direction:column;gap:10px}.part{display:grid;grid-template-columns:90px 1fr 110px 210px;align-items:center;gap:14px;padding:15px;border:1px solid var(--line);border-radius:12px;background:#fcfdff}.part-title{font-weight:800}.range{font-weight:700}.duration{font-size:12px;color:var(--muted);margin-top:4px}.ready{display:inline-block;text-align:center;background:#eaf8f1;color:var(--success);font-size:11px;font-weight:800;padding:6px 8px;border-radius:999px}.part-actions{display:flex;justify-content:flex-end}
+textarea{width:100%;min-height:280px;resize:vertical;border:1px solid #cfd6e4;border-radius:10px;padding:15px;font:14px/1.6 Arial;background:#fbfcfe}
+.note{padding:15px 17px;border-radius:11px;background:var(--soft);color:#344054;font-size:13px;line-height:1.55}
+@media(max-width:760px){.controls{grid-template-columns:1fr}.part{grid-template-columns:1fr}.part-actions{justify-content:flex-start}.topbar-inner{flex-direction:column}main{padding:24px 16px}.hero,.panel{padding:21px}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="topbar-inner"><strong>TheStoreWare · YouTube Question Extractor</strong><span>Administrator only · {{ request.user.username }}</span></div></header>
+<main>
+<a class="back" href="{% url 'content_management' %}">← Back to Content Management</a>
+
+<section class="hero">
+<h1>YouTube Question Extractor</h1>
+<p>Prepare a long YouTube video into manageable parts first. You can then choose exactly which part to scan for questions. Preparing the video does not call OpenAI and does not download the video.</p>
+</section>
+
+{% if extract_error %}<div class="error">{{ extract_error }}</div>{% endif %}
+{% if prepare_error %}<div class="error">{{ prepare_error }}</div>{% endif %}
+
+<section class="panel">
+<form method="post">
+{% csrf_token %}
+<div class="controls">
+<div>
+<label for="youtube_url">YouTube URL</label>
+<input id="youtube_url" name="youtube_url" type="text" value="{{ youtube_url }}" placeholder="https://www.youtube.com/watch?v=..." required>
+</div>
+<div>
+<label for="segment_minutes">Part Size</label>
+<select id="segment_minutes" name="segment_minutes">
+<option value="5" {% if segment_minutes == 5 %}selected{% endif %}>5 minutes</option>
+<option value="10" {% if segment_minutes == 10 %}selected{% endif %}>10 minutes</option>
+<option value="15" {% if segment_minutes == 15 %}selected{% endif %}>15 minutes</option>
+<option value="20" {% if segment_minutes == 20 %}selected{% endif %}>20 minutes</option>
+<option value="30" {% if segment_minutes == 30 %}selected{% endif %}>30 minutes</option>
+</select>
+</div>
+</div>
+<p class="help">Recommended starting size: 15 minutes. The final part is automatically shortened to the video's actual ending.</p>
+<div class="buttons">
+<button class="button" type="submit" name="action" value="prepare_video">Prepare Video Parts</button>
+<button class="button secondary" type="submit" name="action" value="transcript">Extract Full Transcript</button>
+</div>
+</form>
+</section>
+
+{% if prepare_success %}
+<section class="panel">
+<span class="success">VIDEO PREPARED</span>
+<h2 style="margin:0 0 5px;">{{ video_title }}</h2>
+{% if video_uploader %}<p class="help" style="margin-top:0;">{{ video_uploader }}</p>{% endif %}
+<div class="metadata">
+<div class="meta"><strong>Video Duration</strong><span>{{ video_duration_text }}</span></div>
+<div class="meta"><strong>Part Size</strong><span>{{ segment_minutes }} minutes</span></div>
+<div class="meta"><strong>Total Parts</strong><span>{{ part_count }}</span></div>
+<div class="meta"><strong>OpenAI Calls</strong><span>0 during preparation</span></div>
+</div>
+
+<div class="parts">
+{% for part in video_parts %}
+<div class="part">
+<div class="part-title">Part {{ part.part_number }}</div>
+<div>
+<div class="range">{{ part.start_time }} → {{ part.end_time }}</div>
+<div class="duration">Duration {{ part.duration_time }}</div>
+</div>
+<div><span class="ready">{{ part.status }}</span></div>
+<div class="part-actions">
+<button class="button js-extract" type="button"
+data-part="{{ part.part_number }}"
+data-start="{{ part.start_seconds }}"
+data-end="{{ part.end_seconds }}">Extract Questions</button>
+</div>
+<div class="progress-wrap" id="progress-wrap-{{ part.part_number }}" style="display:none;grid-column:1/-1;">
+<div class="progress-track"><div class="progress-bar" id="progress-bar-{{ part.part_number }}"></div></div>
+<div class="progress-text"><span id="stage-{{ part.part_number }}">Queued</span><strong id="percent-{{ part.part_number }}">0%</strong></div>
+<div class="progress-text"><span id="frames-{{ part.part_number }}">Frames: 0 / 0</span><span id="questions-{{ part.part_number }}">Questions: 0</span></div>
+<div class="progress-text" id="download-row-{{ part.part_number }}">
+<span id="download-{{ part.part_number }}">Download: waiting</span>
+<span id="speed-{{ part.part_number }}">Speed: -- | ETA: --</span>
+</div>
+<div class="buttons" style="margin-top:10px;"><button class="button stop js-stop" type="button" data-part="{{ part.part_number }}" style="display:none;">Stop</button></div>
+<div class="results" id="results-{{ part.part_number }}" style="display:none;"></div>
+</div>
+</div>
+{% endfor %}
+</div>
+<p class="help">Each part is processed independently. Start with Part 1. You can stop a running part without affecting the other READY parts.</p>
+</section>
+{% endif %}
+
+{% if transcript_text %}
+<section class="panel">
+<span class="success">TRANSCRIPT AVAILABLE</span>
+<h2 style="margin:0 0 6px;">Transcript Preview</h2>
+<div class="metadata">
+<div class="meta"><strong>Video ID</strong><span>{{ video_id }}</span></div>
+<div class="meta"><strong>Language</strong><span>{{ transcript_language }} ({{ transcript_language_code }})</span></div>
+<div class="meta"><strong>Caption Type</strong><span>{% if transcript_is_generated %}Automatically Generated{% else %}Manual{% endif %}</span></div>
+<div class="meta"><strong>Segments</strong><span>{{ transcript_count }}</span></div>
+</div>
+<textarea readonly>{{ transcript_text }}</textarea>
+</section>
+{% endif %}
+
+<div class="note"><strong>Current stage:</strong> video preparation only. No QuestionBank records are created or modified.</div>
+</main>
+
+<script>
+(function () {
+    const youtubeUrl = document.getElementById("youtube_url");
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    const csrfToken = csrfInput ? csrfInput.value : "";
+    const jobs = {};
+
+    function renderQuestions(part, questions) {
+        const box = document.getElementById(`results-${part}`);
+        if (!box) return;
+        if (!questions || !questions.length) {
+            box.innerHTML = "<strong>Completed.</strong> No questions detected in this part.";
+        } else {
+            let output = `<strong>${questions.length} question(s) detected.</strong>`;
+            questions.forEach((q, i) => {
+                output += `<hr><strong>${i + 1}. ${escapeHtml(q.question_text || "Detected question")}</strong>`;
+                ["a","b","c","d","e"].forEach(letter => {
+                    const value = q[`option_${letter}`];
+                    if (value) output += `<div>${letter.toUpperCase()}) ${escapeHtml(value)}</div>`;
+                });
+                if (q.approx_timestamp) output += `<div style="margin-top:6px;color:#667085;">Approx. ${escapeHtml(q.approx_timestamp)}</div>`;
+            });
+            box.innerHTML = output;
+        }
+        box.style.display = "block";
+    }
+
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, c => ({
+            "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+        })[c]);
+    }
+
+    function formatBytes(bytes) {
+        const value = Number(bytes || 0);
+        if (!value) return "0 MB";
+        return `${(value / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    function formatSpeed(bps) {
+        const value = Number(bps || 0);
+        if (!value) return "--";
+        return `${(value / 1024 / 1024).toFixed(2)} MB/s`;
+    }
+
+    function formatEta(seconds) {
+        if (seconds === null || seconds === undefined) return "--";
+        const s = Number(seconds);
+        if (!Number.isFinite(s)) return "--";
+        if (s < 60) return `${Math.max(0, Math.round(s))} sec`;
+        return `${Math.floor(s / 60)}m ${Math.round(s % 60)}s`;
+    }
+
+    async function poll(part) {
+        const jobId = jobs[part];
+        if (!jobId) return;
+
+        const response = await fetch(`/content-management/youtube-extractor/scan/status/${jobId}/`);
+        const data = await response.json();
+        if (!data.ok) return;
+
+        document.getElementById(`progress-bar-${part}`).style.width = `${data.progress}%`;
+        document.getElementById(`percent-${part}`).textContent = `${data.progress}%`;
+        document.getElementById(`stage-${part}`).textContent = data.stage || data.status;
+        document.getElementById(`frames-${part}`).textContent = `Frames: ${data.frames_done} / ${data.frames_total}`;
+        document.getElementById(`questions-${part}`).textContent = `Questions: ${data.questions_found}`;
+
+        const downloadEl = document.getElementById(`download-${part}`);
+        const speedEl = document.getElementById(`speed-${part}`);
+        if (downloadEl && speedEl) {
+            const dp = Number(data.download_percent || 0);
+            const downloaded = formatBytes(data.downloaded_bytes);
+            const total = Number(data.total_bytes || 0) ? formatBytes(data.total_bytes) : "?";
+            downloadEl.textContent = `Download: ${dp.toFixed(1)}% — ${downloaded} / ${total}`;
+            speedEl.textContent = `Speed: ${formatSpeed(data.speed_bps)} | ETA: ${formatEta(data.eta_seconds)}`;
+            if (data.progress >= 20) {
+                downloadEl.textContent = "Download: completed";
+                speedEl.textContent = "Video segment ready";
+            }
+        }
+
+        const stop = document.querySelector(`.js-stop[data-part="${part}"]`);
+        const start = document.querySelector(`.js-extract[data-part="${part}"]`);
+
+        if (data.status === "RUNNING") {
+            stop.style.display = "inline-block";
+            setTimeout(() => poll(part), 1000);
+        } else {
+            stop.style.display = "none";
+            start.disabled = false;
+            start.textContent = data.status === "COMPLETED" ? "Re-scan" : "Extract Questions";
+            if (data.status === "ERROR") {
+                document.getElementById(`results-${part}`).style.display = "block";
+                document.getElementById(`results-${part}`).textContent = data.error || "Scan failed.";
+            } else {
+                renderQuestions(part, data.questions);
+            }
+        }
+    }
+
+    document.querySelectorAll(".js-extract").forEach(button => {
+        button.addEventListener("click", async function () {
+            const part = this.dataset.part;
+            const wrap = document.getElementById(`progress-wrap-${part}`);
+            wrap.style.display = "block";
+            this.disabled = true;
+            this.textContent = "Starting...";
+            document.getElementById(`results-${part}`).style.display = "none";
+
+            const response = await fetch("/content-management/youtube-extractor/scan/start/", {
+                method: "POST",
+                headers: {"Content-Type":"application/json","X-CSRFToken":csrfToken},
+                body: JSON.stringify({
+                    youtube_url: youtubeUrl.value,
+                    part_number: Number(part),
+                    start_seconds: Number(this.dataset.start),
+                    end_seconds: Number(this.dataset.end)
+                })
+            });
+            const data = await response.json();
+            if (!data.ok) {
+                this.disabled = false;
+                this.textContent = "Extract Questions";
+                document.getElementById(`stage-${part}`).textContent = data.error || "Could not start.";
+                return;
+            }
+            jobs[part] = data.job_id;
+            this.textContent = "Scanning...";
+            poll(part);
+        });
+    });
+
+    document.querySelectorAll(".js-stop").forEach(button => {
+        button.addEventListener("click", async function () {
+            const part = this.dataset.part;
+            const jobId = jobs[part];
+            if (!jobId) return;
+            this.disabled = true;
+            await fetch(`/content-management/youtube-extractor/scan/stop/${jobId}/`, {
+                method: "POST",
+                headers: {"X-CSRFToken":csrfToken}
+            });
+            document.getElementById(`stage-${part}`).textContent = "Stop requested...";
+            this.disabled = false;
+        });
+    });
+})();
+</script>
+
+</body>
+</html>

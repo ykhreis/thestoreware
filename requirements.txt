@@ -14,3 +14,4 @@ openai
 google-api-python-client==2.201.0
 google-auth==2.62.0
 google-auth-httplib2==0.4.4
+youtube-transcript-api==1.2.4

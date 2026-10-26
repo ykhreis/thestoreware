@@ -1,5 +1,8 @@
 from django.conf import settings
 import os
+import re
+import threading
+import uuid
 import json
 import urllib.error
 import urllib.parse
@@ -17,6 +20,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from .website_models import WebsiteSubscriber, WebsiteUserFeedback, QuizExam, QuestionBank, QuizExamQuestion
 from mentor.ai_agent_models import GenericKnowledgeCandidate, ConversationExpression
 from mentor.services.external_ai_service import ask_external_ai
+from youtube_transcript_api import YouTubeTranscriptApi
 
 
 def _graph_setting(*names):
@@ -396,6 +400,396 @@ def content_management(request):
     )
 
 
+def _extract_youtube_video_id(value):
+    """Extract and validate an 11-character YouTube video ID from common YouTube URLs."""
+    value = (value or "").strip()
+    if not value:
+        return None
+
+    if re.fullmatch(r"[A-Za-z0-9_-]{11}", value):
+        return value
+
+    candidate_url = value
+    if "://" not in candidate_url:
+        candidate_url = "https://" + candidate_url
+
+    try:
+        parsed = urllib.parse.urlparse(candidate_url)
+    except ValueError:
+        return None
+
+    host = (parsed.hostname or "").lower()
+    if host.startswith("www."):
+        host = host[4:]
+
+    video_id = ""
+
+    if host == "youtu.be":
+        video_id = parsed.path.strip("/").split("/")[0]
+    elif host in {"youtube.com", "m.youtube.com", "music.youtube.com"}:
+        if parsed.path.rstrip("/") == "/watch":
+            video_id = urllib.parse.parse_qs(parsed.query).get("v", [""])[0]
+        else:
+            parts = [part for part in parsed.path.split("/") if part]
+            if len(parts) >= 2 and parts[0].lower() in {"shorts", "embed", "live"}:
+                video_id = parts[1]
+
+    video_id = (video_id or "").strip()
+    if re.fullmatch(r"[A-Za-z0-9_-]{11}", video_id):
+        return video_id
+
+    return None
+
+
+# Local-development job registry for YouTube part scanning.
+_YOUTUBE_SCAN_JOBS = {}
+_YOUTUBE_SCAN_LOCK = threading.Lock()
+
+
+def _youtube_job_update(job_id, **changes):
+    with _YOUTUBE_SCAN_LOCK:
+        job = _YOUTUBE_SCAN_JOBS.get(job_id)
+        if job is not None:
+            job.update(changes)
+
+
+def _youtube_job_should_stop(job_id):
+    with _YOUTUBE_SCAN_LOCK:
+        return bool(_YOUTUBE_SCAN_JOBS.get(job_id, {}).get("stop_requested"))
+
+
+def _youtube_part_worker(job_id):
+    with _YOUTUBE_SCAN_LOCK:
+        job = dict(_YOUTUBE_SCAN_JOBS[job_id])
+
+    try:
+        from .youtube_question_scanner import scan_youtube_part
+
+        def on_progress(percent, stage, frames_done, frames_total, questions):
+            _youtube_job_update(
+                job_id,
+                progress=int(percent),
+                stage=str(stage),
+                frames_done=int(frames_done),
+                frames_total=int(frames_total),
+                questions_found=int(questions),
+            )
+
+        def on_download(data):
+            downloaded = int(data.get("downloaded_bytes") or 0)
+            total = int(data.get("total_bytes") or 0)
+            download_pct = float(data.get("download_percent") or 0)
+            # Map the actual media download into the overall 5%-20% phase.
+            overall = 5 + int(min(max(download_pct, 0), 100) * 0.15)
+            _youtube_job_update(
+                job_id,
+                progress=min(overall, 19),
+                stage="Downloading selected video segment",
+                download_percent=download_pct,
+                downloaded_bytes=downloaded,
+                total_bytes=total,
+                speed_bps=float(data.get("speed_bps") or 0),
+                eta_seconds=data.get("eta_seconds"),
+            )
+
+        result = scan_youtube_part(
+            youtube_url=job["youtube_url"],
+            start_seconds=job["start_seconds"],
+            end_seconds=job["end_seconds"],
+            interval_seconds=job.get("interval_seconds", 8),
+            progress_callback=on_progress,
+            stop_callback=lambda: _youtube_job_should_stop(job_id),
+            download_callback=on_download,
+        )
+
+        questions = result.get("questions", [])
+        if result.get("stopped"):
+            _youtube_job_update(
+                job_id,
+                status="STOPPED",
+                stage="Stopped by user",
+                questions=questions,
+                questions_found=len(questions),
+            )
+        else:
+            frames_total = int(result.get("frames_total", 0))
+            _youtube_job_update(
+                job_id,
+                status="COMPLETED",
+                progress=100,
+                stage="Completed",
+                questions=questions,
+                questions_found=len(questions),
+                frames_total=frames_total,
+                frames_done=frames_total,
+            )
+    except Exception as exc:
+        _youtube_job_update(
+            job_id,
+            status="ERROR",
+            stage="Scan failed",
+            error=str(exc)[:1000],
+        )
+
+
+@user_passes_test(_admin_only, login_url="/admin/login/")
+def youtube_scan_start(request):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required."}, status=405)
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+        youtube_url = str(payload.get("youtube_url") or "").strip()
+        start_seconds = int(payload.get("start_seconds"))
+        end_seconds = int(payload.get("end_seconds"))
+        part_number = int(payload.get("part_number"))
+    except (ValueError, TypeError, json.JSONDecodeError):
+        return JsonResponse({"ok": False, "error": "Invalid scan request."}, status=400)
+
+    if not _extract_youtube_video_id(youtube_url):
+        return JsonResponse({"ok": False, "error": "Invalid YouTube URL."}, status=400)
+    if start_seconds < 0 or end_seconds <= start_seconds:
+        return JsonResponse({"ok": False, "error": "Invalid part time range."}, status=400)
+
+    job_id = uuid.uuid4().hex
+    with _YOUTUBE_SCAN_LOCK:
+        _YOUTUBE_SCAN_JOBS[job_id] = {
+            "job_id": job_id,
+            "youtube_url": youtube_url,
+            "part_number": part_number,
+            "start_seconds": start_seconds,
+            "end_seconds": end_seconds,
+            "interval_seconds": 8,
+            "status": "RUNNING",
+            "progress": 0,
+            "stage": "Queued",
+            "frames_done": 0,
+            "frames_total": 0,
+            "questions_found": 0,
+            "questions": [],
+            "error": "",
+            "stop_requested": False,
+            "download_percent": 0.0,
+            "downloaded_bytes": 0,
+            "total_bytes": 0,
+            "speed_bps": 0.0,
+            "eta_seconds": None,
+        }
+
+    threading.Thread(
+        target=_youtube_part_worker,
+        args=(job_id,),
+        daemon=True,
+        name=f"youtube-scan-{job_id[:8]}",
+    ).start()
+    return JsonResponse({"ok": True, "job_id": job_id})
+
+
+@user_passes_test(_admin_only, login_url="/admin/login/")
+def youtube_scan_status(request, job_id):
+    with _YOUTUBE_SCAN_LOCK:
+        job = _YOUTUBE_SCAN_JOBS.get(job_id)
+        if not job:
+            return JsonResponse({"ok": False, "error": "Scan job not found."}, status=404)
+        data = {
+            "ok": True,
+            "job_id": job_id,
+            "part_number": job["part_number"],
+            "status": job["status"],
+            "progress": job["progress"],
+            "stage": job["stage"],
+            "frames_done": job["frames_done"],
+            "frames_total": job["frames_total"],
+            "questions_found": job["questions_found"],
+            "download_percent": job.get("download_percent", 0.0),
+            "downloaded_bytes": job.get("downloaded_bytes", 0),
+            "total_bytes": job.get("total_bytes", 0),
+            "speed_bps": job.get("speed_bps", 0.0),
+            "eta_seconds": job.get("eta_seconds"),
+            "questions": job["questions"] if job["status"] in {"COMPLETED", "STOPPED"} else [],
+            "error": job["error"],
+        }
+    return JsonResponse(data)
+
+
+@user_passes_test(_admin_only, login_url="/admin/login/")
+def youtube_scan_stop(request, job_id):
+    if request.method != "POST":
+        return JsonResponse({"ok": False, "error": "POST required."}, status=405)
+
+    with _YOUTUBE_SCAN_LOCK:
+        job = _YOUTUBE_SCAN_JOBS.get(job_id)
+        if not job:
+            return JsonResponse({"ok": False, "error": "Scan job not found."}, status=404)
+        if job["status"] == "RUNNING":
+            job["stop_requested"] = True
+            job["stage"] = "Stop requested..."
+
+    return JsonResponse({"ok": True})
+
+
+@user_passes_test(_admin_only, login_url="/admin/login/")
+def youtube_extractor(request):
+    """
+    Administrator-only YouTube content extractor.
+
+    Current workflow:
+    - Extract Transcript: retrieve available YouTube captions.
+    - Prepare Video: read YouTube metadata/duration and split it into logical parts.
+    - Question extraction remains a separate per-part action.
+
+    Nothing is written to QuestionBank here.
+    """
+    context = {
+        "youtube_url": "",
+        "extract_success": False,
+        "prepare_success": False,
+        "segment_minutes": 15,
+    }
+
+    if request.method == "POST":
+        action = request.POST.get("action", "prepare_video").strip()
+        youtube_url = request.POST.get("youtube_url", "").strip()
+        context["youtube_url"] = youtube_url
+
+        try:
+            context["segment_minutes"] = max(
+                5, min(int(request.POST.get("segment_minutes", "15")), 30)
+            )
+        except (TypeError, ValueError):
+            context["segment_minutes"] = 15
+
+        if not youtube_url:
+            context["extract_error"] = "Please enter a YouTube URL."
+            return render(
+                request,
+                "website/content_management/youtube_extractor/website_youtube_extractor.html",
+                context,
+                status=400,
+            )
+
+        video_id = _extract_youtube_video_id(youtube_url)
+        if not video_id:
+            context["extract_error"] = (
+                "Please enter a valid YouTube URL or an 11-character YouTube video ID."
+            )
+            return render(
+                request,
+                "website/content_management/youtube_extractor/website_youtube_extractor.html",
+                context,
+                status=400,
+            )
+
+        context["video_id"] = video_id
+
+        if action == "transcript":
+            try:
+                fetched_transcript = YouTubeTranscriptApi().fetch(video_id)
+                snippets = list(fetched_transcript)
+                transcript_lines = []
+
+                for snippet in snippets:
+                    text_value = str(getattr(snippet, "text", "") or "").strip()
+                    if text_value:
+                        transcript_lines.append(text_value)
+
+                transcript_text = "\n".join(transcript_lines).strip()
+                if not transcript_text:
+                    raise ValueError("The retrieved transcript is empty.")
+
+                context.update({
+                    "extract_success": True,
+                    "transcript_text": transcript_text,
+                    "transcript_count": len(snippets),
+                    "transcript_language": str(
+                        getattr(fetched_transcript, "language", "") or ""
+                    ),
+                    "transcript_language_code": str(
+                        getattr(fetched_transcript, "language_code", "") or ""
+                    ),
+                    "transcript_is_generated": bool(
+                        getattr(fetched_transcript, "is_generated", False)
+                    ),
+                })
+            except Exception as exc:
+                context["extract_error"] = (
+                    "Unable to retrieve the transcript for this YouTube video. "
+                    f"Details: {str(exc)[:300]}"
+                )
+
+        elif action == "prepare_video":
+            try:
+                import math
+                import yt_dlp
+
+                metadata_options = {
+                    "quiet": True,
+                    "no_warnings": True,
+                    "skip_download": True,
+                    "noplaylist": True,
+                    "extract_flat": False,
+                }
+
+                with yt_dlp.YoutubeDL(metadata_options) as downloader:
+                    info = downloader.extract_info(youtube_url, download=False)
+
+                if not isinstance(info, dict):
+                    raise ValueError("YouTube metadata was not returned.")
+
+                duration_seconds = int(info.get("duration") or 0)
+                if duration_seconds <= 0:
+                    raise ValueError("YouTube did not return a valid video duration.")
+
+                segment_seconds = context["segment_minutes"] * 60
+                part_count = int(math.ceil(duration_seconds / segment_seconds))
+
+                def _clock(total_seconds):
+                    total_seconds = max(0, int(total_seconds))
+                    hours = total_seconds // 3600
+                    minutes = (total_seconds % 3600) // 60
+                    seconds = total_seconds % 60
+                    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+                video_parts = []
+                for index in range(part_count):
+                    start_seconds = index * segment_seconds
+                    end_seconds = min(
+                        (index + 1) * segment_seconds,
+                        duration_seconds,
+                    )
+                    video_parts.append({
+                        "part_number": index + 1,
+                        "start_seconds": start_seconds,
+                        "end_seconds": end_seconds,
+                        "start_time": _clock(start_seconds),
+                        "end_time": _clock(end_seconds),
+                        "duration_time": _clock(end_seconds - start_seconds),
+                        "status": "READY",
+                    })
+
+                context.update({
+                    "prepare_success": True,
+                    "video_title": str(info.get("title") or ""),
+                    "video_duration": duration_seconds,
+                    "video_duration_text": _clock(duration_seconds),
+                    "video_uploader": str(info.get("uploader") or ""),
+                    "part_count": part_count,
+                    "video_parts": video_parts,
+                })
+
+            except Exception as exc:
+                context["prepare_error"] = (
+                    "Unable to prepare this YouTube video. "
+                    "No video was downloaded and no OpenAI scan was started. "
+                    f"Details: {str(exc)[:500]}"
+                )
+
+    return render(
+        request,
+        "website/content_management/youtube_extractor/website_youtube_extractor.html",
+        context,
+    )
+
 @user_passes_test(_admin_only, login_url="/login/")
 def seo_monitoring(request):
     """Administrator-only SEO Monitoring workspace backed by Google Search Console."""
@@ -427,55 +821,12 @@ def seo_monitoring(request):
     monitoring_error = ""
     last_checked = timezone.localtime().strftime("%d %b %Y %H:%M")
     date_range_label = ""
-    date_warning = ""
-
-    from datetime import datetime, timedelta
-
-    today = timezone.localdate()
-    selected_range = request.GET.get("range", "28d").strip().lower()
-    allowed_ranges = {"today", "yesterday", "7d", "28d", "custom"}
-    if selected_range not in allowed_ranges:
-        selected_range = "28d"
-
-    custom_start = request.GET.get("start_date", "").strip()
-    custom_end = request.GET.get("end_date", "").strip()
-
-    if selected_range == "today":
-        start_date = today
-        end_date = today
-        date_warning = "Today's Search Console data may be incomplete because Google reporting is delayed."
-    elif selected_range == "yesterday":
-        start_date = today - timedelta(days=1)
-        end_date = start_date
-        date_warning = "Yesterday's Search Console data may still be incomplete because Google reporting is delayed."
-    elif selected_range == "7d":
-        end_date = today - timedelta(days=3)
-        start_date = end_date - timedelta(days=6)
-    elif selected_range == "custom":
-        try:
-            start_date = datetime.strptime(custom_start, "%Y-%m-%d").date()
-            end_date = datetime.strptime(custom_end, "%Y-%m-%d").date()
-            if start_date > end_date:
-                raise ValueError("Start date must not be after end date.")
-            if end_date > today:
-                raise ValueError("End date cannot be in the future.")
-            if end_date >= today - timedelta(days=2):
-                date_warning = "Recent Search Console dates may be incomplete because Google reporting is delayed."
-        except ValueError as exc:
-            selected_range = "28d"
-            end_date = today - timedelta(days=3)
-            start_date = end_date - timedelta(days=27)
-            monitoring_error = f"Invalid custom date range ({exc}). Showing Last 28 Days instead."
-    else:
-        selected_range = "28d"
-        end_date = today - timedelta(days=3)
-        start_date = end_date - timedelta(days=27)
-
-    date_range_label = f"{start_date:%d %b %Y} - {end_date:%d %b %Y}"
 
     try:
+        from datetime import timedelta
         from google.oauth2 import service_account
         from googleapiclient.discovery import build
+
         import base64
 
         credential_b64 = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS_B64", "").strip()
@@ -489,6 +840,12 @@ def seo_monitoring(request):
             scopes=["https://www.googleapis.com/auth/webmasters.readonly"],
         )
         service = build("searchconsole", "v1", credentials=credentials, cache_discovery=False)
+
+        # Search Console performance data is delayed, so use a stable 28-day
+        # reporting window ending three days before today.
+        end_date = timezone.localdate() - timedelta(days=3)
+        start_date = end_date - timedelta(days=27)
+        date_range_label = f"{start_date:%d %b %Y} - {end_date:%d %b %Y}"
 
         response = service.searchanalytics().query(
             siteUrl="sc-domain:thestoreware.com",
@@ -553,8 +910,7 @@ def seo_monitoring(request):
 
     except Exception as exc:
         monitoring_status = "API Error"
-        if not monitoring_error:
-            monitoring_error = str(exc)[:300]
+        monitoring_error = str(exc)[:300]
 
     context = {
         "keywords": keywords,
@@ -565,10 +921,6 @@ def seo_monitoring(request):
         "monitoring_status": monitoring_status,
         "monitoring_error": monitoring_error,
         "date_range_label": date_range_label,
-        "date_warning": date_warning,
-        "selected_range": selected_range,
-        "custom_start": custom_start,
-        "custom_end": custom_end,
         "total_clicks": total_clicks,
         "total_impressions": total_impressions,
         "actual_queries": actual_queries,
@@ -578,7 +930,6 @@ def seo_monitoring(request):
         "website/content_management/seo_monitoring/website_seo_monitoring.html",
         context,
     )
-
 
 @user_passes_test(_admin_only, login_url="/admin/login/")
 def exam_quiz_management(request):

@@ -37,6 +37,26 @@ urlpatterns = [
         name="seo_monitoring",
     ),
     path(
+        "content-management/youtube-extractor/",
+        website_views.youtube_extractor,
+        name="youtube_extractor",
+    ),
+    path(
+        "content-management/youtube-extractor/scan/start/",
+        website_views.youtube_scan_start,
+        name="youtube_scan_start",
+    ),
+    path(
+        "content-management/youtube-extractor/scan/status/<str:job_id>/",
+        website_views.youtube_scan_status,
+        name="youtube_scan_status",
+    ),
+    path(
+        "content-management/youtube-extractor/scan/stop/<str:job_id>/",
+        website_views.youtube_scan_stop,
+        name="youtube_scan_stop",
+    ),
+    path(
         "content-management/courses/",
         website_views.courses_management,
         name="courses_management",

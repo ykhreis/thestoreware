@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Files - AI-Agent Demo</title>
+    <link rel="stylesheet" href="{% static 'mentor/ai_agent_demo.css' %}">
+    <style>
+        .company-box { margin: 18px 0; padding: 14px 16px; background: #f8fafc; border: 1px solid #dbe4ee; border-radius: 10px; }
+        .company-box strong { display:block; margin-bottom:4px; }
+        .file-input { width:100%; box-sizing:border-box; padding:14px; border:1px dashed #94a3b8; border-radius:10px; background:#fff; margin:10px 0 18px; }
+        .result-box { margin-top:20px; padding:16px; border-radius:10px; background:#f8fafc; border:1px solid #dbe4ee; }
+        .success-text { color:#166534; font-weight:700; }
+        .error-text { color:#b91c1c; }
+        .file-result { margin:6px 0; }
+    </style>
+</head>
+<body>
+    <div class="topbar">
+        <div class="topbar-title">AI-Agent Demo</div>
+        <div class="topbar-user">
+            {{ request.user.username }} |
+            <a href="{% url 'logout' %}">Logout</a>
+        </div>
+    </div>
+
+    <main class="page">
+        <section class="ask-card">
+            <div class="ask-heading">
+                <div class="label">PRESALES KNOWLEDGE ASSISTANT</div>
+                <h1>Upload Files</h1>
+                <p>Add synthetic information to the Presales Knowledge Bank.</p>
+            </div>
+
+            <div class="company-box">
+                <strong>Company / Organization</strong>
+                Company ABC
+            </div>
+
+            {% if error %}
+                <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <label class="question-label" for="information_file">Select One or Multiple Files</label>
+                <p style="margin:6px 0 8px; color:#64748b; font-size:14px;">You can upload multiple PDF, Word and Excel files together.</p>
+                <input id="information_file" class="file-input" type="file"
+                       name="information_file" multiple required
+                       accept=".pdf,.doc,.docx,.xls,.xlsx">
+
+                <div id="selected-files-panel" class="result-box" style="display:none; margin-top:0; margin-bottom:18px;">
+                    <div id="selected-files-title" style="font-weight:700; margin-bottom:8px;">Selected Files</div>
+                    <div id="selected-files-list"></div>
+                </div>
+
+                <div class="ask-actions">
+                    <button type="submit" class="primary-button">Upload &amp; Process Files</button>
+                    <a class="secondary-link" href="{% url 'demo_ask' %}">Ask AI-Agent</a>
+                </div>
+            </form>
+
+            {% if processed %}
+                <div class="result-box">
+                    <div class="success-text">
+                        {{ successful_files|length }} file(s) processed successfully.
+                        {{ total_chunks }} searchable content record(s) stored.
+                    </div>
+                    {% for item in successful_files %}
+                        <div class="file-result">✓ {{ item.name }} — {{ item.stored_chunks }} content record(s)</div>
+                    {% endfor %}
+                    {% for item in failed_files %}
+                        <div class="file-result error-text">✗ {{ item.name }} — {{ item.error }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <a class="back-link" href="{% url 'demo' %}">← Back to AI-Agent Demo</a>
+        </section>
+    </main>
+
+    <script>
+        const fileInput = document.getElementById('information_file');
+        const selectedPanel = document.getElementById('selected-files-panel');
+        const selectedTitle = document.getElementById('selected-files-title');
+        const selectedList = document.getElementById('selected-files-list');
+
+        fileInput.addEventListener('change', function () {
+            selectedList.innerHTML = '';
+
+            if (!this.files || this.files.length === 0) {
+                selectedPanel.style.display = 'none';
+                return;
+            }
+
+            selectedTitle.textContent = `Selected Files (${this.files.length})`;
+
+            Array.from(this.files).forEach(function (file) {
+                const row = document.createElement('div');
+                row.className = 'file-result';
+                row.textContent = '✓ ' + file.name;
+                selectedList.appendChild(row);
+            });
+
+            selectedPanel.style.display = 'block';
+        });
+    </script>
+
+</body>
+</html>
